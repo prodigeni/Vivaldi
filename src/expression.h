@@ -10,15 +10,13 @@ namespace ast {
 
 class expression {
 public:
-  virtual value::base* eval(environment& env) const;
-private:
+  virtual value::base* eval(environment& env) const = 0;
 };
 
 class function_definition;
 class function_call;
 class variable;
 class literal;
-class builtin_function_call;
 class type_definition;
 class cond_statement;
 class while_loop;
