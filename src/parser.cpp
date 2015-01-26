@@ -659,15 +659,15 @@ parse_res<> parse_function_call(vector_ref<std::string> tokens)
 parse_res<std::vector<std::unique_ptr<ast::expression>>>
   parse_expr_list(vector_ref<std::string> tokens)
 {
-  if (tokens.front() == ")" || tokens.front() == "]")
-    return {};
   std::vector<std::unique_ptr<ast::expression>> exprs;
-  do {
-    tokens.remove_prefix(1);
-    auto res = parse_expression(tokens);
-    exprs.push_back(move(res->first));
-    tokens = res->second;
-  } while (tokens.front() == ",");
+  if (tokens.front() != ")" && tokens.front() != "]") {
+    do {
+      tokens.remove_prefix(1);
+      auto res = parse_expression(tokens);
+      exprs.push_back(move(res->first));
+      tokens = res->second;
+    } while (tokens.front() == ",");
+  }
   return {{ move(exprs), tokens }};
 }
 
