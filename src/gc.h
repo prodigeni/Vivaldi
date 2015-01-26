@@ -9,14 +9,14 @@ namespace gc {
 
 namespace internal {
 
-void emplace(value::base* item);
+value::base* emplace(value::base* item);
 
 }
 
 template <typename T, typename... Args>
-T* alloc(Args&&... args)
+value::base* alloc(Args&&... args)
 {
-  internal::emplace(new T{std::forward(args...)});
+  return internal::emplace(new T{args...});
 }
 
 }
