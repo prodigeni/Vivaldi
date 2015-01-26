@@ -3,6 +3,7 @@
 
 #include "expression.h"
 
+#include <istream>
 #include <string>
 #include <vector>
 

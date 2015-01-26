@@ -25,8 +25,10 @@ class dictionary;
 class function;
 class builtin_function;
 class type;
-class nil;
 class symbol;
+class iterator;
+class range;
+class nil;
 class custom_type;
 
 }
