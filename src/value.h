@@ -9,11 +9,14 @@ namespace value {
 
 class base {
 public:
-  virtual base* type() const;
-  virtual std::string value() const;
+  virtual base* type() const = 0;
+  virtual std::string value() const = 0;
+
+  virtual ~base() { }
+
 private:
-  std::vector<base*> m_public_members;
-  std::vector<base*> m_private_members;
+  //std::vector<base*> m_public_members;
+  //std::vector<base*> m_private_members;
 };
 
 class string;

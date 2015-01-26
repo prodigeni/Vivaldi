@@ -15,6 +15,7 @@ public:
 
   bool is_defined(symbol name);
   value::base*& at(symbol name);
+  value::base* assign(symbol name, value::base* val);
 
 private:
   std::unordered_map<symbol, value::base*> m_local_env;

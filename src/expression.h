@@ -11,6 +11,8 @@ namespace ast {
 class expression {
 public:
   virtual value::base* eval(environment& env) const = 0;
+
+  virtual ~expression() { }
 };
 
 class function_definition;

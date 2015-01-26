@@ -290,6 +290,7 @@ parser::token_string parser::tokenize(std::istream& input)
   while (input.peek() != EOF) {
     getline(input, current_line);
     boost::string_ref line{current_line};
+    line = ltrim(line); // remove leading whitespace from line
     while (line.size()) {
       auto res = first_token(line);
       tokens.push_back(res.first);
@@ -820,7 +821,8 @@ parse_res<> parse_variable_declaration(vector_ref<std::string> tokens)
   auto value_res = parse_expression(tokens);
   auto value = move(value_res->first);
   tokens = value_res->second;
-  return {{ std::make_unique<ast::variable_declaration>(name, value), tokens }};
+  return {{ std::make_unique<ast::variable_declaration>(name, move(value)),
+            tokens }};
 }
 
 // }}}

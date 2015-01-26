@@ -13,10 +13,10 @@ public:
   friend bool operator==(symbol first, symbol second);
   friend bool operator!=(symbol first, symbol second);
 
-  friend std::string to_string(symbol sym);
+  friend const std::string& to_string(symbol sym);
 
 private:
-  std::string* m_ptr;
+  const std::string* m_ptr;
   static std::unordered_set<std::string> s_symbol_table;
 
   friend struct std::hash<il::symbol>;
@@ -26,7 +26,7 @@ private:
 
 template <>
 struct std::hash<il::symbol> {
-  size_t operator()(const il::symbol& sym);
+  size_t operator()(const il::symbol& sym) const;
 };
 
 #endif
