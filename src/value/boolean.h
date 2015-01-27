@@ -10,7 +10,8 @@ namespace value {
 class boolean : public base {
 public:
   boolean(bool val) : m_val{val} { }
-  base* type() const override;
+
+  custom_type* type() const override;
   std::string value() const override;
 
 private:

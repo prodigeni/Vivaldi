@@ -10,7 +10,8 @@ namespace value {
 class floating_point : public base {
 public:
   floating_point(double val) : m_val{val} { }
-  base* type() const override;
+
+  custom_type* type() const override;
   std::string value() const override;
 
 private:

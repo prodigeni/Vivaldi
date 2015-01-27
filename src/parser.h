@@ -2,6 +2,7 @@
 #define IL_PARSER_H
 
 #include "expression.h"
+#include "utils.h"
 
 #include <istream>
 #include <string>
@@ -11,11 +12,13 @@ namespace il {
 
 namespace parser {
 
-using token_string = std::vector<std::string>;
+using token_string = vector_ref<std::string>;
 
-token_string tokenize(std::istream& input);
+std::vector<std::string> tokenize(std::istream& input);
 
-std::vector<std::unique_ptr<ast::expression>> parse(const token_string& tokens);
+bool is_valid(token_string tokens);
+
+std::vector<std::unique_ptr<ast::expression>> parse(token_string tokens);
 
 }
 

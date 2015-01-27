@@ -11,7 +11,8 @@ namespace value {
 class symbol : public base {
 public:
   symbol(const il::symbol& val) : m_val{val} { }
-  base* type() const override;
+
+  custom_type* type() const override;
   std::string value() const override;
 
 private:

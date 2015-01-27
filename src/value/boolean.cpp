@@ -1,5 +1,8 @@
 #include "boolean.h"
 
+#include "gc.h"
+#include "lang_utils.h"
+
 #include <string>
 
 using namespace il;

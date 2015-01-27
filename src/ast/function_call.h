@@ -9,13 +9,13 @@ namespace ast {
 
 class function_call : public expression {
 public:
-  function_call(symbol name,
+  function_call(std::unique_ptr<ast::expression>&& name,
                 std::vector<std::unique_ptr<ast::expression>>&& args);
 
   value::base* eval(environment& env) const override;
 
 private:
-  symbol m_function_name;
+  std::unique_ptr<ast::expression> m_function_name;
   std::vector<std::unique_ptr<ast::expression>> m_args;
 };
 

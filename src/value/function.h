@@ -10,14 +10,19 @@ namespace value {
 
 class function : public base {
 public:
-  function(const std::vector<symbol>& args,
-           std::unique_ptr<ast::expression>&& body);
-  base* type() const override;
+  function(const std::vector<il::symbol>& args,
+           ast::expression* body,
+           environment& outer_env);
+
+  custom_type* type() const override;
   std::string value() const override;
 
+  base* call(const std::vector<base*>& args) override;
+
 private:
-  std::vector<symbol> m_args;
-  std::unique_ptr<ast::expression> m_body;
+  std::vector<il::symbol> m_args;
+  ast::expression* m_body;
+  environment& m_env;
 };
 
 }

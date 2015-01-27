@@ -1,5 +1,8 @@
 #include "function_definition.h"
 
+#include "gc.h"
+#include "value/function.h"
+
 using namespace il;
 
 ast::function_definition::function_definition(symbol name,
@@ -12,5 +15,7 @@ ast::function_definition::function_definition(symbol name,
 
 value::base* ast::function_definition::eval(environment& env) const
 {
-  throw std::runtime_error{"not yet implemented"};
+  const static symbol nonname{""};
+  auto fn = gc::alloc<value::function>(m_args, m_body.get(), env);
+  return (m_name == nonname) ? fn : env.assign(m_name, fn);
 }

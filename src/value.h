@@ -7,18 +7,6 @@ namespace il {
 
 namespace value {
 
-class base {
-public:
-  virtual base* type() const = 0;
-  virtual std::string value() const = 0;
-
-  virtual ~base() { }
-
-private:
-  //std::vector<base*> m_public_members;
-  //std::vector<base*> m_private_members;
-};
-
 class string;
 class integer;
 class floating_point;
@@ -27,12 +15,27 @@ class array;
 class dictionary;
 class function;
 class builtin_function;
-class type;
 class symbol;
 class iterator;
 class range;
 class nil;
 class custom_type;
+class custom_object;
+
+class base {
+public:
+
+  virtual custom_type* type() const = 0;
+  virtual std::string value() const = 0;
+
+  virtual base* call(const std::vector<value::base*>& args);
+
+  virtual ~base() { }
+
+private:
+  //std::vector<base*> m_public_members;
+  //std::vector<base*> m_private_members;
+};
 
 }
 
