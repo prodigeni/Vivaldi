@@ -4,7 +4,7 @@
 
 using namespace il;
 
-value::base* value::integer::type() const
+value::custom_type* value::integer::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

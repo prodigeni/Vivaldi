@@ -1,5 +1,7 @@
 #include "environment.h"
 
+il::environment::environment() { }
+
 il::environment::environment(environment& prev) : m_parent{&prev} { }
 
 il::value::base*& il::environment::at(symbol name)

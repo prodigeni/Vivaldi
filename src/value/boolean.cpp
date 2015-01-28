@@ -7,7 +7,7 @@
 
 using namespace il;
 
-value::base* value::boolean::type() const
+value::custom_type* value::boolean::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

@@ -1,5 +1,8 @@
 #include "literal.h"
 
+#include "gc.h"
+#include "value/integer.h"
+
 using namespace il;
 
 ast::literal::literal(std::unique_ptr<value::base>&& value)
@@ -8,5 +11,5 @@ ast::literal::literal(std::unique_ptr<value::base>&& value)
 
 value::base* ast::literal::eval(environment& env) const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return gc::alloc<value::integer>( *dynamic_cast<value::integer*>(m_value.get()) );
 }

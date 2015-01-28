@@ -10,7 +10,8 @@ namespace value {
 
 class custom_object : public base {
 public:
-  custom_object(const std::vector<il::symbol>& args,
+  custom_object(custom_type* type,
+                const std::vector<il::symbol>& args,
                 ast::expression* body,
                 environment& outer_env);
 

@@ -11,8 +11,8 @@ class type_definition : public expression {
 public:
   type_definition(symbol name,
                   symbol parent,
-                  const std::vector<std::unique_ptr<expression>> public_mems,
-                  const std::vector<std::unique_ptr<expression>> private_mems);
+                  std::vector<std::unique_ptr<expression>>&& public_mems,
+                  std::vector<std::unique_ptr<expression>>&& private_mems);
 
   value::base* eval(environment& env) const override;
 

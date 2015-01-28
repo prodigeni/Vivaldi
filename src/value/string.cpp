@@ -2,7 +2,7 @@
 
 using namespace il;
 
-value::base* value::string::type() const
+value::custom_type* value::string::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

@@ -4,7 +4,7 @@
 
 using namespace il;
 
-value::base* value::floating_point::type() const
+value::custom_type* value::floating_point::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }
