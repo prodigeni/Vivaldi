@@ -11,7 +11,7 @@ namespace value {
 class function : public base {
 public:
   function(const std::vector<il::symbol>& args,
-           ast::expression* body,
+           std::shared_ptr<ast::expression> body,
            environment& outer_env);
 
   custom_type* type() const override;
@@ -19,9 +19,11 @@ public:
 
   base* call(const std::vector<base*>& args) override;
 
+  base* copy() const override;
+
 private:
   std::vector<il::symbol> m_args;
-  ast::expression* m_body;
+  std::shared_ptr<ast::expression> m_body;
   environment& m_env;
 };
 

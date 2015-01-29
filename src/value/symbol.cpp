@@ -1,5 +1,7 @@
 #include "value/symbol.h"
 
+#include "gc.h"
+
 using namespace il;
 
 value::custom_type* value::symbol::type() const
@@ -10,4 +12,9 @@ value::custom_type* value::symbol::type() const
 std::string value::symbol::value() const
 {
   return '\'' + to_string(m_val);
+}
+
+value::base* value::symbol::copy() const
+{
+  return gc::alloc<symbol>( m_val );
 }

@@ -20,6 +20,8 @@ public:
 
   base* call(const std::vector<base*>& args) override;
 
+  base* copy() const override;
+
 private:
 
   std::vector<base*> m_members;

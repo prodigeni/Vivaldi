@@ -22,3 +22,8 @@ value::base* value::custom_object::call(const std::vector<base*>& args)
 {
   throw std::runtime_error{"not yet implemented"};
 }
+
+value::base* value::custom_object::copy() const
+{
+  throw std::runtime_error{"not yet implemented"};
+}

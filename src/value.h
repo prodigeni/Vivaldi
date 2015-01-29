@@ -30,6 +30,8 @@ public:
 
   virtual base* call(const std::vector<value::base*>& args);
 
+  virtual base* copy() const = 0;
+
   virtual ~base() { }
 
 private:

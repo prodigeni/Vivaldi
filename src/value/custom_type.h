@@ -19,6 +19,8 @@ public:
 
   base* call(const std::vector<base*>& args) override;
 
+  base* copy() const override;
+
 private:
   std::vector<il::symbol> m_ctr_args;
   ast::expression* m_ctr_body;

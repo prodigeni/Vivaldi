@@ -28,3 +28,7 @@ value::base* value::custom_type::call(const std::vector<base*>& args)
   return gc::alloc<custom_object>(this, m_ctr_args, m_ctr_body, m_env);
 }
 
+value::base* value::custom_type::copy() const
+{
+  throw std::runtime_error{"not yet implemented"};
+}

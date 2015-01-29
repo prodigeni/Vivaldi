@@ -16,3 +16,8 @@ std::string value::boolean::value() const
 {
   return m_val ? "true" : "false";
 }
+
+value::base* value::boolean::copy() const
+{
+  return gc::alloc<boolean>( m_val );
+}

@@ -1,5 +1,7 @@
 #include "integer.h"
 
+#include "gc.h"
+
 #include <string>
 
 using namespace il;
@@ -10,3 +12,8 @@ value::custom_type* value::integer::type() const
 }
 
 std::string value::integer::value() const { return std::to_string(m_val); }
+
+value::base* value::integer::copy() const
+{
+  return gc::alloc<integer>( m_val );
+}

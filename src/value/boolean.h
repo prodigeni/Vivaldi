@@ -14,6 +14,8 @@ public:
   custom_type* type() const override;
   std::string value() const override;
 
+  base* copy() const override;
+
 private:
   bool m_val;
 };
