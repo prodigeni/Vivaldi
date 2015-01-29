@@ -17,7 +17,7 @@ public:
 
 private:
   symbol m_name;
-  std::unique_ptr<expression> m_body;
+  std::shared_ptr<expression> m_body;
   std::vector<symbol> m_args;
 };
 

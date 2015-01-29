@@ -16,6 +16,6 @@ ast::function_definition::function_definition(symbol name,
 value::base* ast::function_definition::eval(environment& env) const
 {
   const static symbol nonname{""};
-  auto fn = gc::alloc<value::function>(m_args, m_body.get(), env);
+  auto fn = gc::alloc<value::function>(m_args, m_body, env);
   return (m_name == nonname) ? fn : env.assign(m_name, fn);
 }
