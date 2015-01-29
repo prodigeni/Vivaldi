@@ -151,7 +151,7 @@ val_res val_block(vector_ref<std::string> tokens)
                                          { return t != "\n" && t != ";"; });
       tokens = tokens.remove_prefix(first_nonsep - begin(tokens));
     } else {
-      return {};
+      return tokens.size() ? val_res{tokens.remove_prefix(1)} : val_res{};
     }
   }
   return tokens.size() ? val_res{tokens.remove_prefix(1)} : val_res{};
