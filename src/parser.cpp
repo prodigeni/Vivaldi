@@ -172,7 +172,7 @@ parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_while_loop(vector_ref<std::string> tokens);
 parse_res<> parse_monop_call(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
-parse_res<std::pair<symbol, arg_t>>
+parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
   parse_binop_call(vector_ref<std::string> tokens);
 parse_res<std::pair<symbol, arg_t>>
   parse_method_call(vector_ref<std::string> tokens);
@@ -268,9 +268,9 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
 
     } else if (auto mres = parse_method_call(tokens)) {
       arg_t args{};
-      args.resize(mres->first.second.size() + 1);
-      args[0] = move(res->first);
-      transform(begin(mres->first.second), end(mres->first.second), begin(args),
+      args.push_back(move(res->first));
+      transform(begin(mres->first.second), end(mres->first.second),
+                back_inserter(args),
                 [](auto&& i) { return move(i); });
       auto name = std::make_unique<ast::variable>(mres->first.first);
       res->first = std::make_unique<ast::function_call>(move(name), move(args));
@@ -280,9 +280,7 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
     } else if (auto bres = parse_binop_call(tokens)) {
       arg_t args{};
       args.push_back(move(res->first));
-      transform(begin(bres->first.second), end(bres->first.second),
-                back_inserter(args),
-                [](auto&& i) { return move(i); });
+      args.push_back(move(bres->first.second));
       auto name = std::make_unique<ast::variable>(bres->first.first);
       res->first = std::make_unique<ast::function_call>(move(name), move(args));
 
@@ -497,16 +495,14 @@ parse_res<symbol> parse_binop(vector_ref<std::string> tokens)
   return {};
 }
 
-parse_res<std::pair<symbol, arg_t>>
+parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
   parse_binop_call(vector_ref<std::string> tokens)
 {
   if (auto bin_res = parse_binop(tokens)) {
     tokens = bin_res->second;
     auto expr_res = parse_expression(tokens);
     tokens = expr_res->second;
-    arg_t arg{};
-    arg.push_back(move(expr_res->first));
-    auto pair = std::make_pair(bin_res->first, move(arg));
+    auto pair = std::make_pair(bin_res->first, move(expr_res->first));
     return {{ move(pair), tokens }};
   }
   return {};
