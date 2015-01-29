@@ -1,6 +1,8 @@
 #ifndef IL_VALUE_H
 #define IL_VALUE_H
 
+#include "symbol.h"
+
 #include <vector>
 
 namespace il {
@@ -29,6 +31,8 @@ public:
   virtual std::string value() const = 0;
 
   virtual base* call(const std::vector<value::base*>& args);
+  virtual base* call_method(il::symbol method,
+                            const std::vector<value::base*>& args);
 
   virtual base* copy() const = 0;
 

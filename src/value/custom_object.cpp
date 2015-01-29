@@ -1,26 +1,39 @@
 #include "custom_object.h"
 
+#include "custom_type.h"
+#include "ast/function_definition.h"
+
 using namespace il;
 
 value::custom_object::custom_object(custom_type* type,
-                                    const std::vector<il::symbol>& args,
-                                    ast::expression* body,
+                                    const std::vector<base*>& args,
                                     environment& outer_env)
-{ }
+  : m_local_env {outer_env}
+{
+  const auto& mems = type->ctr_args();
+  if (args.size() != mems.size())
+    throw std::runtime_error{"wrong number of arguments"};
+
+  for (size_t i = args.size(); i--;)
+    m_local_env.assign(mems[i], args[i]);
+}
 
 value::custom_type* value::custom_object::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return m_type;
 }
 
 std::string value::custom_object::value() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return "<object>";
 }
 
-value::base* value::custom_object::call(const std::vector<base*>& args)
+value::base* value::custom_object::call_method(il::symbol method,
+                                               const std::vector<base*>& args)
 {
-  throw std::runtime_error{"not yet implemented"};
+  auto method_definition = type()->method(method);
+  auto fn = method_definition->eval(m_local_env);
+  return fn->call(args);
 }
 
 value::base* value::custom_object::copy() const

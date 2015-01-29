@@ -11,20 +11,20 @@ namespace value {
 class custom_object : public base {
 public:
   custom_object(custom_type* type,
-                const std::vector<il::symbol>& args,
-                ast::expression* body,
+                const std::vector<base*>& args,
                 environment& outer_env);
 
   custom_type* type() const override;
   std::string value() const override;
 
-  base* call(const std::vector<base*>& args) override;
+  base* call_method(il::symbol method, const std::vector<base*>& args) override;
 
   base* copy() const override;
 
 private:
 
-  std::vector<base*> m_members;
+  environment m_local_env;
+
   custom_type* m_type;
 };
 

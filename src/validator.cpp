@@ -409,15 +409,38 @@ val_res val_dict_literal(vector_ref<std::string> tokens)
 // }}}
 // type_definition {{{
 
+val_res val_method_definition(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "mem")
+    return {};
+  tokens = tokens.remove_prefix(1);
+
+  if (tokens.size() && val_name(tokens))
+    tokens = tokens.remove_prefix(1);
+
+  if (auto param_res = val_bracketed_subexpr(tokens, val_parameter_list,
+                                             "(", ")")) {
+    tokens = *param_res;
+    if (!tokens.size() || tokens.front() != ":")
+      return {};
+    return val_expression(tokens.remove_prefix(1));
+  }
+  return {};
+}
+
 val_res val_type_definition(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "type")
+  if (!tokens.size() || tokens.front() != "newtype")
     return {};
   if (auto name_res = val_name(tokens.remove_prefix(1))) {
-    return val_bracketed_subexpr(*name_res,
-         [](auto t)
-           { return val_comma_separated_list(t, val_function_definition); },
-          "{", "}");
+
+    if (auto mems_res = val_bracketed_subexpr(*name_res, val_parameter_list,
+                                              "[", "]")) {
+      return val_bracketed_subexpr(*mems_res,
+           [](auto t)
+             { return val_comma_separated_list(t, val_method_definition); },
+            "{", "}");
+    }
   }
   return {};
 }

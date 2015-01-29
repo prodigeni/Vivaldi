@@ -8,6 +8,7 @@
 #include "ast/function_call.h"
 #include "ast/function_definition.h"
 #include "ast/literal.h"
+#include "ast/type_definition.h"
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
 #include "ast/while_loop.h"
@@ -537,7 +538,7 @@ parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens)
 
 parse_res<symbol> parse_literal_symbol(vector_ref<std::string> tokens)
 {
-  return {{ symbol(tokens.front()), tokens.remove_prefix(1) }};
+  return {{ tokens.front(), tokens.remove_prefix(1) }};
 }
 
 parse_res<std::vector<symbol>> parse_arg_list(vector_ref<std::string> tokens)
@@ -703,9 +704,58 @@ parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
 // }}}
 // type_definition !!! {{{
 
+parse_res<std::pair<il::symbol, std::shared_ptr<ast::function_definition>>>
+  parse_method(vector_ref<std::string> tokens)
+{
+  if (tokens.front() != "mem")
+    return {};
+  symbol name{tokens[1]};
+  tokens = tokens.remove_prefix(2);
+  auto arg_res = parse_bracketed_subexpr(tokens, parse_arg_list, "(", ")");
+  auto args = arg_res->first;
+  tokens = arg_res->second.remove_prefix(1); // ':'
+  auto body_res = parse_expression(tokens);
+  auto body = move(body_res->first);
+  tokens = body_res->second;
+
+  auto fn = std::make_shared<ast::function_definition>(symbol{""},
+                                                       move(body),
+                                                       args);
+
+  return {{ {name, fn}, tokens }};
+}
+
 parse_res<> parse_type_definition(vector_ref<std::string> tokens)
 {
   //throw std::runtime_error{"not yet implemented"};
+  if (!tokens.size() || tokens.front() != "newtype")
+    return {};
+  tokens = tokens.remove_prefix(1);
+  auto name = parse_literal_symbol(tokens);
+  tokens = name->second;
+
+  if (auto members_res = parse_bracketed_subexpr(tokens, parse_arg_list,
+                                                 "[", "]")) {
+    tokens = members_res->second;
+    auto methods_res = parse_bracketed_subexpr(tokens,
+                           [](auto t)
+                             { return parse_comma_separated_list(t,
+                                         parse_method); },
+                             "{", "}");
+    if (methods_res) {
+      std::unordered_map<symbol,
+                         std::shared_ptr<ast::function_definition>> methods;
+      for (const auto& i : methods_res->first)
+        methods[i.first] = i.second;
+
+      return {{ std::make_unique<ast::type_definition>( name->first,
+                                                        symbol{""},
+                                                        members_res->first,
+                                                        methods ),
+                methods_res->second }};
+    }
+  }
+
   return {};
 }
 

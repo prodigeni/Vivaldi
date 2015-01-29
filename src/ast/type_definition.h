@@ -11,16 +11,23 @@ class type_definition : public expression {
 public:
   type_definition(symbol name,
                   symbol parent,
-                  std::vector<std::unique_ptr<expression>>&& public_mems,
-                  std::vector<std::unique_ptr<expression>>&& private_mems);
+                  const std::vector<symbol>& public_mems,
+                  const std::unordered_map<
+                            il::symbol,
+                            std::shared_ptr<ast::function_definition>>&
+                          m_methods);
+
 
   value::base* eval(environment& env) const override;
 
 private:
   symbol m_name;
   symbol m_parent;
-  std::vector<std::unique_ptr<expression>> m_public_members;
-  std::vector<std::unique_ptr<expression>> m_private_members;
+
+  std::vector<symbol> m_members;
+
+  std::unordered_map<il::symbol,
+                     std::shared_ptr<ast::function_definition>> m_methods;
 };
 
 }
