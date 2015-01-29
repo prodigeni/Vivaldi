@@ -27,6 +27,7 @@ add_executable(il
   src/ast/function_call.cpp
   src/ast/function_definition.cpp
   src/ast/literal.cpp
+  src/ast/method_call.cpp
   src/ast/type_definition.cpp
   src/ast/variable.cpp
   src/ast/variable_declaration.cpp

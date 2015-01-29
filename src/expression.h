@@ -17,6 +17,7 @@ public:
 
 class function_definition;
 class function_call;
+class method_call;
 class variable;
 class literal;
 class type_definition;

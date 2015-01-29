@@ -8,7 +8,8 @@ using namespace il;
 value::custom_object::custom_object(custom_type* type,
                                     const std::vector<base*>& args,
                                     environment& outer_env)
-  : m_local_env {outer_env}
+  : m_local_env {outer_env},
+    m_type      {type}
 {
   const auto& mems = type->ctr_args();
   if (args.size() != mems.size())

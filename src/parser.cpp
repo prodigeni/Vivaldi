@@ -8,6 +8,7 @@
 #include "ast/function_call.h"
 #include "ast/function_definition.h"
 #include "ast/literal.h"
+#include "ast/method_call.h"
 #include "ast/type_definition.h"
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
@@ -268,22 +269,18 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
       tokens = fres->second;
 
     } else if (auto mres = parse_method_call(tokens)) {
-      arg_t args{};
-      args.push_back(move(res->first));
-      transform(begin(mres->first.second), end(mres->first.second),
-                back_inserter(args),
-                [](auto&& i) { return move(i); });
-      auto name = std::make_unique<ast::variable>(mres->first.first);
-      res->first = std::make_unique<ast::function_call>(move(name), move(args));
+      res->first = std::make_unique<ast::method_call>(move(res->first),
+                                                      mres->first.first,
+                                                      move(mres->first.second));
 
       tokens = mres->second;
 
     } else if (auto bres = parse_binop_call(tokens)) {
       arg_t args{};
-      args.push_back(move(res->first));
       args.push_back(move(bres->first.second));
-      auto name = std::make_unique<ast::variable>(bres->first.first);
-      res->first = std::make_unique<ast::function_call>(move(name), move(args));
+      res->first = std::make_unique<ast::method_call>(move(res->first),
+                                                      bres->first.first,
+                                                      move(args));
 
       tokens = bres->second;
 
