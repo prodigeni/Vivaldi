@@ -25,7 +25,9 @@ std::string value::function::value() const
 value::base* value::function::call(const std::vector<base*>& args)
 {
   if (args.size() != m_args.size())
-    throw std::runtime_error{"wrong number of arguments"};
+    throw std::runtime_error{"wrong number of arguments (expected "    +
+                             std::to_string(m_args.size()) += ", got " +
+                             std::to_string(args.size())   += ")"};
   environment call_env{m_env};
   for (auto sz = args.size(); sz--;)
     call_env.assign(m_args[sz], args[sz]);

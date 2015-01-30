@@ -535,6 +535,8 @@ parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens)
 
 parse_res<symbol> parse_literal_symbol(vector_ref<std::string> tokens)
 {
+  if (!tokens.size() || !isnamechar(tokens.front().front()))
+    return {};
   return {{ tokens.front(), tokens.remove_prefix(1) }};
 }
 
@@ -777,6 +779,8 @@ parse_res<> parse_variable_declaration(vector_ref<std::string> tokens)
 
 parse_res<> parse_name(vector_ref<std::string> tokens)
 {
+  if (!tokens.size() || !isnamechar(tokens.front().front()))
+    return {};
   symbol sym{tokens[0]};
   return {{ std::make_unique<ast::variable>( sym ), tokens.remove_prefix(1) }};
 }
