@@ -1,8 +1,17 @@
 #include "lang_utils.h"
 
+#include "builtins.h"
+#include "gc.h"
+#include "value/boolean.h"
+#include "value/builtin_type.h"
+
 bool il::truthy(const value::base* val)
 {
-  throw std::runtime_error{"not yet implemented"};
+  if (val->type() == &builtin::type::nil)
+    return false;
+  else if (val->type() == &builtin::type::boolean)
+    return static_cast<const value::boolean*>(val)->bool_val();
+  return true;
 }
 
 void il::check_size(size_t expected, size_t receieved)

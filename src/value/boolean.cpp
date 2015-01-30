@@ -1,7 +1,9 @@
 #include "boolean.h"
 
+#include "builtins.h"
 #include "gc.h"
 #include "lang_utils.h"
+#include "value/builtin_type.h"
 
 #include <string>
 
@@ -9,7 +11,7 @@ using namespace il;
 
 value::basic_type* value::boolean::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return &builtin::type::boolean;
 }
 
 std::string value::boolean::value() const

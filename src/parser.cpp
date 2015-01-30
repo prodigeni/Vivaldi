@@ -640,7 +640,7 @@ parse_res<> parse_symbol(vector_ref<std::string> tokens)
 
   std::unique_ptr<value::base> vsym{new value::symbol{sym}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(vsym)}};
-  return {{ move(literal), tokens.remove_prefix(1) }};
+  return {{ move(literal), tokens.remove_prefix(2) }};
 }
 
 parse_res<> parse_literal(vector_ref<std::string> tokens)
@@ -701,7 +701,7 @@ parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
 }
 
 // }}}
-// type_definition !!! {{{
+// type_definition {{{
 
 parse_res<std::pair<il::symbol, std::shared_ptr<ast::function_definition>>>
   parse_method(vector_ref<std::string> tokens)
@@ -726,7 +726,6 @@ parse_res<std::pair<il::symbol, std::shared_ptr<ast::function_definition>>>
 
 parse_res<> parse_type_definition(vector_ref<std::string> tokens)
 {
-  //throw std::runtime_error{"not yet implemented"};
   if (!tokens.size() || tokens.front() != "newtype")
     return {};
   tokens = tokens.remove_prefix(1);

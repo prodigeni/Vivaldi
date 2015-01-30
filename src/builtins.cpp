@@ -323,3 +323,7 @@ value::builtin_type type::string {fn_string_ctr, {
   { {"equals"},  fn_string_equals },
   { {"unequal"}, fn_string_unequal }
 }};
+
+value::builtin_type type::boolean {nullptr, { }};
+value::builtin_type type::nil     {nullptr, { }};
+value::builtin_type type::symbol  {nullptr, { }};

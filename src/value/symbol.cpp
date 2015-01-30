@@ -1,12 +1,14 @@
 #include "value/symbol.h"
 
+#include "builtins.h"
 #include "gc.h"
+#include "value/builtin_type.h"
 
 using namespace il;
 
 value::basic_type* value::symbol::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return &builtin::type::symbol;
 }
 
 std::string value::symbol::value() const

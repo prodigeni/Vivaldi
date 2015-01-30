@@ -1,5 +1,9 @@
 #include "while_loop.h"
 
+#include "gc.h"
+#include "lang_utils.h"
+#include "value/nil.h"
+
 using namespace il;
 
 ast::while_loop::while_loop(std::unique_ptr<expression>&& test,
@@ -10,5 +14,9 @@ ast::while_loop::while_loop(std::unique_ptr<expression>&& test,
 
 value::base* ast::while_loop::eval(environment& env) const
 {
-  throw std::runtime_error{"not yet implemented"};
+  value::base* result{nullptr};
+  environment inner_env{env};
+  while (truthy(m_test->eval(inner_env)))
+    result = m_body->eval(inner_env);
+  return result ? result : gc::alloc<value::nil>( );
 }

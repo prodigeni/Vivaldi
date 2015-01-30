@@ -160,10 +160,22 @@ val_res val_block(vector_ref<std::string> tokens)
 // }}}
 // cond_statement {{{
 
+val_res val_if_statement(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "if")
+    return {};
+  if (auto test_res = val_expression(tokens.remove_prefix(1))) {
+    tokens = *test_res;
+    if (tokens.size() && tokens.front() == ":")
+      return val_expression(tokens.remove_prefix(1));
+  }
+  return {};
+}
+
 val_res val_cond_statement(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "cond")
-    return {};
+    return val_if_statement(tokens);
   return val_dict_literal(tokens.remove_prefix(1)); // convenient cheat
 }
 

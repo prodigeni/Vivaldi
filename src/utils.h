@@ -6,8 +6,6 @@
 
 namespace il {
 
-// String helper functions {{{
-
 inline boost::string_ref ltrim(boost::string_ref str)
 {
   auto last = std::find_if_not(begin(str), end(str), isspace);
