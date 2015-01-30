@@ -24,7 +24,9 @@ void il::run_repl()
     { symbol{"size"},    &builtin::function::size },
     { symbol{"type"},    &builtin::function::type },
     { symbol{"Array"},   &builtin::type::array },
-    { symbol{"Integer"}, &builtin::type::integer }
+    { symbol{"Float"},   &builtin::type::floating_point },
+    { symbol{"Integer"}, &builtin::type::integer },
+    { symbol{"String"},  &builtin::type::string }
   }};
   std::string cur_line;
   do {

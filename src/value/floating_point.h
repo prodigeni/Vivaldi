@@ -14,6 +14,8 @@ public:
   basic_type* type() const override;
   std::string value() const override;
 
+  double float_val() const { return m_val; }
+
   base* copy() const override;
 
 private:

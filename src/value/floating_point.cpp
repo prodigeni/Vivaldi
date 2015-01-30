@@ -1,6 +1,8 @@
 #include "floating_point.h"
 
+#include "builtins.h"
 #include "gc.h"
+#include "value/builtin_type.h"
 
 #include <string>
 
@@ -8,7 +10,7 @@ using namespace il;
 
 value::basic_type* value::floating_point::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return &builtin::type::floating_point;
 }
 
 std::string value::floating_point::value() const

@@ -16,6 +16,7 @@ public:
   basic_type* type() const override;
   std::string value() const override;
 
+  std::string& str() { return m_val; }
   const std::string& str() const { return m_val; }
 
   base* copy() const override;
