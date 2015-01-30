@@ -1,8 +1,8 @@
 #include "symbol.h"
 
-std::unordered_set<std::string> il::symbol::s_symbol_table{};
+std::unordered_set<std::string> il::symbol::s_symbol_table{ };
 
-il::symbol::symbol(const std::string str)
+il::symbol::symbol(const std::string& str)
   : m_ptr {&*s_symbol_table.insert(str).first}
 { }
 

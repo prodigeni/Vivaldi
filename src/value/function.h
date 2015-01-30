@@ -14,7 +14,7 @@ public:
            std::shared_ptr<ast::expression> body,
            environment& outer_env);
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* call(const std::vector<base*>& args) override;

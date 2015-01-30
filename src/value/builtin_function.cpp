@@ -9,7 +9,7 @@ value::builtin_function::builtin_function(
   : m_body {body}
 { }
 
-value::custom_type* value::builtin_function::type() const
+value::basic_type* value::builtin_function::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

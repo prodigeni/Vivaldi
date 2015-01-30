@@ -1,14 +1,16 @@
 #include "array.h"
 
 #include "gc.h"
+#include "builtins.h"
+#include "value/builtin_type.h"
 
 using namespace il;
 
 value::array::array(const std::vector<base*>& mems) : m_mems {mems} { }
 
-value::custom_type* value::array::type() const
+value::basic_type* value::array::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return &builtin::type::array;
 }
 
 std::string value::array::value() const

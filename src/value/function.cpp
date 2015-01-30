@@ -13,7 +13,7 @@ value::function::function(const std::vector<il::symbol>& args,
     m_env  {outer_env}
 { }
 
-value::custom_type* value::function::type() const
+value::basic_type* value::function::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

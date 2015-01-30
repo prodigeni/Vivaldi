@@ -14,7 +14,7 @@ public:
                 const std::vector<base*>& args,
                 environment& outer_env);
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* call_method(il::symbol method, const std::vector<base*>& args) override;

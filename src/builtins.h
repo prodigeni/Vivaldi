@@ -21,18 +21,18 @@ extern value::builtin_function type;
 
 namespace type {
 
-extern value::custom_type string;
-extern value::custom_type integer;
-extern value::custom_type floating_point;
-extern value::custom_type boolean;
-extern value::custom_type array;
-extern value::custom_type dictionary;
-extern value::custom_type symbol;
-extern value::custom_type iterator;
-extern value::custom_type range;
-extern value::custom_type nil;
-extern value::custom_type custom_type;
-extern value::custom_type custom_object;
+extern value::builtin_type string;
+extern value::builtin_type integer;
+extern value::builtin_type floating_point;
+extern value::builtin_type boolean;
+extern value::builtin_type array;
+extern value::builtin_type dictionary;
+extern value::builtin_type symbol;
+extern value::builtin_type iterator;
+extern value::builtin_type range;
+extern value::builtin_type nil;
+extern value::builtin_type custom_type;
+extern value::builtin_type custom_object;
 
 }
 

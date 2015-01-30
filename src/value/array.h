@@ -12,8 +12,11 @@ class array : public base {
 public:
   array(const std::vector<base*>& mems);
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
+
+  std::vector<base*>& members() { return m_mems; }
+  const std::vector<base*>& members() const { return m_mems; }
 
   base* copy() const override;
 

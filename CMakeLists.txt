@@ -10,12 +10,13 @@ add_executable(il
   src/main.cpp
   src/repl.cpp
 
-  src/builtins.cpp
   src/environment.cpp
   src/gc.cpp
   src/lang_utils.cpp
   src/symbol.cpp
   src/value.cpp
+
+  src/builtins.cpp
 
   src/tokenizer.cpp
   src/validator.cpp
@@ -37,6 +38,7 @@ add_executable(il
   src/value/array.cpp
   src/value/boolean.cpp
   src/value/builtin_function.cpp
+  src/value/builtin_type.cpp
   src/value/custom_object.cpp
   src/value/custom_type.cpp
   src/value/floating_point.cpp

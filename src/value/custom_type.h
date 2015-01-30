@@ -8,7 +8,7 @@ namespace il {
 
 namespace value {
 
-class custom_type : public base {
+class custom_type : public basic_type {
 public:
   custom_type(const std::vector<il::symbol>& args,
               const std::unordered_map<
@@ -16,10 +16,10 @@ public:
                         std::shared_ptr<ast::function_definition>>& methods,
              environment& outer_env);
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
-  ast::function_definition* method(il::symbol name) const;
+  base* method(il::symbol name, base* self, environment& env) const override;
   const std::vector<il::symbol>& ctr_args() const { return m_ctr_args; }
 
   base* call(const std::vector<base*>& args) override;

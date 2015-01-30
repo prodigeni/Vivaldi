@@ -488,7 +488,7 @@ parse_res<symbol> parse_binop(vector_ref<std::string> tokens)
   if (op == ">")  return {{ {"greater"},        tokens }};
   if (op == "<=") return {{ {"less_equals"},    tokens }};
   if (op == ">=") return {{ {"greater_equals"}, tokens }};
-  if (op == "&&") return {{ {"ands"},           tokens }};
+  if (op == "&&") return {{ {"and"},            tokens }};
   if (op == "||") return {{ {"or"},             tokens }};
   return {};
 }
@@ -665,7 +665,7 @@ parse_res<> parse_literal(vector_ref<std::string> tokens)
 parse_res<> parse_array_literal(vector_ref<std::string> tokens)
 {
   if (auto args = parse_bracketed_subexpr(tokens, parse_expr_list, "[", "]")) {
-    auto fn_name = std::make_unique<ast::variable>(symbol{"make_array"});
+    auto fn_name = std::make_unique<ast::variable>(symbol{"Array"});
     return {{ std::make_unique<ast::function_call>(move(fn_name),
                                                    move(args->first)),
               args->second }};

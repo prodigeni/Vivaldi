@@ -1,14 +1,16 @@
 #include "integer.h"
 
 #include "gc.h"
+#include "builtins.h"
+#include "value/builtin_type.h"
 
 #include <string>
 
 using namespace il;
 
-value::custom_type* value::integer::type() const
+value::basic_type* value::integer::type() const
 {
-  throw std::runtime_error{"not yet implemented"};
+  return &builtin::type::integer;
 }
 
 std::string value::integer::value() const { return std::to_string(m_val); }

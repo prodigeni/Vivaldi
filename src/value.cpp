@@ -1,5 +1,7 @@
 #include "value.h"
 
+#include "environment.h"
+
 using namespace il;
 
 value::base* value::base::call(const std::vector<value::base*>& args)
@@ -11,5 +13,6 @@ value::base* value::base::call(const std::vector<value::base*>& args)
 value::base* value::base::call_method(il::symbol method,
                                       const std::vector<value::base*>& args)
 {
-  throw std::runtime_error{"not yet implemented"};
+  environment env;
+  return type()->method(method, this, env)->call(args);
 }

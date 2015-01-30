@@ -12,7 +12,7 @@ class symbol : public base {
 public:
   symbol(const il::symbol& val) : m_val{val} { }
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* copy() const override;

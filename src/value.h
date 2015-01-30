@@ -7,6 +7,8 @@
 
 namespace il {
 
+class environment;
+
 namespace value {
 
 class string;
@@ -21,13 +23,15 @@ class symbol;
 class iterator;
 class range;
 class nil;
+class basic_type;
 class custom_type;
+class builtin_type;
 class custom_object;
 
 class base {
 public:
 
-  virtual custom_type* type() const = 0;
+  virtual basic_type* type() const = 0;
   virtual std::string value() const = 0;
 
   virtual base* call(const std::vector<value::base*>& args);
@@ -37,10 +41,13 @@ public:
   virtual base* copy() const = 0;
 
   virtual ~base() { }
+};
 
-private:
-  //std::vector<base*> m_public_members;
-  //std::vector<base*> m_private_members;
+class basic_type : public base {
+public:
+  virtual value::base* method(il::symbol name,
+                              value::base* self,
+                              environment& env) const = 0;
 };
 
 }

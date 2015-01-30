@@ -11,7 +11,7 @@ class floating_point : public base {
 public:
   floating_point(double val) : m_val{val} { }
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* copy() const override;

@@ -11,8 +11,10 @@ class integer : public base {
 public:
   integer(int val) : m_val{val} { }
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
+
+  int int_val() const { return m_val; }
 
   base* copy() const override;
 

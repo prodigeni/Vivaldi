@@ -12,7 +12,7 @@ class builtin_function : public base {
 public:
   builtin_function(std::function<base*(const std::vector<base*>& args)> body);
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* call(const std::vector<base*>& args) override;

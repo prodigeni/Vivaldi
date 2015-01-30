@@ -13,7 +13,7 @@ class string : public base {
 public:
   string(const std::string& val) : m_val{val} { }
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   const std::string& str() const { return m_val; }

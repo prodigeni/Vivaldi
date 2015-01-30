@@ -11,7 +11,7 @@ class boolean : public base {
 public:
   boolean(bool val) : m_val{val} { }
 
-  custom_type* type() const override;
+  basic_type* type() const override;
   std::string value() const override;
 
   base* copy() const override;

@@ -4,7 +4,7 @@
 
 using namespace il;
 
-value::custom_type* value::string::type() const
+value::basic_type* value::string::type() const
 {
   throw std::runtime_error{"not yet implemented"};
 }

@@ -19,7 +19,7 @@ value::custom_object::custom_object(custom_type* type,
     m_local_env.assign(mems[i], args[i]);
 }
 
-value::custom_type* value::custom_object::type() const
+value::basic_type* value::custom_object::type() const
 {
   return m_type;
 }
@@ -32,8 +32,7 @@ std::string value::custom_object::value() const
 value::base* value::custom_object::call_method(il::symbol method,
                                                const std::vector<base*>& args)
 {
-  auto method_definition = type()->method(method);
-  auto fn = method_definition->eval(m_local_env);
+  const auto fn = type()->method(method, this, m_local_env);
   return fn->call(args);
 }
 

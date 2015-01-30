@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "value.h"
 #include "value/builtin_function.h"
+#include "value/builtin_type.h"
 
 #include <iostream>
 #include <sstream>
@@ -17,12 +18,13 @@ void error(const std::string& message)
 void il::run_repl()
 {
   il::environment env {{
-    { symbol{"gets"},       &builtin::function::gets },
-    { symbol{"puts"},       &builtin::function::puts },
-    { symbol{"quit"},       &builtin::function::quit },
-    { symbol{"make_array"}, &builtin::function::make_array },
-    { symbol{"size"},       &builtin::function::size },
-    { symbol{"type"},       &builtin::function::type }
+    { symbol{"gets"},    &builtin::function::gets },
+    { symbol{"puts"},    &builtin::function::puts },
+    { symbol{"quit"},    &builtin::function::quit },
+    { symbol{"size"},    &builtin::function::size },
+    { symbol{"type"},    &builtin::function::type },
+    { symbol{"Array"},   &builtin::type::array },
+    { symbol{"Integer"}, &builtin::type::integer }
   }};
   std::string cur_line;
   do {
