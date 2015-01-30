@@ -10,7 +10,7 @@ namespace il {
 
 class environment {
 public:
-  environment();
+  environment(const std::unordered_map<symbol, value::base*>& local = {});
   environment(environment& parent);
 
   bool is_defined(symbol name);

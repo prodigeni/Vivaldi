@@ -2,12 +2,9 @@
 
 std::unordered_set<std::string> il::symbol::s_symbol_table{};
 
-il::symbol::symbol(const std::string& str)
-{
-  if (!s_symbol_table.count(str))
-    s_symbol_table.insert(str);
-  m_ptr = &*s_symbol_table.find(str);
-}
+il::symbol::symbol(const std::string str)
+  : m_ptr {&*s_symbol_table.insert(str).first}
+{ }
 
 bool il::operator==(il::symbol first, il::symbol second)
 {

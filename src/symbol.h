@@ -8,7 +8,7 @@ namespace il {
 
 class symbol {
 public:
-  symbol(const std::string& str);
+  symbol(std::string str);
 
   friend bool operator==(symbol first, symbol second);
   friend bool operator!=(symbol first, symbol second);

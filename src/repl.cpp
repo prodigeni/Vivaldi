@@ -1,8 +1,10 @@
 #include "repl.h"
 
-#include "parser.h"
+#include "builtins.h"
 #include "expression.h"
+#include "parser.h"
 #include "value.h"
+#include "value/builtin_function.h"
 
 #include <iostream>
 #include <sstream>
@@ -14,7 +16,14 @@ void error(const std::string& message)
 
 void il::run_repl()
 {
-  environment env{};
+  il::environment env {{
+    { symbol{"gets"},       &builtin::function::gets },
+    { symbol{"puts"},       &builtin::function::puts },
+    { symbol{"quit"},       &builtin::function::quit },
+    { symbol{"make_array"}, &builtin::function::make_array },
+    { symbol{"size"},       &builtin::function::size },
+    { symbol{"type"},       &builtin::function::type }
+  }};
   std::string cur_line;
   do {
     std::cout << "il> ";
@@ -24,8 +33,10 @@ void il::run_repl()
     if (parser::is_valid(tokens)) {
       auto expr = parser::parse(tokens);
       try {
-        for (const auto& i : expr)
-          std::cout << "=> " << i->eval(env)->value() << '\n';
+        for (const auto& i : expr) {
+          const auto value = i->eval(env)->value();
+          std::cout << "=> " << value << '\n';
+        }
       } catch (const std::runtime_error& err) {
         error(err.what());
       }

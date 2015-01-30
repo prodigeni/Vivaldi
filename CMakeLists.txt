@@ -10,6 +10,7 @@ add_executable(il
   src/main.cpp
   src/repl.cpp
 
+  src/builtins.cpp
   src/environment.cpp
   src/gc.cpp
   src/lang_utils.cpp
@@ -33,7 +34,9 @@ add_executable(il
   src/ast/variable_declaration.cpp
   src/ast/while_loop.cpp
 
+  src/value/array.cpp
   src/value/boolean.cpp
+  src/value/builtin_function.cpp
   src/value/custom_object.cpp
   src/value/custom_type.cpp
   src/value/floating_point.cpp
