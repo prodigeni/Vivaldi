@@ -2,6 +2,7 @@
 
 #include "builtins.h"
 #include "expression.h"
+#include "gc.h"
 #include "parser.h"
 #include "value.h"
 #include "value/builtin_function.h"
@@ -27,8 +28,9 @@ void il::run_repl()
       auto expr = parser::parse(tokens);
       try {
         for (const auto& i : expr) {
-          const auto value = i->eval(builtin::g_base_env)->value();
-          std::cout << "=> " << value << '\n';
+          const auto result = gc::push_argument(i->eval(builtin::g_base_env));
+          std::cout << "=> " << result->value() << '\n';
+          gc::pop_argument();
         }
       } catch (const std::runtime_error& err) {
         error(err.what());

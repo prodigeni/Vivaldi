@@ -29,3 +29,10 @@ value::base* value::array::copy() const
 {
   return gc::alloc<array>( m_mems );
 }
+
+void value::array::mark()
+{
+  base::mark();
+  for (auto* i : m_mems)
+    i->mark();
+}

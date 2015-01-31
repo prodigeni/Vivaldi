@@ -31,8 +31,9 @@ value::base* fn_print(const std::vector<value::base*>& args)
 
 value::base* fn_puts(const std::vector<value::base*>& args)
 {
-  auto ret = fn_print(args);
+  auto ret = gc::push_argument(fn_print(args));
   std::cout << '\n';
+  gc::pop_argument();
   return ret;
 }
 
@@ -131,7 +132,10 @@ value::base* fn_array_at(value::base* self,
   if (args.front()->type() != &type::integer)
     throw std::runtime_error{"index must be an integer"};
   auto val = static_cast<value::integer*>(args.front())->int_val();
-  return static_cast<value::array*>(self)->members().at(val);
+  const auto& arr = static_cast<value::array*>(self)->members();
+  if (arr.size() <= static_cast<unsigned>(val) || val < 0)
+    throw std::runtime_error{"out of range (expected 0-" + std::to_string(arr.size()) + ", got " + std::to_string(val) + ")"};
+  return arr.at(val);
 }
 
 // }}}
@@ -165,7 +169,7 @@ value::base* fn_integer_unequal(value::base* self,
 {
   check_size(1, args.size());
   if (args.front()->type() != &type::integer)
-    return gc::alloc<value::boolean>( false );
+    return gc::alloc<value::boolean>( true );
   return gc::alloc<value::boolean>( to_int(self) != to_int(args.front()) );
 }
 

@@ -40,7 +40,14 @@ public:
 
   virtual base* copy() const = 0;
 
+  virtual void mark();
+  bool marked() const;
+  void unmark();
+
   virtual ~base() { }
+
+private:
+  bool m_marked;
 };
 
 class basic_type : public base {

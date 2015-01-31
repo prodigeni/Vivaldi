@@ -16,7 +16,10 @@ value::base* ast::while_loop::eval(environment& env) const
 {
   value::base* result{nullptr};
   environment inner_env{env};
-  while (truthy(m_test->eval(inner_env)))
-    result = m_body->eval(inner_env);
+  while (truthy(m_test->eval(inner_env))) {
+    if (result)
+      gc::pop_argument();
+    result = gc::push_argument(m_body->eval(inner_env));
+  }
   return result ? result : gc::alloc<value::nil>( );
 }

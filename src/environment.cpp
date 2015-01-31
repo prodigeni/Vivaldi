@@ -6,7 +6,11 @@ il::environment::environment(
     m_parent    {nullptr}
 { }
 
-il::environment::environment(environment& prev) : m_parent{&prev} { }
+il::environment::environment(environment& prev)
+  : m_parent {&prev}
+{
+  m_parent->m_children.push_back(this);
+}
 
 il::value::base*& il::environment::at(symbol name)
 {
@@ -20,4 +24,21 @@ il::value::base*& il::environment::at(symbol name)
 il::value::base* il::environment::assign(symbol name, value::base* val)
 {
   return m_local_env[name] = val;
+}
+
+void il::environment::mark()
+{
+  for (const auto& i : m_local_env)
+    if (!i.second->marked())
+      i.second->mark();
+  for (auto* i : m_children)
+    i->mark();
+}
+
+il::environment::~environment()
+{
+  if (m_parent) {
+    auto& children = m_parent->m_children;
+    children.erase(find(begin(children), end(children), this));
+  }
 }

@@ -47,3 +47,9 @@ value::base* value::custom_type::copy() const
 {
   return gc::alloc<value::custom_type>( m_ctr_args, m_methods, m_env );
 }
+
+void value::custom_type::mark()
+{
+  base::mark();
+  m_env.mark();
+}

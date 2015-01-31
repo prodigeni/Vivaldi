@@ -21,6 +21,8 @@ public:
 
   base* copy() const override;
 
+  void mark() override;
+
 private:
 
   environment m_local_env;

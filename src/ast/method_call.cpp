@@ -1,5 +1,7 @@
 #include "method_call.h"
 
+#include "gc.h"
+
 using namespace il;
 
 ast::method_call::method_call(
@@ -17,6 +19,9 @@ value::base* ast::method_call::eval(environment& env) const
 
   std::vector<value::base*> args;
   std::transform(begin(m_args), end(m_args), back_inserter(args),
-                 [&](const auto& i) { return i->eval(env); });
-  return object->call_method(m_name, args);
+                 [&](const auto& i){ return gc::push_argument(i->eval(env)); });
+  auto result = object->call_method(m_name, args);
+  for (auto i = m_args.size(); i--;)
+    gc::pop_argument();
+  return result;
 }

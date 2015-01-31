@@ -26,6 +26,8 @@ public:
 
   base* copy() const override;
 
+  void mark() override;
+
 private:
   std::vector<il::symbol> m_ctr_args;
   environment& m_env;

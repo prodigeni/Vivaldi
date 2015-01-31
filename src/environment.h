@@ -17,9 +17,14 @@ public:
   value::base*& at(symbol name);
   value::base* assign(symbol name, value::base* val);
 
+  void mark();
+
+  ~environment();
+
 private:
   std::unordered_map<symbol, value::base*> m_local_env;
   environment* m_parent;
+  std::vector<environment*> m_children;
 };
 
 }

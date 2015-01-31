@@ -39,4 +39,8 @@ value::base* value::function::copy() const
   return gc::alloc<function>( m_args, m_body, m_env );
 }
 
-#include <iostream>
+void value::function::mark()
+{
+  base::mark();
+  m_env.mark();
+}

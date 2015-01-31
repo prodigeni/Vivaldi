@@ -20,6 +20,8 @@ public:
 
   base* copy() const override;
 
+  void mark() override;
+
 private:
   std::vector<base*> m_mems;
 };

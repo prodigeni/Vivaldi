@@ -40,3 +40,10 @@ value::base* value::custom_object::copy() const
 {
   throw std::runtime_error{"not yet implemented"};
 }
+
+void value::custom_object::mark()
+{
+  base::mark();
+  m_type->mark();
+  m_local_env.mark();
+}
