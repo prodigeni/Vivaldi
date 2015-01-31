@@ -364,12 +364,13 @@ parse_res<> parse_inner_cond(vector_ref<std::string> tokens)
 
 parse_res<> parse_if_statement(vector_ref<std::string> tokens)
 {
-  auto test_res = parse_expression(tokens.remove_prefix(1));
+  auto test_res = parse_expression(tokens.remove_prefix(1)); // 'if'
   auto test = move(test_res->first);
   tokens = test_res->second.remove_prefix(1); // ':'
+
   auto body_res = parse_expression(tokens);
   auto body = move(body_res->first);
-  tokens = body_res->second.remove_prefix(1);
+  tokens = body_res->second;
 
   auto pair = std::make_pair(move(test), move(body));
 
@@ -381,9 +382,9 @@ parse_res<> parse_if_statement(vector_ref<std::string> tokens)
 
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
 {
-  if (tokens[0] == "if")
+  if (tokens.size() && tokens[0] == "if")
     return parse_if_statement(tokens);
-  if (tokens[0] != "cond")
+  if (!tokens.size() || tokens[0] != "cond")
     return {};
    auto res = parse_inner_cond(tokens.remove_prefix(2)); // 'cond' '{'
    return {{ move(res->first), res->second.remove_prefix(1) }};
@@ -413,7 +414,7 @@ parse_res<> parse_for_loop(vector_ref<std::string> tokens)
 
 parse_res<> parse_while_loop(vector_ref<std::string> tokens)
 {
-  if (tokens.front() != "while")
+  if (!tokens.size() || tokens.front() != "while")
     return {};
   auto test_res = parse_expression(tokens.remove_prefix(1)); // 'while'
   auto test = move(test_res->first);
