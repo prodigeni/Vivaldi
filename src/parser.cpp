@@ -317,6 +317,8 @@ parse_res<> parse_block(vector_ref<std::string> tokens)
   do {
     do tokens = tokens.remove_prefix(1); while (tokens.front() == "\n");
     auto expr_res = parse_expression(tokens);
+    if (!expr_res)
+      break;
     subexprs.push_back(move(expr_res->first));
     tokens = expr_res->second;
   } while (tokens.front() == "\n" || tokens.front() == ";");
