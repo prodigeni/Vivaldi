@@ -15,7 +15,7 @@ ast::method_call::method_call(
 
 value::base* ast::method_call::eval(environment& env) const
 {
-  auto object = m_object->eval(env);
+  auto object = gc::push_argument(m_object->eval(env));
 
   std::vector<value::base*> args;
   std::transform(begin(m_args), end(m_args), back_inserter(args),
@@ -23,5 +23,6 @@ value::base* ast::method_call::eval(environment& env) const
   auto result = object->call_method(m_name, args);
   for (auto i = m_args.size(); i--;)
     gc::pop_argument();
+  gc::pop_argument();
   return result;
 }
