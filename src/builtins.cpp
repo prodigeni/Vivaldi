@@ -114,7 +114,13 @@ value::base* fn_array_append(value::base* self,
                              const std::vector<value::base*>& args)
 {
   check_size(1, args.size());
-  static_cast<value::array*>(self)->members().push_back(args.front());
+  if (args.front()->type() == &type::array) {
+    auto& arr = static_cast<value::array*>(self)->members();
+    const auto& new_mems = static_cast<value::array*>(args.front())->members();
+    copy(begin(new_mems), end(new_mems), back_inserter(arr));
+  } else {
+    static_cast<value::array*>(self)->members().push_back(args.front());
+  }
   return self;
 }
 
@@ -296,33 +302,33 @@ value::builtin_type type::array {fn_array_ctr, {
 }};
 
 value::builtin_type type::integer{fn_integer_ctr, {
-  { {std::string{"equals"}},         fn_integer_equals },
-  { {std::string{"unequal"}},        fn_integer_unequal },
-  { {std::string{"add"}},            fn_integer_op(std::plus<int>{}) },
-  { {std::string{"subtract"}},       fn_integer_op(std::minus<int>{}) },
-  { {std::string{"times"}},          fn_integer_op(std::multiplies<int>{}) },
-  { {std::string{"divides"}},        fn_integer_op(std::divides<int>{}) },
-  { {std::string{"modulo"}},         fn_integer_op(std::modulus<int>{}) },
-  { {std::string{"bitand"}},         fn_integer_op(std::bit_and<int>{}) },
-  { {std::string{"bitor"}},          fn_integer_op(std::bit_or<int>{}) },
-  { {std::string{"xor"}},            fn_integer_op(std::bit_xor<int>{}) },
-  { {std::string{"less"}},           fn_int_bool_op(std::less<int>{}) },
-  { {std::string{"greater"}},        fn_int_bool_op(std::greater<int>{}) },
-  { {std::string{"less_equals"}},    fn_int_bool_op(std::less_equal<int>{}) },
-  { {std::string{"greater_equals"}}, fn_int_bool_op(std::greater_equal<int>{}) }
+  { {"equals"},         fn_integer_equals },
+  { {"unequal"},        fn_integer_unequal },
+  { {"add"},            fn_integer_op(std::plus<int>{}) },
+  { {"subtract"},       fn_integer_op(std::minus<int>{}) },
+  { {"times"},          fn_integer_op(std::multiplies<int>{}) },
+  { {"divides"},        fn_integer_op(std::divides<int>{}) },
+  { {"modulo"},         fn_integer_op(std::modulus<int>{}) },
+  { {"bitand"},         fn_integer_op(std::bit_and<int>{}) },
+  { {"bitor"},          fn_integer_op(std::bit_or<int>{}) },
+  { {"xor"},            fn_integer_op(std::bit_xor<int>{}) },
+  { {"less"},           fn_int_bool_op(std::less<int>{}) },
+  { {"greater"},        fn_int_bool_op(std::greater<int>{}) },
+  { {"less_equals"},    fn_int_bool_op(std::less_equal<int>{}) },
+  { {"greater_equals"}, fn_int_bool_op(std::greater_equal<int>{}) }
 }};
 
 value::builtin_type type::floating_point{fn_floating_point_ctr, {
-  { {std::string{"equals"}},         fn_floating_point_equals },
-  { {std::string{"unequal"}},        fn_floating_point_unequal },
-  { {std::string{"add"}},            fn_floating_point_op(std::plus<double>{}) },
-  { {std::string{"subtract"}},       fn_floating_point_op(std::minus<double>{}) },
-  { {std::string{"times"}},          fn_floating_point_op(std::multiplies<double>{}) },
-  { {std::string{"divides"}},        fn_floating_point_op(std::divides<double>{}) },
-  { {std::string{"less"}},           fn_float_bool_op(std::less<double>{}) },
-  { {std::string{"greater"}},        fn_float_bool_op(std::greater<double>{}) },
-  { {std::string{"less_equals"}},    fn_float_bool_op(std::less_equal<double>{}) },
-  { {std::string{"greater_equals"}}, fn_float_bool_op(std::greater_equal<double>{}) }
+  { {"equals"},         fn_floating_point_equals },
+  { {"unequal"},        fn_floating_point_unequal },
+  { {"add"},            fn_floating_point_op(std::plus<double>{}) },
+  { {"subtract"},       fn_floating_point_op(std::minus<double>{}) },
+  { {"times"},          fn_floating_point_op(std::multiplies<double>{}) },
+  { {"divides"},        fn_floating_point_op(std::divides<double>{}) },
+  { {"less"},           fn_float_bool_op(std::less<double>{}) },
+  { {"greater"},        fn_float_bool_op(std::greater<double>{}) },
+  { {"less_equals"},    fn_float_bool_op(std::less_equal<double>{}) },
+  { {"greater_equals"}, fn_float_bool_op(std::greater_equal<double>{}) }
 }};
 
 value::builtin_type type::string {fn_string_ctr, {
@@ -332,6 +338,24 @@ value::builtin_type type::string {fn_string_ctr, {
   { {"unequal"}, fn_string_unequal }
 }};
 
-value::builtin_type type::boolean {nullptr, { }};
-value::builtin_type type::nil     {nullptr, { }};
-value::builtin_type type::symbol  {nullptr, { }};
+value::builtin_type type::boolean     {nullptr, { }};
+value::builtin_type type::nil         {nullptr, { }};
+value::builtin_type type::symbol      {nullptr, { }};
+value::builtin_type type::custom_type {nullptr, { }};
+
+environment builtin::g_base_env {{
+  { {"print"},   &builtin::function::print },
+  { {"puts"},    &builtin::function::puts },
+  { {"gets"},    &builtin::function::gets },
+  { {"quit"},    &builtin::function::quit },
+  { {"size"},    &builtin::function::size },
+  { {"type"},    &builtin::function::type },
+  { {"Array"},   &builtin::type::array },
+  { {"Float"},   &builtin::type::floating_point },
+  { {"Integer"}, &builtin::type::integer },
+  { {"String"},  &builtin::type::string },
+  { {"Bool"},    &builtin::type::boolean },
+  { {"Nil"},     &builtin::type::nil },
+  { {"Symbol"},  &builtin::type::symbol },
+  { {"Type"},    &builtin::type::custom_type }
+}};
