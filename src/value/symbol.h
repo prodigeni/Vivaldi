@@ -15,6 +15,8 @@ public:
   basic_type* type() const override;
   std::string value() const override;
 
+  il::symbol sym() const { return m_val; }
+
   base* copy() const override;
 
 private:

@@ -11,6 +11,7 @@
 #include "value/integer.h"
 #include "value/nil.h"
 #include "value/string.h"
+#include "value/symbol.h"
 
 #include <iostream>
 
@@ -94,6 +95,13 @@ const std::string& to_string(value::base* boxed)
   if (boxed->type() != &type::string)
     throw std::runtime_error{"argument must be a string"};
   return static_cast<value::string*>(boxed)->str();
+}
+
+il::symbol to_symbol(value::base* boxed)
+{
+  if (boxed->type() != &type::symbol)
+    throw std::runtime_error{"argument must be a symbol"};
+  return static_cast<value::symbol*>(boxed)->sym();
 }
 
 // array {{{
@@ -296,6 +304,39 @@ value::base* fn_string_append(value::base* self,
 }
 
 // }}}
+// symbol {{{
+
+value::base* fn_symbol_ctr(const std::vector<value::base*>& args)
+{
+  throw std::runtime_error{"not yet implemented"};
+}
+
+value::base* fn_symbol_equals(value::base* self,
+                               const std::vector<value::base*>& args)
+{
+  check_size(1, args.size());
+  if (args.front()->type() != &type::symbol)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(to_symbol(self) == to_symbol(args.front()));
+}
+
+value::base* fn_symbol_unequal(value::base* self,
+                               const std::vector<value::base*>& args)
+{
+  check_size(1, args.size());
+  if (args.front()->type() != &type::symbol)
+    return gc::alloc<value::boolean>( true );
+  return gc::alloc<value::boolean>(to_symbol(self) != to_symbol(args.front()));
+}
+
+value::base* fn_symbol_to_str(value::base* self,
+                              const std::vector<value::base*>& args)
+{
+  check_size(0, args.size());
+  return gc::alloc<value::string>( to_string(to_symbol(self)) );
+}
+
+// }}}
 
 }
 
@@ -342,9 +383,13 @@ value::builtin_type type::string {fn_string_ctr, {
   { {"unequal"}, fn_string_unequal }
 }};
 
+value::builtin_type type::symbol {fn_symbol_ctr, {
+  { {"equals"},  fn_symbol_equals },
+  { {"unequal"}, fn_symbol_unequal },
+  { {"to_str"},  fn_symbol_to_str }
+}};
 value::builtin_type type::boolean     {nullptr, { }};
 value::builtin_type type::nil         {nullptr, { }};
-value::builtin_type type::symbol      {nullptr, { }};
 value::builtin_type type::custom_type {nullptr, { }};
 
 environment builtin::g_base_env {{
