@@ -10,8 +10,9 @@ namespace builtin {
 
 namespace function {
 
-extern value::builtin_function gets;
+extern value::builtin_function print;
 extern value::builtin_function puts;
+extern value::builtin_function gets;
 extern value::builtin_function quit;
 extern value::builtin_function make_array;
 extern value::builtin_function size;
@@ -35,6 +36,8 @@ extern value::builtin_type custom_type;
 extern value::builtin_type custom_object;
 
 }
+
+extern environment g_base_env;
 
 }
 

@@ -19,6 +19,23 @@ using namespace builtin;
 
 namespace {
 
+value::base* fn_print(const std::vector<value::base*>& args)
+{
+  check_size(1, args.size());
+  if (args.front()->type() == &type::string)
+    std::cout << static_cast<value::string*>(args.front())->str();
+  else
+    std::cout << args.front()->value();
+  return gc::alloc<value::nil>( );
+}
+
+value::base* fn_puts(const std::vector<value::base*>& args)
+{
+  auto ret = fn_print(args);
+  std::cout << '\n';
+  return ret;
+}
+
 value::base* fn_gets(const std::vector<value::base*>& args)
 {
   check_size(0, args.size());
@@ -26,16 +43,6 @@ value::base* fn_gets(const std::vector<value::base*>& args)
   getline(std::cin, str);
 
   return gc::alloc<value::string>( str );
-}
-
-value::base* fn_puts(const std::vector<value::base*>& args)
-{
-  check_size(1, args.size());
-  //if (args.front()->type() == &type::string)
-    //std::cout << static_cast<value::string*>(args.front())->str() << '\n';
-  //else
-    std::cout << args.front()->value() << '\n';
-  return gc::alloc<value::nil>( );
 }
 
 [[noreturn]] value::base* fn_quit(const std::vector<value::base*>& args)
@@ -58,8 +65,9 @@ value::base* fn_type(const std::vector<value::base*>& args)
 
 }
 
-value::builtin_function function::gets{fn_gets};
+value::builtin_function function::print{fn_print};
 value::builtin_function function::puts{fn_puts};
+value::builtin_function function::gets{fn_gets};
 value::builtin_function function::quit{fn_quit};
 value::builtin_function function::size{fn_size};
 value::builtin_function function::type{fn_type};

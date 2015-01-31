@@ -17,17 +17,6 @@ void error(const std::string& message)
 
 void il::run_repl()
 {
-  il::environment env {{
-    { symbol{"gets"},    &builtin::function::gets },
-    { symbol{"puts"},    &builtin::function::puts },
-    { symbol{"quit"},    &builtin::function::quit },
-    { symbol{"size"},    &builtin::function::size },
-    { symbol{"type"},    &builtin::function::type },
-    { symbol{"Array"},   &builtin::type::array },
-    { symbol{"Float"},   &builtin::type::floating_point },
-    { symbol{"Integer"}, &builtin::type::integer },
-    { symbol{"String"},  &builtin::type::string }
-  }};
   std::string cur_line;
   do {
     std::cout << "il> ";
@@ -38,7 +27,7 @@ void il::run_repl()
       auto expr = parser::parse(tokens);
       try {
         for (const auto& i : expr) {
-          const auto value = i->eval(env)->value();
+          const auto value = i->eval(builtin::g_base_env)->value();
           std::cout << "=> " << value << '\n';
         }
       } catch (const std::runtime_error& err) {
