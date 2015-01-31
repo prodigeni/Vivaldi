@@ -16,7 +16,10 @@ value::custom_type::custom_type(
   : m_ctr_args {args},
     m_env      {outer_env},
     m_methods  {methods}
-{ }
+{
+  if (m_methods.count({"init"}))
+    m_ctr = m_methods[{"init"}];
+}
 
 value::basic_type* value::custom_type::type() const
 {
