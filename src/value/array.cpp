@@ -16,10 +16,12 @@ value::basic_type* value::array::type() const
 std::string value::array::value() const
 {
   std::string str{'['};
-  for_each(begin(m_mems), end(m_mems) - 1,
-           [&](const auto& v) { str += v->value() += ", "; });
-  if (m_mems.size())
-    str += m_mems.back()->value() += ']';
+  if (m_mems.size()) {
+    for_each(begin(m_mems), end(m_mems) - 1,
+             [&](const auto& v) { str += v->value() += ", "; });
+    str += m_mems.back()->value();
+  }
+  str += ']';
   return str;
 }
 
