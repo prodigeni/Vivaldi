@@ -108,6 +108,16 @@ tok_res eq_tokens(boost::string_ref line)
 }
 
 // }}}
+// '!' {{{
+
+tok_res bang_tokens(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '=')
+    return {"!", ltrim(remove_prefix(line, 1))};
+  return {"!=", ltrim(remove_prefix(line, 2))};
+}
+
+// }}}
 // '&' {{{
 
 tok_res and_tokens(boost::string_ref line)
@@ -229,6 +239,7 @@ tok_res first_token(boost::string_ref line)
   case '0': return zero_token(line);
   case '.': return dot_tokens(line);
   case '=': return eq_tokens(line);
+  case '!': return bang_tokens(line);
   case '&': return and_tokens(line);
   case '|': return or_tokens(line);
   case '<': return lt_tokens(line);
