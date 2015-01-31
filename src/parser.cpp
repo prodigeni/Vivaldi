@@ -339,7 +339,7 @@ parse_cond_pair(vector_ref<std::string> tokens)
 
   auto test_expr_res = parse_expression(tokens);
   auto test_expr = move(test_expr_res->first);
-  tokens = test_expr_res->second;
+  tokens = test_expr_res->second.remove_prefix(1);
 
   auto then_expr_res = parse_expression(tokens);
   auto then_expr = move(then_expr_res->first);
@@ -355,11 +355,10 @@ parse_res<> parse_inner_cond(vector_ref<std::string> tokens)
   std::vector<std::pair<std::unique_ptr<ast::expression>,
                         std::unique_ptr<ast::expression>>> pairs{};
 
-  while (auto cur_pair = parse_cond_pair(tokens)) {
-    pairs.push_back(move(cur_pair->first));
-    tokens = cur_pair->second;
-  };
-  return {{ std::make_unique<ast::cond_statement>( move(pairs) ), tokens }};
+  auto list = parse_comma_separated_list(tokens, parse_cond_pair);
+  std::transform(begin(list->first), end(list->first), back_inserter(pairs),
+                 [](auto&& i) { return move(i); });
+  return {{ std::make_unique<ast::cond_statement>(move(pairs)), list->second }};
 }
 
 parse_res<> parse_if_statement(vector_ref<std::string> tokens)
@@ -386,7 +385,8 @@ parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
     return parse_if_statement(tokens);
   if (!tokens.size() || tokens[0] != "cond")
     return {};
-   auto res = parse_inner_cond(tokens.remove_prefix(2)); // 'cond' '{'
+   auto res = parse_bracketed_subexpr(tokens.remove_prefix(1), parse_inner_cond,
+                                      "{", "}");
    return {{ move(res->first), res->second.remove_prefix(1) }};
 }
 
