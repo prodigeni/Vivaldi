@@ -10,14 +10,12 @@ namespace value {
 
 class array : public base {
 public:
-  array(const std::vector<base*>& mems);
-
-  basic_type* type() const override;
-  std::string value() const override;
+  array(const std::vector<base*>& mems, environment& env);
 
   std::vector<base*>& members() { return m_mems; }
   const std::vector<base*>& members() const { return m_mems; }
 
+  std::string value() const override;
   base* copy() const override;
 
   void mark() override;

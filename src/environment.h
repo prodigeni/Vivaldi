@@ -2,11 +2,17 @@
 #define IL_ENVIRONMENT_H
 
 #include "symbol.h"
-#include "value.h"
 
+#include <vector>
 #include <unordered_map>
 
 namespace il {
+
+namespace value {
+
+class base;
+
+}
 
 class environment {
 public:
@@ -16,6 +22,8 @@ public:
   bool is_defined(symbol name);
   value::base*& at(symbol name);
   value::base* assign(symbol name, value::base* val);
+
+  environment* parent() const { return m_parent; }
 
   void mark();
 

@@ -9,13 +9,11 @@ namespace value {
 
 class floating_point : public base {
 public:
-  floating_point(double val) : m_val{val} { }
-
-  basic_type* type() const override;
-  std::string value() const override;
+  floating_point(double val, environment& env);
 
   double float_val() const { return m_val; }
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

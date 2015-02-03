@@ -2,12 +2,16 @@
 #define IL_VALUE_H
 
 #include "symbol.h"
+#include "environment.h"
 
+#include <unordered_map>
 #include <vector>
 
 namespace il {
 
-class environment;
+namespace ast {
+class function_definition;
+}
 
 namespace value {
 
@@ -30,13 +34,15 @@ class custom_object;
 
 class base {
 public:
+  base(basic_type* type, environment& env);
 
-  virtual basic_type* type() const = 0;
+  basic_type* type() const { return m_type; }
   virtual std::string value() const = 0;
+  environment& env() { return m_env; }
+  const environment& env() const { return m_env; }
 
   virtual base* call(const std::vector<value::base*>& args);
-  virtual base* call_method(il::symbol method,
-                            const std::vector<value::base*>& args);
+  value::base*& member(il::symbol name);
 
   virtual base* copy() const = 0;
 
@@ -47,14 +53,18 @@ public:
   virtual ~base() { }
 
 private:
+  std::unordered_map<il::symbol, value::base*> m_members;
   bool m_marked;
+  basic_type* m_type;
+  environment m_env;
 };
 
 class basic_type : public base {
 public:
-  virtual value::base* method(il::symbol name,
-                              value::base* self,
-                              environment& env) const = 0;
+  basic_type(environment& env);
+
+  virtual void each_key(const std::function<void(il::symbol)>& fn) const = 0;
+  virtual base* method(il::symbol name, environment& env) const = 0;
 };
 
 }

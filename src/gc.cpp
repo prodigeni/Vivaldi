@@ -35,11 +35,11 @@ void sweep()
 
 value::base* gc::internal::emplace(value::base* val)
 {
-  if (g_vals.capacity() / 8 > (g_vals.capacity() - g_vals.size())) {
+  if (g_vals.capacity() == g_vals.size()) {
     mark();
     sweep();
   }
-  if (g_vals.capacity() / 8 > (g_vals.capacity() - g_vals.size())) {
+  if (g_vals.capacity() == g_vals.size()) {
     g_vals.reserve(g_vals.capacity() * 2);
   }
 

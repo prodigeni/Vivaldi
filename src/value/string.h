@@ -11,14 +11,12 @@ namespace value {
 
 class string : public base {
 public:
-  string(const std::string& val) : m_val{val} { }
-
-  basic_type* type() const override;
-  std::string value() const override;
+  string(const std::string& val, environment& env);
 
   std::string& str() { return m_val; }
   const std::string& str() const { return m_val; }
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

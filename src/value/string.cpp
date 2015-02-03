@@ -6,10 +6,10 @@
 
 using namespace il;
 
-value::basic_type* value::string::type() const
-{
-  return &builtin::type::string;
-}
+value::string::string(const std::string& val, environment& env)
+  : base  {&builtin::type::string, env},
+    m_val {val}
+{ }
 
 std::string value::string::value() const
 {
@@ -18,5 +18,5 @@ std::string value::string::value() const
 
 value::base* value::string::copy() const
 {
-  return gc::alloc<string>( m_val );
+  return gc::alloc<string>( m_val, *env().parent() );
 }

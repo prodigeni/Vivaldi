@@ -26,7 +26,7 @@ val_res val_while_loop(          vector_ref<std::string> tokens);
 val_res val_function_call(       vector_ref<std::string> tokens);
 val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
-val_res val_method_call(         vector_ref<std::string> tokens);
+val_res val_member(              vector_ref<std::string> tokens);
 val_res val_expr_list(           vector_ref<std::string> tokens);
 val_res val_function_definition( vector_ref<std::string> tokens);
 val_res val_literal(             vector_ref<std::string> tokens);
@@ -107,7 +107,7 @@ val_res val_expression(vector_ref<std::string> tokens)
     res = nres;
     tokens = *res;
     if (!( (nres = val_function_call(tokens))
-        || (nres = val_method_call(tokens))
+        || (nres = val_member(tokens))
         || (nres = val_binop_call(tokens))))
       return res;
   }
@@ -278,15 +278,13 @@ val_res val_binop_call(vector_ref<std::string> tokens)
 }
 
 // }}}
-// method_call {{{
+// member {{{
 
-val_res val_method_call(vector_ref<std::string> tokens)
+val_res val_member(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != ".")
     return {};
-  if (auto name_res = val_name(tokens.remove_prefix(1)))
-    return val_function_call(*name_res);
-  return {};
+ return val_name(tokens.remove_prefix(1));
 }
 
 // }}}

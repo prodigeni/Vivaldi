@@ -9,9 +9,9 @@ namespace value {
 
 class nil : public base {
 public:
-  basic_type* type() const override;
-  std::string value() const override;
+  nil(environment& env);
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

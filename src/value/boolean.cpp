@@ -9,10 +9,10 @@
 
 using namespace il;
 
-value::basic_type* value::boolean::type() const
-{
-  return &builtin::type::boolean;
-}
+value::boolean::boolean(bool val, environment& env)
+  : base  {&builtin::type::boolean, env},
+    m_val {val}
+{ }
 
 std::string value::boolean::value() const
 {
@@ -21,5 +21,5 @@ std::string value::boolean::value() const
 
 value::base* value::boolean::copy() const
 {
-  return gc::alloc<boolean>( m_val );
+  return gc::alloc<boolean>( m_val, *env().parent() );
 }

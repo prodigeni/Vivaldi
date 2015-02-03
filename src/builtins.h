@@ -32,6 +32,7 @@ extern value::builtin_type symbol;
 extern value::builtin_type iterator;
 extern value::builtin_type range;
 extern value::builtin_type nil;
+extern value::builtin_type function;
 extern value::builtin_type custom_type;
 extern value::builtin_type custom_object;
 

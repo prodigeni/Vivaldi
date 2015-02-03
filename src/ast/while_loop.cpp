@@ -21,5 +21,5 @@ value::base* ast::while_loop::eval(environment& env) const
       gc::pop_argument();
     result = gc::push_argument(m_body->eval(inner_env));
   }
-  return result ? result : gc::alloc<value::nil>( );
+  return result ? result : gc::alloc<value::nil>( env );
 }

@@ -9,13 +9,11 @@ namespace value {
 
 class boolean : public base {
 public:
-  boolean(bool val) : m_val{val} { }
-
-  basic_type* type() const override;
-  std::string value() const override;
+  boolean(bool val, environment& env);
 
   bool bool_val() const { return m_val; }
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

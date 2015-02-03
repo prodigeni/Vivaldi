@@ -10,13 +10,11 @@ namespace value {
 
 class symbol : public base {
 public:
-  symbol(const il::symbol& val) : m_val{val} { }
-
-  basic_type* type() const override;
-  std::string value() const override;
+  symbol(il::symbol val, environment& env);
 
   il::symbol sym() const { return m_val; }
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

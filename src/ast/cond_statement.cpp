@@ -19,5 +19,5 @@ value::base* ast::cond_statement::eval(environment& env) const
     if (truthy(i.first->eval(pair_env)))
       return i.second->eval(pair_env);
   }
-  return gc::alloc<value::nil>();
+  return gc::alloc<value::nil>( env );
 }

@@ -14,7 +14,6 @@ public:
            std::shared_ptr<ast::expression> body,
            environment& outer_env);
 
-  basic_type* type() const override;
   std::string value() const override;
 
   base* call(const std::vector<base*>& args) override;
@@ -26,7 +25,6 @@ public:
 private:
   std::vector<il::symbol> m_args;
   std::shared_ptr<ast::expression> m_body;
-  environment& m_env;
 };
 
 }

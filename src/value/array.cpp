@@ -6,12 +6,10 @@
 
 using namespace il;
 
-value::array::array(const std::vector<base*>& mems) : m_mems {mems} { }
-
-value::basic_type* value::array::type() const
-{
-  return &builtin::type::array;
-}
+value::array::array(const std::vector<base*>& mems, environment& env)
+  : base  {&builtin::type::array, env},
+    m_mems {mems}
+{ }
 
 std::string value::array::value() const
 {
@@ -27,7 +25,7 @@ std::string value::array::value() const
 
 value::base* value::array::copy() const
 {
-  return gc::alloc<array>( m_mems );
+  return gc::alloc<array>( m_mems, *env().parent() );
 }
 
 void value::array::mark()

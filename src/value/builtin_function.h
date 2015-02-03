@@ -10,17 +10,16 @@ namespace value {
 
 class builtin_function : public base {
 public:
-  builtin_function(std::function<base*(const std::vector<base*>& args)> body);
+  builtin_function(
+      const std::function<base*(const std::vector<base*>&, environment&)>& body,
+      environment& env);
 
-  basic_type* type() const override;
   std::string value() const override;
-
   base* call(const std::vector<base*>& args) override;
-
   base* copy() const override;
 
 private:
-  std::function<base*(const std::vector<base*>& args)> m_body;
+  std::function<base*(const std::vector<base*>&, environment&)> m_body;
 };
 
 }

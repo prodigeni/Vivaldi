@@ -8,14 +8,14 @@
 
 using namespace il;
 
-value::basic_type* value::integer::type() const
-{
-  return &builtin::type::integer;
-}
+value::integer::integer(int val, environment& env)
+  : base  {&builtin::type::integer, env},
+    m_val {val}
+{ }
 
 std::string value::integer::value() const { return std::to_string(m_val); }
 
 value::base* value::integer::copy() const
 {
-  return gc::alloc<integer>( m_val );
+  return gc::alloc<integer>( m_val, *env().parent() );
 }

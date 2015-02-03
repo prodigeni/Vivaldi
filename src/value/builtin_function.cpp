@@ -1,18 +1,17 @@
 #include "builtin_function.h"
 
+#include "builtins.h"
 #include "gc.h"
+#include "value/builtin_type.h"
 
 using namespace il;
 
 value::builtin_function::builtin_function(
-    std::function<base*(const std::vector<base*>& args)> body)
-  : m_body {body}
+    const std::function<base*(const std::vector<base*>&, environment&)>& body,
+    environment& env)
+  : base   {nullptr, env},
+    m_body {body}
 { }
-
-value::basic_type* value::builtin_function::type() const
-{
-  throw std::runtime_error{"not yet implemented"};
-}
 
 std::string value::builtin_function::value() const
 {
@@ -21,10 +20,10 @@ std::string value::builtin_function::value() const
 
 value::base* value::builtin_function::call(const std::vector<base*>& args)
 {
-  return m_body(args);
+  return m_body(args, *env().parent());
 }
 
 value::base* value::builtin_function::copy() const
 {
-  return gc::alloc<builtin_function>( m_body );
+  return gc::alloc<builtin_function>( m_body, *env().parent() );
 }

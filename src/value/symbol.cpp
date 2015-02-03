@@ -6,10 +6,10 @@
 
 using namespace il;
 
-value::basic_type* value::symbol::type() const
-{
-  return &builtin::type::symbol;
-}
+value::symbol::symbol(il::symbol val, environment& env)
+  : base  {&builtin::type::symbol, env},
+    m_val {val}
+{ }
 
 std::string value::symbol::value() const
 {
@@ -18,5 +18,5 @@ std::string value::symbol::value() const
 
 value::base* value::symbol::copy() const
 {
-  return gc::alloc<symbol>( m_val );
+  return gc::alloc<symbol>( m_val, *env().parent() );
 }

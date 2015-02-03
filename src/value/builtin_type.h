@@ -14,23 +14,21 @@ public:
       const std::function<base*(const std::vector<base*>&)>& ctr,
       const std::unordered_map<
               il::symbol,
-              std::function<base*(base*, const std::vector<base*>&)>>& methods);
+              std::function<base*(base*, const std::vector<base*>&)>>& methods,
+      environment& env);
 
-  basic_type* type() const override;
+  void each_key(const std::function<void(il::symbol)>& fn) const override;
+  base* method(il::symbol name, environment& env) const override;
+
   std::string value() const override;
-
-  base* method(il::symbol name, base* self, environment& env) const override;
-
   base* call(const std::vector<base*>& args) override;
-
   base* copy() const override;
 
 private:
   std::function<base*(const std::vector<base*>&)> m_ctr;
   std::unordered_map<
-      il::symbol,
-      std::function<base*(base*, const std::vector<base*>&)>> m_methods;
-
+    il::symbol,
+    std::function<base*(base*, const std::vector<base*>&)>> m_methods;
 };
 
 }

@@ -5,54 +5,49 @@
 #include "value/custom_object.h"
 
 using namespace il;
+using namespace value;
 
-value::custom_type::custom_type(
+custom_type::custom_type(
     const std::vector<il::symbol>& args,
     const std::unordered_map<
               il::symbol,
               std::shared_ptr<ast::function_definition>>& methods,
     environment& outer_env)
 
-  : m_ctr_args {args},
-    m_env      {outer_env},
+  : basic_type {outer_env},
+    m_ctr_args {args},
     m_methods  {methods}
 {
-  if (m_methods.count({"init"}))
-    m_ctr = m_methods[{"init"}];
+  m_ctr = m_methods[{"init"}];
 }
 
-value::basic_type* value::custom_type::type() const
+void custom_type::each_key(const std::function<void(il::symbol)>& fn) const
 {
-  throw std::runtime_error{"not yet implemented"};
+  for (const auto& i : m_methods)
+    fn(i.first);
 }
 
-std::string value::custom_type::value() const
+base* custom_type::method(il::symbol name, environment& env) const
+{
+  return m_methods.at(name)->eval(env);
+}
+
+std::string custom_type::value() const
 {
   return "<type>";
 }
 
-value::base* value::custom_type::method(il::symbol name,
-                                        base* self,
-                                        environment& env) const
+base* value::custom_type::call(const std::vector<base*>& args)
 {
-  auto definition = m_methods.at(name).get();
-  environment local_env{env};
-  local_env.assign({"self"}, self);
-  return definition->eval(local_env);
+  return gc::alloc<custom_object>(this, args, env());
 }
 
-value::base* value::custom_type::call(const std::vector<base*>& args)
+base* value::custom_type::copy() const
 {
-  return gc::alloc<custom_object>(this, args, m_env);
+  return gc::alloc<custom_type>(m_ctr_args, m_methods, *env().parent());
 }
 
-value::base* value::custom_type::copy() const
-{
-  return gc::alloc<value::custom_type>( m_ctr_args, m_methods, m_env );
-}
-
-void value::custom_type::mark()
+void custom_type::mark()
 {
   base::mark();
-  m_env.mark();
 }

@@ -4,41 +4,56 @@
 #include "value/builtin_function.h"
 
 using namespace il;
+using namespace value;
 
-value::builtin_type::builtin_type(
+namespace {
+
+auto method_for(const std::function<base*(base*,
+                                          const std::vector<base*>&)>& fn)
+{
+  return [&](const std::vector<base*>& args, environment& env)
+  {
+    auto self = env.at({"self"});
+    return fn(self, args);
+  };
+}
+
+}
+
+builtin_type::builtin_type(
     const std::function<base*(const std::vector<base*>&)>& ctr,
     const std::unordered_map<
             il::symbol,
-            std::function<base*(value::base*, const std::vector<base*>&)>>& fns)
-  : m_ctr      {ctr},
+            std::function<base*(base*, const std::vector<base*>&)>>& fns,
+    environment& env)
+  : basic_type {env},
+    m_ctr      {ctr},
     m_methods  {fns}
 { }
 
-value::basic_type* value::builtin_type::type() const
+void builtin_type::each_key(
+    const std::function<void(il::symbol)>& fn) const
 {
-  throw std::runtime_error{"not yet implemented"};
+  for (const auto& i : m_methods)
+    fn(i.first);
 }
 
-std::string value::builtin_type::value() const
+base* builtin_type::method(il::symbol name, environment& env) const
+{
+  return gc::alloc<builtin_function>( method_for(m_methods.at(name)), env );
+}
+
+std::string builtin_type::value() const
 {
   return "<builtin type>";
 }
 
-value::base* value::builtin_type::method(il::symbol name,
-                                         base* self,
-                                         environment&) const
-{
-  using namespace std::placeholders;
-  auto function = std::bind(m_methods.at(name), self, _1);
-  return gc::alloc<builtin_function>( function );
-}
-
-value::base* value::builtin_type::call(const std::vector<base*>& args)
+base* builtin_type::call(const std::vector<base*>& args)
 {
   return m_ctr(args);
 }
 
-value::base* value::builtin_type::copy() const
+base* builtin_type::copy() const
 {
-  return gc::alloc<value::builtin_type>( m_ctr, m_methods );
+  return gc::alloc<builtin_type>( m_ctr, m_methods, *env().parent() );
 }

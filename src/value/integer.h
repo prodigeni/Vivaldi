@@ -9,13 +9,11 @@ namespace value {
 
 class integer : public base {
 public:
-  integer(int val) : m_val{val} { }
-
-  basic_type* type() const override;
-  std::string value() const override;
+  integer(int val, environment& env);
 
   int int_val() const { return m_val; }
 
+  std::string value() const override;
   base* copy() const override;
 
 private:

@@ -1,5 +1,7 @@
 #include "environment.h"
 
+#include "value.h"
+
 il::environment::environment(
     const std::unordered_map<symbol, value::base*>& local)
   : m_local_env {local},
@@ -39,6 +41,8 @@ il::environment::~environment()
 {
   if (m_parent) {
     auto& children = m_parent->m_children;
-    children.erase(find(begin(children), end(children), this));
+    auto parent_ptr = find(begin(children), end(children), this);
+    if (parent_ptr != end(children))
+      children.erase(parent_ptr);
   }
 }

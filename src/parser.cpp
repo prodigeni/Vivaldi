@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include "builtins.h"
 #include "utils.h"
 #include "ast/assignment.h"
 #include "ast/block.h"
@@ -8,7 +9,7 @@
 #include "ast/function_call.h"
 #include "ast/function_definition.h"
 #include "ast/literal.h"
-#include "ast/method_call.h"
+#include "ast/member.h"
 #include "ast/type_definition.h"
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
@@ -22,8 +23,6 @@
 
 #include <boost/utility/string_ref.hpp>
 #include <boost/optional/optional.hpp>
-
-#include <stack>
 
 using namespace il;
 
@@ -39,6 +38,7 @@ using namespace il;
  *            ::= name
  *            ::= variable_declaration
  *            ::= while_loop
+ *            ::= member
  *            ::= '(' expression ')'
  *
  * assignment ::= name '=' expression
@@ -95,7 +95,7 @@ using namespace il;
  *       ::= '-'
  *       ::= '#'
  *
- * method_call  ::= expression '.' name '(' expr_list ')'
+ * member  ::= expression '.' name
  *
  * function_definition ::= 'fn' name '(' arg_list ')' ':' expression
  *                     ::= 'fn' '(' arg_list ')' ':' expression
@@ -176,8 +176,7 @@ parse_res<> parse_monop_call(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
 parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
   parse_binop_call(vector_ref<std::string> tokens);
-parse_res<std::pair<symbol, arg_t>>
-  parse_method_call(vector_ref<std::string> tokens);
+parse_res<symbol> parse_member(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
@@ -268,19 +267,17 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
                                                         move(fres->first));
       tokens = fres->second;
 
-    } else if (auto mres = parse_method_call(tokens)) {
-      res->first = std::make_unique<ast::method_call>(move(res->first),
-                                                      mres->first.first,
-                                                      move(mres->first.second));
+    } else if (auto mres = parse_member(tokens)) {
+      res->first = std::make_unique<ast::member>(move(res->first), mres->first);
 
       tokens = mres->second;
 
     } else if (auto bres = parse_binop_call(tokens)) {
       arg_t args{};
       args.push_back(move(bres->first.second));
-      res->first = std::make_unique<ast::method_call>(move(res->first),
-                                                      bres->first.first,
-                                                      move(args));
+      auto mem = std::make_unique<ast::member>(move(res->first),
+                                               bres->first.first);
+      res->first = std::make_unique<ast::function_call>(move(mem), move(args));
 
       tokens = bres->second;
 
@@ -315,7 +312,9 @@ parse_res<> parse_block(vector_ref<std::string> tokens)
 
   std::vector<std::unique_ptr<ast::expression>> subexprs;
   do {
-    do tokens = tokens.remove_prefix(1); while (tokens.front() == "\n");
+    do {
+      tokens = tokens.remove_prefix(1);
+    } while (tokens.front() == "\n" || tokens.front() == ";");
     auto expr_res = parse_expression(tokens);
     if (!expr_res)
       break;
@@ -387,7 +386,7 @@ parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
     return {};
    auto res = parse_bracketed_subexpr(tokens.remove_prefix(1), parse_inner_cond,
                                       "{", "}");
-   return {{ move(res->first), res->second.remove_prefix(1) }};
+   return {{ move(res->first), res->second }};
 }
 
 // }}}
@@ -510,19 +509,14 @@ parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
 }
 
 // }}}
-// method_call {{{
+// member {{{
 
-parse_res<std::pair<symbol, arg_t>>
-  parse_method_call(vector_ref<std::string> tokens)
+parse_res<symbol> parse_member(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != ".")
     return {};
   tokens = tokens.remove_prefix(1);
-  symbol name{tokens.front()};
-  tokens = tokens.remove_prefix(1);
-  auto rest = parse_function_call(tokens);
-  auto pair = std::make_pair(name, move(rest->first));
-  return {{ move(pair), rest->second }};
+  return {{ tokens.front(), tokens.remove_prefix(1) }};
 }
 
 // }}}
@@ -582,7 +576,9 @@ parse_res<> parse_number(vector_ref<std::string> tokens)
   if (num.find('.') != num.npos) {
 
     auto value = stod(num);
-    std::unique_ptr<value::base> flt{new value::floating_point{value}};
+    std::unique_ptr<value::base> flt{new value::floating_point{
+                                             value,
+                                             builtin::g_base_env}};
     std::unique_ptr<ast::expression> literal{new ast::literal{move(flt)}};
     return {{ move(literal), tokens.remove_prefix(1) }};
   }
@@ -595,7 +591,8 @@ parse_res<> parse_number(vector_ref<std::string> tokens)
     value = std::stoi(num);
   }
 
-  std::unique_ptr<value::base> integer{new value::integer{value}};
+  std::unique_ptr<value::base> integer{new value::integer{value,
+                                                          builtin::g_base_env}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(integer)}};
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
@@ -606,7 +603,8 @@ parse_res<> parse_string(vector_ref<std::string> tokens)
     return {};
   std::string str{begin(tokens.front()) + 1, end(tokens.front()) - 1};
 
-  std::unique_ptr<value::base> string{new value::string{str}};
+  std::unique_ptr<value::base> string{new value::string{str,
+                                                        builtin::g_base_env}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(string)}};
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
@@ -620,7 +618,8 @@ parse_res<> parse_bool(vector_ref<std::string> tokens)
     value = false;
   else
     return {};
-  std::unique_ptr<value::base> boolean{new value::boolean{value}};
+  std::unique_ptr<value::base> boolean{new value::boolean{value,
+                                                          builtin::g_base_env}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(boolean)}};
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
@@ -630,7 +629,7 @@ parse_res<> parse_nil(vector_ref<std::string> tokens)
   if (tokens.front() != "nil")
     return {};
 
-  std::unique_ptr<value::base> nil{new value::nil{}};
+  std::unique_ptr<value::base> nil{new value::nil{builtin::g_base_env}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(nil)}};
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
@@ -641,7 +640,8 @@ parse_res<> parse_symbol(vector_ref<std::string> tokens)
     return {};
   auto sym = symbol{tokens[1]};
 
-  std::unique_ptr<value::base> vsym{new value::symbol{sym}};
+  std::unique_ptr<value::base> vsym{new value::symbol{sym,
+                                                      builtin::g_base_env}};
   std::unique_ptr<ast::expression> literal{new ast::literal{move(vsym)}};
   return {{ move(literal), tokens.remove_prefix(2) }};
 }
