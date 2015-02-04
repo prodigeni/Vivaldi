@@ -26,6 +26,8 @@
 
 using namespace il;
 
+// Grammar {{{
+
 /**
  * expression ::= assignment
  *            ::= block
@@ -146,6 +148,7 @@ using namespace il;
 //                  | '[' expression ']'
 //                  ) }
 
+// }}}
 // Parsing {{{
 
 namespace {
@@ -237,7 +240,7 @@ auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
 
 parse_res<> parse_expression(vector_ref<std::string> tokens)
 {
-  if (tokens.front() == "(") {
+  if (tokens.size() && tokens.front() == "(") {
     auto res = parse_expression(tokens.remove_prefix(1));
     return {{ move(res->first), res->second.remove_prefix(1) }};
   }
@@ -573,7 +576,7 @@ parse_res<> parse_number(vector_ref<std::string> tokens)
   if (!isdigit(num.front()))
     return {};
 
-  if (num.find('.') != num.npos) {
+  if (find(begin(num), end(num), '.') != end(num)) {
 
     auto value = stod(num);
     std::unique_ptr<value::base> flt{new value::floating_point{
