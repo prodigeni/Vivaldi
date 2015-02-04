@@ -1,8 +1,5 @@
 #include "literal.h"
 
-#include "gc.h"
-#include "value/integer.h"
-
 using namespace il;
 
 ast::literal::literal(std::unique_ptr<value::base>&& value)
@@ -11,5 +8,5 @@ ast::literal::literal(std::unique_ptr<value::base>&& value)
 
 value::base* ast::literal::eval(environment&) const
 {
-  return m_value.get();
+  return m_value->copy();
 }
