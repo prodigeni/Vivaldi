@@ -18,6 +18,12 @@
 using namespace il;
 using namespace builtin;
 
+// Symbols {{{
+
+il::symbol sym::self{"self"};
+il::symbol sym::call{"call"};
+
+// }}}
 // Freestanding functions {{{
 
 namespace {

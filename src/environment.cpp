@@ -14,6 +14,22 @@ il::environment::environment(environment& prev)
   m_parent->m_children.push_back(this);
 }
 
+il::environment il::environment::close_on(environment& parent)
+{
+  environment env{parent};
+  env.m_parent->m_children.pop_back();
+  return env;
+}
+
+bool il::environment::is_defined(symbol name)
+{
+  if (m_local_env.count(name))
+    return true;
+  if (!m_parent)
+    return false;
+  return m_parent->is_defined(name);
+}
+
 il::value::base*& il::environment::at(symbol name)
 {
   if (m_local_env.count(name))

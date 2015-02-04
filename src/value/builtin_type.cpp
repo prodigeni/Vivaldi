@@ -1,5 +1,6 @@
 #include "builtin_type.h"
 
+#include "builtins.h"
 #include "gc.h"
 #include "value/builtin_function.h"
 
@@ -13,7 +14,7 @@ auto method_for(const std::function<base*(base*,
 {
   return [&](const std::vector<base*>& args, environment& env)
   {
-    auto self = env.at({"self"});
+    auto self = env.at(builtin::sym::self);
     return fn(self, args);
   };
 }

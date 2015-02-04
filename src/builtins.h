@@ -8,6 +8,13 @@ namespace il {
 
 namespace builtin {
 
+namespace sym {
+
+extern il::symbol self;
+extern il::symbol call;
+
+}
+
 namespace function {
 
 extern value::builtin_function print;

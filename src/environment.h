@@ -18,6 +18,9 @@ class environment {
 public:
   environment(const std::unordered_map<symbol, value::base*>& local = {});
   environment(environment& parent);
+  environment(environment&& other) = default;
+
+  static environment close_on(environment& parent);
 
   bool is_defined(symbol name);
   value::base*& at(symbol name);

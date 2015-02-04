@@ -37,14 +37,16 @@ public:
   base(basic_type* type, environment& env);
 
   basic_type* type() const { return m_type; }
-  virtual std::string value() const = 0;
   environment& env() { return m_env; }
   const environment& env() const { return m_env; }
 
+  virtual std::string value() const = 0;
   virtual base* call(const std::vector<value::base*>& args);
   value::base*& member(il::symbol name);
 
   virtual base* copy() const = 0;
+
+  void set_owner(base* owner) { m_owner = owner; }
 
   virtual void mark();
   bool marked() const;
@@ -57,6 +59,8 @@ private:
   bool m_marked;
   basic_type* m_type;
   environment m_env;
+
+  base* m_owner;
 };
 
 class basic_type : public base {
