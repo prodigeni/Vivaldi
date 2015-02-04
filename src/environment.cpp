@@ -16,8 +16,8 @@ il::environment::environment(environment& prev)
 
 il::environment il::environment::close_on(environment& parent)
 {
-  environment env{parent};
-  env.m_parent->m_children.pop_back();
+  environment env{{}};
+  env.m_parent = &parent;
   return env;
 }
 
