@@ -12,14 +12,16 @@ using namespace il;
 value::base::base(basic_type* type, environment& env)
   : m_marked {false},
     m_type   {type},
-    m_env    {std::move(environment::close_on(env))}
+    m_env    {std::move(environment::close_on(env))},
+    m_owner  {nullptr}
 {
   m_env.assign(builtin::sym::self, this);
   if (m_type) {
     m_type->each_key([&](auto sym)
     {
-      m_members[sym] = gc::push_argument(m_type->method(sym, m_env));
-      m_members[sym]->set_owner(this);
+      auto tmp = gc::push_argument(m_type->method(sym, m_env));
+      m_members[sym] = tmp;
+      tmp->set_owner(this);
     });
     m_type->each_key([&](auto) { gc::pop_argument(); });
   }
