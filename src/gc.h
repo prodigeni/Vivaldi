@@ -27,6 +27,7 @@ value::base* push_argument(value::base* arg);
 void pop_argument();
 
 void init();
+void empty();
 
 }
 

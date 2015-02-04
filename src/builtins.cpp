@@ -59,6 +59,7 @@ value::base* fn_gets(const std::vector<value::base*>& args, environment& env)
 value::base* fn_quit(const std::vector<value::base*>& args, environment&)
 {
   check_size(0, args.size());
+  gc::empty();
   exit(0);
 }
 

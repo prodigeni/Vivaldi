@@ -62,3 +62,10 @@ void gc::init()
 {
   g_vals.reserve(512);
 }
+
+void gc::empty()
+{
+  for (auto i : g_vals)
+    delete i;
+  g_vals.clear();
+}

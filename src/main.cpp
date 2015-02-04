@@ -1,6 +1,7 @@
+#include "builtins.h"
+#include "gc.h"
 #include "parser.h"
 #include "repl.h"
-#include "builtins.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,5 +22,5 @@ int main(int argc, char** argv)
   auto exprs = il::parser::parse(tokens);
   for (const auto& i : exprs)
     i->eval(il::builtin::g_base_env);
-  return 0;
+  il::gc::empty();
 }
