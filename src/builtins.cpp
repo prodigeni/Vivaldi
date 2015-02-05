@@ -119,6 +119,13 @@ il::symbol to_symbol(const value::base* boxed)
   return static_cast<const value::symbol*>(boxed)->sym();
 }
 
+bool to_bool(const value::base* boxed)
+{
+  if (boxed->type() != &type::boolean)
+    throw std::runtime_error{"argument must be a symbol"};
+  return static_cast<const value::boolean*>(boxed)->bool_val();
+}
+
 // }}}
 
 // array {{{
@@ -364,6 +371,31 @@ value::base* fn_symbol_to_str(value::base* self,
 }
 
 // }}}
+// boolean {{{
+
+value::base* fn_bool_ctr(const std::vector<value::base*>& args)
+{
+  check_size(1, args.size());
+  auto type = args.front()->type();
+
+  if (type == &type::boolean)
+    return args.front();
+
+  return gc::alloc<value::boolean>( truthy(args.front()), g_base_env );
+}
+
+template <typename F>
+auto fn_bool_op(const F& op)
+{
+  return [=](value::base* self, const std::vector<value::base*>& args)
+  {
+    check_size(1, args.size());
+    return gc::alloc<value::boolean>( op(to_bool(self), to_bool(args.front())),
+                                      *self->env().parent() );
+  };
+}
+
+// }}}
 // custom_type {{{
 
 value::base* fn_custom_type_ctr(const std::vector<value::base*>& args)
@@ -432,10 +464,14 @@ value::builtin_type type::symbol {fn_symbol_ctr, {
   { {"to_str"},  fn_symbol_to_str }
 }, g_base_env};
 
+value::builtin_type type::boolean {fn_bool_ctr, {
+  { {"equals"},  fn_bool_op(std::equal_to<bool>{}) },
+  { {"unequal"}, fn_bool_op(std::not_equal_to<bool>{}) },
+}, g_base_env};
+
 value::builtin_type type::custom_type {fn_custom_type_ctr, {
 }, g_base_env};
 
-value::builtin_type type::boolean     {nullptr, { }, g_base_env};
 value::builtin_type type::nil         {nullptr, { }, g_base_env};
 value::builtin_type type::function    {nullptr, { }, g_base_env};
 
