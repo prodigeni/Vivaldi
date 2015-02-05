@@ -14,7 +14,7 @@ value::custom_object::custom_object(custom_type* type,
 {
   const auto& mems = type->ctr_args();
   for (size_t i = mems.size(); i--;)
-    env().assign(mems[i], gc::alloc<nil>( env() ));
+    env().create(mems[i], gc::alloc<nil>( env() ));
 
   const auto fn = gc::push_argument(type->ctr()->eval(env()));
   fn->call(args);
