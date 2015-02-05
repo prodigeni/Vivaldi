@@ -46,6 +46,7 @@ value::base* gc::internal::emplace(value::base* val)
     g_vals.reserve(g_vals.capacity() * 2);
   }
 
+  val->unmark();
   g_vals.push_back(val);
   return val;
 }
