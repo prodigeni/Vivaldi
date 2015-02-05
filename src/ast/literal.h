@@ -13,8 +13,10 @@ public:
 
   value::base* eval(environment& env) const override;
 
+  ~literal();
+
 private:
-  std::unique_ptr<value::base> m_value;
+  value::base* m_value;
 };
 
 }

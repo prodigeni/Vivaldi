@@ -29,6 +29,9 @@ void pop_argument();
 void init();
 void empty();
 
+value::base* push_ast(value::base* ast);
+void pop_ast(value::base* ast);
+
 }
 
 }

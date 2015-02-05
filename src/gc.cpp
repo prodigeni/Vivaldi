@@ -9,10 +9,13 @@ namespace {
 std::vector<value::base*> g_args;
 
 std::vector<value::base*> g_vals;
+std::unordered_set<value::base*> g_ast;
 
 void mark()
 {
   for (auto* i : g_args)
+    i->mark();
+  for (auto* i : g_ast)
     i->mark();
   builtin::g_base_env.mark();
 }
@@ -56,6 +59,17 @@ value::base* gc::push_argument(value::base* arg)
 void gc::pop_argument()
 {
   g_args.pop_back();
+}
+
+value::base* gc::push_ast(value::base* ast)
+{
+  g_ast.insert(ast);
+  return ast;
+}
+
+void gc::pop_ast(value::base* ast)
+{
+  g_ast.erase(ast);
 }
 
 void gc::init()
