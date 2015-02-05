@@ -21,6 +21,6 @@ ast::type_definition::type_definition(
 
 value::base* ast::type_definition::eval(environment& env) const
 {
-  return env.assign(m_name,
+  return env.create(m_name,
                     gc::alloc<value::custom_type>( m_members, m_methods, env ));
 }

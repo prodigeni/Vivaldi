@@ -30,7 +30,7 @@ bool il::environment::is_defined(symbol name)
   return m_parent->is_defined(name);
 }
 
-il::value::base*& il::environment::at(symbol name)
+il::value::base* il::environment::at(symbol name)
 {
   if (m_local_env.count(name))
     return m_local_env[name];
@@ -40,6 +40,17 @@ il::value::base*& il::environment::at(symbol name)
 }
 
 il::value::base* il::environment::assign(symbol name, value::base* val)
+{
+  if (m_local_env.count(name)) {
+    m_local_env.erase(name);
+    return m_local_env[name] = val;
+  }
+  if (m_parent)
+    return m_parent->at(name);
+  throw std::runtime_error{"symbol '" + to_string(name) + " undefined"};
+}
+
+il::value::base* il::environment::create(symbol name, value::base* val)
 {
   return m_local_env[name] = val;
 }

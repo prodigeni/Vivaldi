@@ -26,7 +26,7 @@ value::base* value::function::call(const std::vector<base*>& args)
 
   environment call_env{*env().parent()};
   for (auto sz = args.size(); sz--;)
-    call_env.assign(m_args[sz], args[sz]);
+    call_env.create(m_args[sz], args[sz]);
 
   return m_body->eval(call_env);
 }

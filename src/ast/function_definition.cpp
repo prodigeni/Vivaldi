@@ -19,5 +19,5 @@ value::base* ast::function_definition::eval(environment& env) const
   if (m_name == nonname)
     return gc::alloc<value::function>(m_args, m_body, env);
   else
-    return env.assign(m_name, gc::alloc<value::function>(m_args, m_body, env));
+    return env.create(m_name, gc::alloc<value::function>(m_args, m_body, env));
 }

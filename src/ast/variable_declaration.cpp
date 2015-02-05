@@ -11,5 +11,5 @@ ast::variable_declaration::variable_declaration(
 
 value::base* ast::variable_declaration::eval(environment& env) const
 {
-  return env.assign(m_name, m_value->eval(env));
+  return env.create(m_name, m_value->eval(env));
 }

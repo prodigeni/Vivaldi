@@ -15,7 +15,7 @@ value::base::base(basic_type* type, environment& env)
     m_env    {std::move(environment::close_on(env))},
     m_owner  {nullptr}
 {
-  m_env.assign(builtin::sym::self, this);
+  m_env.create(builtin::sym::self, this);
   if (m_type) {
     m_type->each_key([&](auto sym)
     {

@@ -23,8 +23,9 @@ public:
   static environment close_on(environment& parent);
 
   bool is_defined(symbol name);
-  value::base*& at(symbol name);
+  value::base* at(symbol name);
   value::base* assign(symbol name, value::base* val);
+  value::base* create(symbol name, value::base* val);
 
   environment* parent() const { return m_parent; }
 
