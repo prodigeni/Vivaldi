@@ -46,7 +46,7 @@ il::value::base* il::environment::assign(symbol name, value::base* val)
     return m_local_env[name] = val;
   }
   if (m_parent)
-    return m_parent->at(name);
+    return m_parent->assign(name, val);
   throw std::runtime_error{"symbol '" + to_string(name) + " undefined"};
 }
 
