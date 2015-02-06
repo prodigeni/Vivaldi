@@ -32,8 +32,10 @@ value::base* value::base::call(const std::vector<value::base*>& args)
   return member(builtin::sym::call)->call(args);
 }
 
-value::base*& value::base::member(il::symbol name)
+value::base* value::base::member(il::symbol name) const
 {
+  if (!m_members.count(name))
+    throw std::runtime_error{"no such member: '" + to_string(name)};
   return m_members.at(name);
 }
 
@@ -43,7 +45,7 @@ void value::base::mark()
   m_env.mark();
   if (m_type && !m_type->marked())
     m_type->mark();
-  for (auto& i : m_members) {
+  for (const auto& i : m_members) {
     if (!i.second->marked())
       i.second->mark();
   }

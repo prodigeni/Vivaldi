@@ -42,7 +42,7 @@ public:
 
   virtual std::string value() const = 0;
   virtual base* call(const std::vector<value::base*>& args);
-  value::base*& member(il::symbol name);
+  value::base* member(il::symbol name) const;
 
   virtual base* copy() const = 0;
 
