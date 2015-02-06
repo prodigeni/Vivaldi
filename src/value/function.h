@@ -20,8 +20,6 @@ public:
 
   base* copy() const override;
 
-  void mark() override;
-
 private:
   std::vector<il::symbol> m_args;
   std::shared_ptr<ast::expression> m_body;

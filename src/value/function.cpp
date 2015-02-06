@@ -35,9 +35,3 @@ value::base* value::function::copy() const
 {
   return gc::alloc<function>( m_args, m_body, *env().parent() );
 }
-
-void value::function::mark()
-{
-  base::mark();
-  env().mark();
-}
