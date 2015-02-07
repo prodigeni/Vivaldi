@@ -26,7 +26,6 @@ enum class instruction {
   write,
   let,
 
-  push_self,
   self,
   push_arg,
   pop_arg,

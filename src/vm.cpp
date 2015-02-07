@@ -52,7 +52,6 @@ void vm::machine::run()
     case instruction::write: write(get<symbol>(arg)); break;
     case instruction::let:   let(get<symbol>(arg));   break;
 
-    case instruction::push_self: push_self();               break;
     case instruction::self:      self();                    break;
     case instruction::push_arg:  push_arg();                break;
     case instruction::pop_arg:   pop_arg(get<symbol>(arg)); break;
@@ -137,11 +136,6 @@ void vm::machine::let(symbol sym)
   m_stack->local.back()[sym] = m_retval;
 }
 
-void vm::machine::push_self()
-{
-  m_stack->pushed_self = *m_retval;
-}
-
 void vm::machine::self()
 {
   m_retval = &*m_stack->self;
@@ -160,6 +154,7 @@ void vm::machine::pop_arg(symbol sym)
 
 void vm::machine::mem(symbol sym)
 {
+  m_stack->pushed_self = *m_retval;
   m_retval = m_retval->members[sym];
 }
 

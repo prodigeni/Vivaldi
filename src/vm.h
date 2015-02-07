@@ -26,7 +26,6 @@ private:
   void write(symbol sym);
   void let(symbol sym);
 
-  void push_self();
   void self();
   void push_arg();
   void pop_arg(symbol sym);
