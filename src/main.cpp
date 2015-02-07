@@ -2,6 +2,8 @@
 #include "gc.h"
 #include "parser.h"
 #include "repl.h"
+#include "vm/call_stack.h"
+#include "vm/instruction.h"
 
 #include <iostream>
 #include <fstream>
@@ -20,7 +22,16 @@ int main(int argc, char** argv)
   std::ifstream file{argv[1]};
   auto tokens = il::parser::tokenize(file);
   auto exprs = il::parser::parse(tokens);
-  for (const auto& i : exprs)
-    i->eval(il::builtin::g_base_env);
+  std::vector<il::vm::command> body;
+  for (const auto& i : exprs) {
+    auto code = i->generate();
+    copy(begin(code), end(code), back_inserter(body));
+  }
+  auto base_stack = std::make_shared<il::vm::call_stack>(
+      std::shared_ptr<il::vm::call_stack>{},
+      std::shared_ptr<il::vm::call_stack>{},
+      std::vector<il::value::base*>{},
+      il::vector_ref<il::vm::command>{body} );
+
   il::gc::empty();
 }

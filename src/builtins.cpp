@@ -28,61 +28,54 @@ il::symbol sym::call{"call"};
 
 namespace {
 
-value::base* fn_print(const std::vector<value::base*>& args, environment& env)
+value::base* fn_print(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() == &type::string)
-    std::cout << static_cast<value::string*>(args.front())->str();
+  check_size(1, base.args.size());
+  if (base.args.front()->type == &type::string)
+    std::cout << static_cast<value::string*>(base.args.front())->val;
   else
-    std::cout << args.front()->value();
-  return gc::alloc<value::nil>( env );
+    std::cout << base.args.front()->value();
+  return gc::alloc<value::nil>( );
 }
 
-value::base* fn_puts(const std::vector<value::base*>& args, environment& env)
+value::base* fn_puts(vm::call_stack& base)
 {
-  auto ret = gc::push_argument(fn_print(args, env));
+  auto ret = gc::push_argument(fn_print(base));
   std::cout << '\n';
   gc::pop_argument();
   return ret;
 }
 
-value::base* fn_gets(const std::vector<value::base*>& args, environment& env)
+value::base* fn_gets(vm::call_stack& base)
 {
-  check_size(0, args.size());
+  check_size(0, base.args.size());
   std::string str;
   getline(std::cin, str);
 
-  return gc::alloc<value::string>( str, env );
+  return gc::alloc<value::string>( str );
 }
 
 [[noreturn]]
-value::base* fn_quit(const std::vector<value::base*>& args, environment&)
+value::base* fn_quit(vm::call_stack& base)
 {
-  check_size(0, args.size());
+  check_size(0, base.args.size());
   gc::empty();
   exit(0);
 }
 
-value::base* fn_size(const std::vector<value::base*>& args, environment&)
+value::base* fn_type(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  return args.front()->member({"size"})->call({});
-}
-
-value::base* fn_type(const std::vector<value::base*>& args, environment&)
-{
-  check_size(1, args.size());
-  return args.front()->type();
+  check_size(1, base.args.size());
+  return base.args.front()->type;
 }
 
 }
 
-value::builtin_function function::print{fn_print, g_base_env};
-value::builtin_function function::puts{ fn_puts,  g_base_env};
-value::builtin_function function::gets{ fn_gets,  g_base_env};
-value::builtin_function function::quit{ fn_quit,  g_base_env};
-value::builtin_function function::size{ fn_size,  g_base_env};
-value::builtin_function function::type{ fn_type,  g_base_env};
+value::builtin_function function::print{fn_print};
+value::builtin_function function::puts{ fn_puts};
+value::builtin_function function::gets{ fn_gets};
+value::builtin_function function::quit{ fn_quit};
+value::builtin_function function::type{ fn_type};
 
 // }}}
 // Methods and constructors {{{
@@ -91,80 +84,77 @@ namespace {
 
 // Converters {{{
 
-int to_int(const value::base* boxed)
+int to_int(const value::base& boxed)
 {
-  if (boxed->type() != &type::integer)
+  if (boxed.type != &type::integer)
     throw std::runtime_error{"argument must be an integer"};
-  return static_cast<const value::integer*>(boxed)->int_val();
+  return static_cast<const value::integer&>(boxed).val;
 }
 
-double to_float(const value::base* boxed)
+double to_float(const value::base& boxed)
 {
-  if (boxed->type() != &type::floating_point)
+  if (boxed.type != &type::floating_point)
     throw std::runtime_error{"argument must be a float"};
-  return static_cast<const value::floating_point*>(boxed)->float_val();
+  return static_cast<const value::floating_point&>(boxed).val;
 }
 
-const std::string& to_string(const value::base* boxed)
+const std::string& to_string(const value::base& boxed)
 {
-  if (boxed->type() != &type::string)
+  if (boxed.type != &type::string)
     throw std::runtime_error{"argument must be a string"};
-  return static_cast<const value::string*>(boxed)->str();
+  return static_cast<const value::string&>(boxed).val;
 }
 
-il::symbol to_symbol(const value::base* boxed)
+il::symbol to_symbol(const value::base& boxed)
 {
-  if (boxed->type() != &type::symbol)
+  if (boxed.type != &type::symbol)
     throw std::runtime_error{"argument must be a symbol"};
-  return static_cast<const value::symbol*>(boxed)->sym();
+  return static_cast<const value::symbol&>(boxed).val;
 }
 
-bool to_bool(const value::base* boxed)
+bool to_bool(const value::base& boxed)
 {
-  if (boxed->type() != &type::boolean)
+  if (boxed.type != &type::boolean)
     throw std::runtime_error{"argument must be a symbol"};
-  return static_cast<const value::boolean*>(boxed)->bool_val();
+  return static_cast<const value::boolean&>(boxed).val;
 }
 
 // }}}
 
 // array {{{
 
-value::base* fn_array_ctr(const std::vector<value::base*>& args)
+value::base* fn_array_ctr(vm::call_stack& base)
 {
-  return gc::alloc<value::array>( args, g_base_env );
+  return gc::alloc<value::array>( base.args );
 }
 
-value::base* fn_array_size(value::base* self,
-                           const std::vector<value::base*>& args)
+value::base* fn_array_size(vm::call_stack& base)
 {
-  check_size(0, args.size());
-  auto sz = static_cast<value::array*>(self)->members().size();
-  return gc::alloc<value::integer>(static_cast<int>(sz), *self->env().parent());
+  check_size(0, base.args.size());
+  auto sz = static_cast<value::array&>(*base.self).mems.size();
+  return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_array_append(value::base* self,
-                             const std::vector<value::base*>& args)
+value::base* fn_array_append(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() == &type::array) {
-    auto& arr = static_cast<value::array*>(self)->members();
-    const auto& new_mems = static_cast<value::array*>(args.front())->members();
+  check_size(1, base.args.size());
+  if (base.args.front()->type == &type::array) {
+    auto& arr = static_cast<value::array&>(*base.self).mems;
+    const auto& new_mems = static_cast<value::array*>(base.args.front())->mems;
     copy(begin(new_mems), end(new_mems), back_inserter(arr));
   } else {
-    static_cast<value::array*>(self)->members().push_back(args.front());
+    static_cast<value::array&>(*base.self).mems.push_back(base.args.front());
   }
-  return self;
+  return &*base.self;
 }
 
-value::base* fn_array_at(value::base* self,
-                         const std::vector<value::base*>& args)
+value::base* fn_array_at(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::integer)
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::integer)
     throw std::runtime_error{"index must be an integer"};
-  auto val = static_cast<value::integer*>(args.front())->int_val();
-  const auto& arr = static_cast<value::array*>(self)->members();
+  auto val = static_cast<value::integer*>(base.args.front())->val;
+  const auto& arr = static_cast<value::array&>(*base.self).mems;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     throw std::runtime_error{"out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
@@ -175,234 +165,230 @@ value::base* fn_array_at(value::base* self,
 // }}}
 // integer {{{
 
-value::base* fn_integer_ctr(const std::vector<value::base*>& args)
+value::base* fn_integer_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  auto type = args.front()->type();
+  check_size(1, base.args.size());
+  auto type = base.args.front()->type;
 
   if (type == &type::integer)
-    return args.front();
+    return base.args.front();
 
   if (type == &type::floating_point)
-    return gc::alloc<value::integer>( static_cast<int>(to_float(args.front())),
-                                      g_base_env );
+    return gc::alloc<value::integer>(
+        static_cast<int>(to_float(*base.args.front())) );
 
   throw std::runtime_error{"cannot create Integer from "
-                          + args.front()->value()};
+                          + base.args.front()->value()};
 }
 
 template <typename F>
 auto fn_integer_op(const F& op)
 {
-  return [=](value::base* self, const std::vector<value::base*>& args)
+  return [=](vm::call_stack& base)
   {
-    check_size(1, args.size());
-    return gc::alloc<value::integer>( op(to_int(self), to_int(args.front())),
-                                      *self->env().parent() );
+    check_size(1, base.args.size());
+    return gc::alloc<value::integer>(
+        op(to_int(*base.self), to_int(*base.args.front())));
   };
 }
 
 template <typename F>
 auto fn_int_bool_op(const F& op)
 {
-  return [=](value::base* self, const std::vector<value::base*>& args)
+  return [=](vm::call_stack& base)
   {
-    check_size(1, args.size());
-    return gc::alloc<value::boolean>( op(to_int(self), to_int(args.front())),
-                                      *self->env().parent() );
+    check_size(1, base.args.size());
+    return gc::alloc<value::boolean>(
+        op(to_int(*base.self), to_int(*base.args.front())) );
   };
 }
 
 // }}}
 // floating_point {{{
 
-value::base* fn_floating_point_ctr(const std::vector<value::base*>& args)
+value::base* fn_floating_point_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  auto type = args.front()->type();
+  check_size(1, base.args.size());
+  auto type = base.args.front()->type;
 
   if (type == &type::floating_point)
-    return args.front();
+    return base.args.front();
 
   if (type == &type::integer) {
-    auto int_val = to_int(args.front());
-    return gc::alloc<value::floating_point>( static_cast<double>(int_val),
-                                              g_base_env );
+    auto int_val = to_int(*base.args.front());
+    return gc::alloc<value::floating_point>( static_cast<double>(int_val) );
   }
 
-  throw std::runtime_error{"cannot create Float from " + args.front()->value()};
+  throw std::runtime_error{"cannot create Float from " + base.args.front()->value()};
 }
 
-value::base* fn_floating_point_equals(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_floating_point_equals(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::floating_point)
-    return gc::alloc<value::boolean>( false, *self->env().parent() );
-  return gc::alloc<value::boolean>( to_float(self) == to_float(args.front()),
-                                    *self->env().parent() );
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::floating_point)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(
+      to_float(*base.self) == to_float(*base.args.front()) );
 }
 
-value::base* fn_floating_point_unequal(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_floating_point_unequal(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::floating_point)
-    return gc::alloc<value::boolean>( false, *self->env().parent() );
-  return gc::alloc<value::boolean>( to_float(self) != to_float(args.front()),
-                                    *self->env().parent() );
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::floating_point)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(
+      to_float(*base.self) != to_float(*base.args.front()) );
 }
 
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](value::base* self, const std::vector<value::base*>& args)
+  return [=](vm::call_stack& base)
   {
-    check_size(1, args.size());
-    return gc::alloc<value::floating_point>( op(to_float(self),
-                                                to_float(args.front())),
-                                             *self->env().parent() );
+    check_size(1, base.args.size());
+    return gc::alloc<value::floating_point>( op(to_float(*base.self),
+                                                to_float(*base.args.front())) );
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](value::base* self, const std::vector<value::base*>& args)
+  return [=](vm::call_stack& base)
   {
-    check_size(1, args.size());
-    return gc::alloc<value::boolean>( op(to_float(self),
-                                         to_float(args.front())),
-                                      *self->env().parent() );
+    check_size(1, base.args.size());
+    return gc::alloc<value::boolean>( op(to_float(*base.self),
+                                         to_float(*base.args.front())) );
   };
 }
 
 // }}}
 // string {{{
 
-value::base* fn_string_ctr(const std::vector<value::base*>& args)
+value::base* fn_string_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() == &type::string)
-    return args.front()->copy();
-  if (args.front()->type() == &type::symbol)
-    return gc::alloc<value::string>( to_string(to_symbol(args.front())),
-                                     g_base_env );
-  return gc::alloc<value::string>( args.front()->value(), g_base_env );
+  check_size(1, base.args.size());
+  if (base.args.front()->type == &type::string)
+    return gc::alloc<value::string>( to_string(*base.args.front()) );
+  if (base.args.front()->type == &type::symbol)
+    return gc::alloc<value::string>( to_string(to_symbol(*base.args.front())) );
+  return gc::alloc<value::string>( base.args.front()->value() );
 }
 
-value::base* fn_string_size(value::base* self,
-                            const std::vector<value::base*>& args)
+value::base* fn_string_size(
+                            vm::call_stack& base)
 {
-  check_size(0, args.size());
-  auto sz = static_cast<value::string*>(self)->str().size();
-  return gc::alloc<value::integer>( static_cast<int>(sz), *self->env().parent() );
+  check_size(0, base.args.size());
+  auto sz = static_cast<value::string&>(*base.self).val.size();
+  return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_string_equals(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_string_equals(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::string)
-    return gc::alloc<value::boolean>( false, *self->env().parent() );
-  return gc::alloc<value::boolean>(to_string(self) == to_string(args.front()), *self->env().parent());
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::string)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(
+      to_string(*base.self) == to_string(*base.args.front()) );
 }
 
-value::base* fn_string_unequal(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_string_unequal(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::string)
-    return gc::alloc<value::boolean>( false, *self->env().parent() );
-  return gc::alloc<value::boolean>(to_string(self) != to_string(args.front()), *self->env().parent());
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::string)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(
+      to_string(*base.self) != to_string(*base.args.front()) );
 }
 
-value::base* fn_string_append(value::base* self,
-                              const std::vector<value::base*>& args)
+value::base* fn_string_append(
+                              vm::call_stack& base)
 {
-  check_size(1, args.size());
-  auto str = to_string(args.front());
-  static_cast<value::string*>(self)->str() += str;
-  return self;
+  check_size(1, base.args.size());
+  auto str = to_string(*base.args.front());
+  static_cast<value::string&>(*base.self).val += str;
+  return &*base.self;
 }
 
 // }}}
 // symbol {{{
 
-value::base* fn_symbol_ctr(const std::vector<value::base*>& args)
+value::base* fn_symbol_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() == &type::symbol)
-    return args.front()->copy();
-  if (args.front()->type() == &type::string)
-    return gc::alloc<value::symbol>( symbol{to_string(args.front())},
-                                     g_base_env );
+  check_size(1, base.args.size());
+  if (base.args.front()->type == &type::symbol)
+    return base.args.front();
+  if (base.args.front()->type == &type::string)
+    return gc::alloc<value::symbol>( symbol{to_string(*base.args.front())} );
   throw std::runtime_error {
     "can only construct a Symbol from a String or another Symbol"
   };
 }
 
-value::base* fn_symbol_equals(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_symbol_equals(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::symbol)
-    return gc::alloc<value::boolean>( false, *self->env().parent() );
-  return gc::alloc<value::boolean>( to_symbol(self) == to_symbol(args.front()),
-                                    *self->env().parent() );
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::symbol)
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>(
+      to_symbol(*base.self) == to_symbol(*base.args.front()) );
 }
 
-value::base* fn_symbol_unequal(value::base* self,
-                               const std::vector<value::base*>& args)
+value::base* fn_symbol_unequal(
+                               vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() != &type::symbol)
-    return gc::alloc<value::boolean>( true, *self->env().parent() );
-  return gc::alloc<value::boolean>( to_symbol(self) != to_symbol(args.front()),
-                                    *self->env().parent() );
+  check_size(1, base.args.size());
+  if (base.args.front()->type != &type::symbol)
+    return gc::alloc<value::boolean>( true );
+  return gc::alloc<value::boolean>(
+      to_symbol(*base.self) != to_symbol(*base.args.front()) );
 }
 
-value::base* fn_symbol_to_str(value::base* self,
-                              const std::vector<value::base*>& args)
+value::base* fn_symbol_to_str(
+                              vm::call_stack& base)
 {
-  check_size(0, args.size());
-  return gc::alloc<value::string>( to_string(to_symbol(self)),
-                                   *self->env().parent() );
+  check_size(0, base.args.size());
+  return gc::alloc<value::string>( to_string(to_symbol(*base.self)) );
 }
 
 // }}}
 // boolean {{{
 
-value::base* fn_bool_ctr(const std::vector<value::base*>& args)
+value::base* fn_bool_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  auto type = args.front()->type();
+  check_size(1, base.args.size());
+  auto type = base.args.front()->type;
 
   if (type == &type::boolean)
-    return args.front();
+    return base.args.front();
 
-  return gc::alloc<value::boolean>( truthy(args.front()), g_base_env );
+  return gc::alloc<value::boolean>( truthy(base.args.front()) );
 }
 
 template <typename F>
 auto fn_bool_op(const F& op)
 {
-  return [=](value::base* self, const std::vector<value::base*>& args)
+  return [=](vm::call_stack& base)
   {
-    check_size(1, args.size());
-    return gc::alloc<value::boolean>( op(to_bool(self), to_bool(args.front())),
-                                      *self->env().parent() );
+    check_size(1, base.args.size());
+    return gc::alloc<value::boolean>(
+        op(to_bool(*base.self), to_bool(*base.args.front())) );
   };
 }
 
 // }}}
 // custom_type {{{
 
-value::base* fn_custom_type_ctr(const std::vector<value::base*>& args)
+value::base* fn_custom_type_ctr(vm::call_stack& base)
 {
-  check_size(1, args.size());
-  if (args.front()->type() == &type::custom_type)
-    return args.front()->copy();
+  check_size(1, base.args.size());
+  if (base.args.front()->type == &type::custom_type)
+    return base.args.front();
   throw std::runtime_error {
     "can only construct a Type from another Type"
   };
@@ -419,7 +405,7 @@ value::builtin_type type::array {fn_array_ctr, {
   { {"size"},   fn_array_size },
   { {"append"}, fn_array_append },
   { {"at"},     fn_array_at }
-}, g_base_env};
+}};
 
 value::builtin_type type::integer{fn_integer_ctr, {
   { {"add"},            fn_integer_op(std::plus<int>{}) },
@@ -436,7 +422,7 @@ value::builtin_type type::integer{fn_integer_ctr, {
   { {"greater"},        fn_int_bool_op(std::greater<int>{}) },
   { {"less_equals"},    fn_int_bool_op(std::less_equal<int>{}) },
   { {"greater_equals"}, fn_int_bool_op(std::greater_equal<int>{}) }
-}, g_base_env };
+} };
 
 value::builtin_type type::floating_point{fn_floating_point_ctr, {
   { {"equals"},         fn_floating_point_equals },
@@ -449,47 +435,50 @@ value::builtin_type type::floating_point{fn_floating_point_ctr, {
   { {"greater"},        fn_float_bool_op(std::greater<double>{}) },
   { {"less_equals"},    fn_float_bool_op(std::less_equal<double>{}) },
   { {"greater_equals"}, fn_float_bool_op(std::greater_equal<double>{}) }
-}, g_base_env};
+}};
 
 value::builtin_type type::string {fn_string_ctr, {
   { {"size"},    fn_string_size },
   { {"append"},  fn_string_append },
   { {"equals"},  fn_string_equals },
   { {"unequal"}, fn_string_unequal }
-}, g_base_env};
+}};
 
 value::builtin_type type::symbol {fn_symbol_ctr, {
   { {"equals"},  fn_symbol_equals },
   { {"unequal"}, fn_symbol_unequal },
   { {"to_str"},  fn_symbol_to_str }
-}, g_base_env};
+}};
 
 value::builtin_type type::boolean {fn_bool_ctr, {
   { {"equals"},  fn_bool_op(std::equal_to<bool>{}) },
   { {"unequal"}, fn_bool_op(std::not_equal_to<bool>{}) },
-}, g_base_env};
+}};
 
 value::builtin_type type::custom_type {fn_custom_type_ctr, {
-}, g_base_env};
+}};
 
-value::builtin_type type::nil         {nullptr, { }, g_base_env};
-value::builtin_type type::function    {nullptr, { }, g_base_env};
+value::builtin_type type::nil         {nullptr, { }};
+value::builtin_type type::function    {nullptr, { }};
 
 // }}}
 
-environment builtin::g_base_env {{
-  { {"print"},   &builtin::function::print },
-  { {"puts"},    &builtin::function::puts },
-  { {"gets"},    &builtin::function::gets },
-  { {"quit"},    &builtin::function::quit },
-  { {"size"},    &builtin::function::size },
-  { {"type"},    &builtin::function::type },
-  { {"Array"},   &builtin::type::array },
-  { {"Float"},   &builtin::type::floating_point },
-  { {"Integer"}, &builtin::type::integer },
-  { {"String"},  &builtin::type::string },
-  { {"Bool"},    &builtin::type::boolean },
-  { {"Nil"},     &builtin::type::nil },
-  { {"Symbol"},  &builtin::type::symbol },
-  { {"Type"},    &builtin::type::custom_type }
-}};
+void builtin::make_base_env(vm::call_stack& base)
+{
+  base.local = { {
+    { {"print"},   &builtin::function::print },
+    { {"puts"},    &builtin::function::puts },
+    { {"gets"},    &builtin::function::gets },
+    { {"quit"},    &builtin::function::quit },
+    { {"size"},    &builtin::function::size },
+    { {"type"},    &builtin::function::type },
+    { {"Array"},   &builtin::type::array },
+    { {"Float"},   &builtin::type::floating_point },
+    { {"Integer"}, &builtin::type::integer },
+    { {"String"},  &builtin::type::string },
+    { {"Bool"},    &builtin::type::boolean },
+    { {"Nil"},     &builtin::type::nil },
+    { {"Symbol"},  &builtin::type::symbol },
+    { {"Type"},    &builtin::type::custom_type }
+  } };
+}

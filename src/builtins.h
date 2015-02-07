@@ -2,6 +2,7 @@
 #define IL_BUILTINS_H
 
 #include "value.h"
+#include "vm/call_stack.h"
 
 namespace il {
 
@@ -43,6 +44,8 @@ extern value::builtin_type custom_type;
 extern value::builtin_type custom_object;
 
 }
+
+void make_base_env(vm::call_stack& base);
 
 }
 
