@@ -32,7 +32,7 @@ public:
   template <typename I>
   vector_ref(I first, I last) : m_data{&*first}, m_sz( last - first ) { }
 
-  vector_ref remove_prefix(size_t prefix) const
+  vector_ref remove_prefix(int prefix) const
   {
     return {m_data + prefix, m_data + m_sz};
   }

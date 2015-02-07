@@ -19,18 +19,17 @@ class call_stack {
 public:
   call_stack(std::shared_ptr<call_stack> parent,
              std::shared_ptr<call_stack> enclosing,
-             vector_ref<instruction>     instr_ptr);
+             vector_ref<command>     instr_ptr);
 
-  boost::optional<std::shared_ptr<call_stack> const> parent;
-  boost::optional<std::shared_ptr<call_stack> const> enclosing;
-  std::unordered_map<symbol, value::base* const> local;
-  std::unordered_map<symbol, value::base* const> parameters;
+  const std::shared_ptr<call_stack> parent;
+  const std::shared_ptr<call_stack> enclosing;
+  std::unordered_map<symbol, value::base*> local;
   boost::optional<value::base&> self;
 
-  std::vector<value::base* const> pushed_args;
+  std::vector<value::base*> pushed_args;
   boost::optional<value::base&> pushed_self;
 
-  vector_ref<instruction> instr_ptr;
+  vector_ref<command> instr_ptr;
 };
 
 }

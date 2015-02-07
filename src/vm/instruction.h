@@ -1,8 +1,9 @@
 #ifndef IL_VM_INSTRUCTIONS_H
 #define IL_VM_INSTRUCTIONS_H
 
-#include "symbol.h"
 #include "expression.h"
+#include "symbol.h"
+#include "value.h"
 
 #include <boost/variant/variant.hpp>
 
