@@ -1,8 +1,7 @@
 #include "builtins.h"
 #include "gc.h"
 #include "parser.h"
-#include "vm/call_stack.h"
-#include "vm/instruction.h"
+#include "vm.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,6 +26,10 @@ int main(int argc, char** argv)
       std::shared_ptr<il::vm::call_stack>{},
       std::vector<il::value::base*>{},
       il::vector_ref<il::vm::command>{body} );
+
+  il::builtin::make_base_env(*base_stack);
+  il::vm::machine machine{base_stack};
+  machine.run();
 
   il::gc::empty();
 }
