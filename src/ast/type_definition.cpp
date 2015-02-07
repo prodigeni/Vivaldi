@@ -21,6 +21,5 @@ ast::type_definition::type_definition(
 
 std::vector<vm::command> ast::type_definition::generate() const
 {
-  return env.create(m_name,
-                    gc::alloc<value::custom_type>( m_members, m_methods, env ));
+  throw std::runtime_error{"not yet implemented"};
 }

@@ -10,7 +10,7 @@ ast::for_loop::for_loop(symbol iterator,
     m_body     {move(body)}
 { }
 
-value::base* ast::for_loop::eval(environment& env) const
+std::vector<vm::command> ast::for_loop::generate() const
 {
   throw std::runtime_error{"not yet implemented"};
 }
