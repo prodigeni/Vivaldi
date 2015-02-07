@@ -15,6 +15,7 @@ add_executable(il
   src/lang_utils.cpp
   src/symbol.cpp
   src/value.cpp
+  src/vm.cpp
 
   src/builtins.cpp
 
@@ -46,4 +47,7 @@ add_executable(il
   src/value/integer.cpp
   src/value/nil.cpp
   src/value/string.cpp
-  src/value/symbol.cpp)
+  src/value/symbol.cpp
+
+  src/vm/call_stack.cpp
+  src/vm/instruction.cpp)
