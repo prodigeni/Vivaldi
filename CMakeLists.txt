@@ -8,7 +8,6 @@ include_directories("/usr/local/Cellar/boost/1.57.0/include" "src")
 
 add_executable(il
   src/main.cpp
-  src/repl.cpp
 
   src/gc.cpp
   src/lang_utils.cpp
