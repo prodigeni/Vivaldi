@@ -21,18 +21,28 @@ public:
   virtual ~expression() { }
 };
 
-class function_definition;
-class function_call;
-class member;
-class variable;
-class literal;
-class type_definition;
-class cond_statement;
-class while_loop;
-class for_loop;
 class assignment;
-class variable_declaration;
 class block;
+class cond_statement;
+class for_loop;
+class function_call;
+class function_definition;
+class member;
+class type_definition;
+class while_loop;
+class variable;
+class variable_declaration;
+
+namespace literal {
+
+class boolean;
+class floating_point;
+class integer;
+class nil;
+class string;
+class symbol;
+
+}
 
 }
 

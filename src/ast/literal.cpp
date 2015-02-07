@@ -1,21 +1,35 @@
 #include "literal.h"
 
-#include "gc.h"
+#include "vm/instruction.h"
 
 using namespace il;
 
-ast::literal::literal(std::unique_ptr<value::base>&& value)
-  : m_value {value.release()}
+std::vector<vm::command> ast::literal::boolean::generate() const
 {
-  gc::push_ast(m_value);
+  return { {vm::instruction::push_bool, m_val} };
 }
 
-value::base* ast::literal::eval(environment&) const
+std::vector<vm::command> ast::literal::floating_point::generate() const
 {
-  return m_value->copy();
+  return { {vm::instruction::push_flt, m_val} };
 }
 
-ast::literal::~literal()
+std::vector<vm::command> ast::literal::integer::generate() const
 {
-  gc::pop_ast(m_value);
+  return { {vm::instruction::push_int, m_val} };
+}
+
+std::vector<vm::command> ast::literal::nil::generate() const
+{
+  return { {vm::instruction::push_nil} };
+}
+
+std::vector<vm::command> ast::literal::string::generate() const
+{
+  return { {vm::instruction::push_str, m_val} };
+}
+
+std::vector<vm::command> ast::literal::symbol::generate() const
+{
+  return { {vm::instruction::push_sym, m_val} };
 }
