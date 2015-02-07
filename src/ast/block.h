@@ -11,7 +11,7 @@ class block : public expression {
 public:
   block(std::vector<std::unique_ptr<expression>>&& subexpressions);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   std::vector<std::unique_ptr<expression>> m_subexpressions;

@@ -12,7 +12,7 @@ public:
   while_loop(std::unique_ptr<expression>&& test,
              std::unique_ptr<expression>&& body);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   std::unique_ptr<expression> m_test;

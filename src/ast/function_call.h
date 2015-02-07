@@ -12,10 +12,10 @@ public:
   function_call(std::unique_ptr<ast::expression>&& name,
                 std::vector<std::unique_ptr<ast::expression>>&& args);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
-  std::unique_ptr<ast::expression> m_function_name;
+  std::unique_ptr<ast::expression> m_function;
   std::vector<std::unique_ptr<ast::expression>> m_args;
 };
 

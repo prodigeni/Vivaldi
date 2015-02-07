@@ -13,7 +13,7 @@ public:
            std::unique_ptr<expression>&& range,
            std::unique_ptr<expression>&& body);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   symbol m_iterator;

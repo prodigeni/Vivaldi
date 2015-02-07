@@ -1,7 +1,7 @@
 #ifndef IL_EXPRESSION_H
 #define IL_EXPRESSION_H
 
-#include "value.h"
+#include "vm/instruction.h"
 
 namespace il {
 
@@ -9,8 +9,7 @@ namespace ast {
 
 class expression {
 public:
-  virtual value::base* eval() const = 0;
-
+  virtual std::vector<vm::command> generate() const = 0;
   virtual ~expression() { }
 };
 

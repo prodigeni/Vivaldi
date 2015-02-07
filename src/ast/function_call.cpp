@@ -7,21 +7,23 @@ using namespace il;
 ast::function_call::function_call(
     std::unique_ptr<ast::expression>&& name,
     std::vector<std::unique_ptr<ast::expression>>&& args)
-  : m_function_name {move(name)},
-    m_args          {move(args)}
+  : m_function {move(name)},
+    m_args     {move(args)}
 { }
 
-value::base* ast::function_call::eval(environment& env) const
+std::vector<vm::command> ast::function_call::generate() const
 {
-  auto fn = gc::push_argument(m_function_name->eval(env));
+  std::vector<vm::command> vec;
 
-  std::vector<value::base*> args{};
-  std::transform(begin(m_args), end(m_args), back_inserter(args),
-                 [&](const auto& i){ return gc::push_argument(i->eval(env)); });
-  auto tmp = fn->call(args);
+  for (const auto& i : m_args) {
+    auto arg = i->generate();
+    copy(begin(arg), end(arg), back_inserter(vec));
+    vec.emplace_back(vm::instruction::push_arg);
+  }
 
-  for (auto i = m_args.size(); i--;)
-    gc::pop_argument();
-  gc::pop_argument();
-  return tmp;
+  auto fn = m_function->generate();
+  copy(begin(fn), end(fn), back_inserter(vec));
+
+  vec.emplace_back(vm::instruction::call, static_cast<int>(m_args.size()));
+  return vec;
 }

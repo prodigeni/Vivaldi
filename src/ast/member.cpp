@@ -9,10 +9,9 @@ ast::member::member(std::unique_ptr<ast::expression>&& object, il::symbol name)
     m_name   {name}
 { }
 
-value::base* ast::member::eval(environment& env) const
+std::vector<vm::command> ast::member::generate() const
 {
-  auto object = gc::push_argument(m_object->eval(env));
-  auto member = object->member(m_name);
-  gc::pop_argument();
-  return member;
+  auto vec = m_object->generate();
+  vec.emplace_back(vm::instruction::member, m_name);
+  return vec;
 }

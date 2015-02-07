@@ -11,7 +11,7 @@ class literal : public expression {
 public:
   literal(std::unique_ptr<value::base>&& value);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
   ~literal();
 

@@ -11,7 +11,7 @@ class member : public expression {
 public:
   member(std::unique_ptr<ast::expression>&& object, il::symbol name);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   std::unique_ptr<ast::expression> m_object;

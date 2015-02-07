@@ -9,10 +9,9 @@ ast::assignment::assignment(symbol name, std::unique_ptr<expression>&& value)
     m_value {move(value)}
 { }
 
-value::base* ast::assignment::eval(environment& env) const
+std::vector<vm::command> ast::assignment::generate() const
 {
-  auto val = gc::push_argument(m_value->eval(env));
-  env.assign(m_name, val);
-  gc::pop_argument();
-  return val;
+  auto vec = m_value->generate();
+  vec.emplace_back(vm::instruction::write, m_name);
+  return vec;
 }

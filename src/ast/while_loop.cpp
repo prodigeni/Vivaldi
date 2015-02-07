@@ -12,14 +12,17 @@ ast::while_loop::while_loop(std::unique_ptr<expression>&& test,
     m_body {move(body)}
 { }
 
-value::base* ast::while_loop::eval(environment& env) const
+std::vector<vm::command> ast::while_loop::generate() const
 {
-  value::base* result{nullptr};
-  environment inner_env{env};
-  while (truthy(m_test->eval(inner_env))) {
-    if (result)
-      gc::pop_argument();
-    result = gc::push_argument(m_body->eval(inner_env));
-  }
-  return result ? result : gc::alloc<value::nil>( env );
+  auto vec = m_test->generate();
+  vec.emplace_back(vm::instruction::jump_unless);
+  auto test_jump_iterator = --end(vec);
+
+  auto body = m_body->generate();
+  copy(begin(body), end(body), back_inserter(vec));
+
+  vec.emplace_back(vm::instruction::jump, -static_cast<int>(vec.size()));
+  test_jump_iterator->arg = static_cast<int>(end(vec) - test_jump_iterator);
+
+  return vec;
 }

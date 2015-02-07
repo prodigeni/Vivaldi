@@ -19,7 +19,7 @@ ast::type_definition::type_definition(
     m_methods {m_methods}
 { }
 
-value::base* ast::type_definition::eval(environment& env) const
+std::vector<vm::command> ast::type_definition::generate() const
 {
   return env.create(m_name,
                     gc::alloc<value::custom_type>( m_members, m_methods, env ));

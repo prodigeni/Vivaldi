@@ -4,7 +4,7 @@ using namespace il;
 
 ast::variable::variable(symbol name) : m_name{name} { }
 
-value::base* ast::variable::eval(environment& env) const
+std::vector<vm::command> ast::variable::generate() const
 {
-  return env.at(m_name);
+  return { {vm::instruction::read, m_name} };
 }

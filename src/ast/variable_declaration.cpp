@@ -9,7 +9,9 @@ ast::variable_declaration::variable_declaration(
     m_value {move(value)}
 { }
 
-value::base* ast::variable_declaration::eval(environment& env) const
+std::vector<vm::command> ast::variable_declaration::generate() const
 {
-  return env.create(m_name, m_value->eval(env));
+  auto vec = m_value->generate();
+  vec.emplace_back(vm::instruction::let, m_name);
+  return vec;
 }

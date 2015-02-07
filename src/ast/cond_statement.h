@@ -12,7 +12,7 @@ public:
   cond_statement(std::vector<std::pair<std::unique_ptr<expression>,
                                        std::unique_ptr<expression>>>&& body);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   std::vector<std::pair<std::unique_ptr<expression>,

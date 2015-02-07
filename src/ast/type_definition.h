@@ -18,7 +18,7 @@ public:
                           m_methods);
 
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   symbol m_name;

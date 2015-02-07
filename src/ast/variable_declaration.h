@@ -11,7 +11,7 @@ class variable_declaration : public expression {
 public:
   variable_declaration(symbol name, std::unique_ptr<expression>&& value);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   symbol m_name;

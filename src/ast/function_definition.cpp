@@ -13,11 +13,10 @@ ast::function_definition::function_definition(symbol name,
     m_args {args}
 { }
 
-value::base* ast::function_definition::eval(environment& env) const
+std::vector<vm::command> ast::function_definition::generate() const
 {
   const static symbol nonname{""};
-  if (m_name == nonname)
-    return gc::alloc<value::function>(m_args, m_body, env);
-  else
-    return env.create(m_name, gc::alloc<value::function>(m_args, m_body, env));
+  if (m_name == nonname) {
+  } else {
+  }
 }

@@ -8,14 +8,15 @@ ast::block::block(std::vector<std::unique_ptr<expression>>&& subexpressions)
   : m_subexpressions {move(subexpressions)}
 { }
 
-value::base* ast::block::eval(environment& env) const
+std::vector<vm::command> ast::block::generate() const
 {
-  environment block_env{env};
-  value::base* result{nullptr};
+  std::vector<vm::command> vec{ {vm::instruction::enter} };
+
   for (const auto& i : m_subexpressions) {
-    if (result)
-      gc::pop_argument();
-    result = gc::push_argument(i->eval(block_env));
+    auto subexpr = i->generate();
+    copy(begin(subexpr), end(subexpr), back_inserter(vec));
   }
-  return result;
+
+  vec.push_back(vm::instruction::leave);
+  return vec;
 }

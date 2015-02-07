@@ -11,7 +11,7 @@ class variable : public expression {
 public:
   variable(symbol name);
 
-  value::base* eval(environment& env) const override;
+  std::vector<vm::command> generate() const override;
 
 private:
   symbol m_name;
