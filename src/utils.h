@@ -9,7 +9,7 @@ namespace il {
 inline boost::string_ref ltrim(boost::string_ref str)
 {
   auto last = std::find_if_not(begin(str), end(str), isspace);
-  str.remove_prefix(last - begin(str));
+  str.remove_prefix(static_cast<size_t>(last - begin(str)));
   return str;
 }
 
@@ -30,7 +30,10 @@ public:
   { }
 
   template <typename I>
-  vector_ref(I first, I last) : m_data{&*first}, m_sz( last - first ) { }
+  vector_ref(I first, I last)
+  : m_data {&*first},
+    m_sz   ( static_cast<size_t>(last - first) )
+  { }
 
   vector_ref remove_prefix(int prefix) const
   {
