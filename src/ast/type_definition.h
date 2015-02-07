@@ -4,6 +4,9 @@
 #include "expression.h"
 
 #include "symbol.h"
+#include "ast/function_definition.h"
+
+#include <unordered_map>
 
 namespace il {
 
