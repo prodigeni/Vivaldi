@@ -35,7 +35,7 @@ public:
     m_sz   ( static_cast<size_t>(last - first) )
   { }
 
-  vector_ref remove_prefix(int prefix) const
+  vector_ref remove_prefix(long prefix) const
   {
     return {m_data + prefix, m_data + m_sz};
   }
