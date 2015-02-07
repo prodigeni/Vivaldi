@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (il)
 
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -O3 -std=c++1y -lc++abi -ggdb")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -lc++abi -ggdb")
 
 include_directories("/usr/local/Cellar/boost/1.57.0/include" "src")
 
