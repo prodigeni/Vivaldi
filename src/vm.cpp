@@ -21,10 +21,12 @@
 using namespace il;
 
 vm::machine::machine(std::shared_ptr<call_stack> frame)
-  : m_stack {frame},
-    m_base  {frame}
+  : m_stack  {frame},
+    m_retval {nullptr},
+    m_base   {frame}
 {
   gc::set_current_frame(frame);
+  gc::set_current_retval(m_retval);
 }
 
 void vm::machine::run()

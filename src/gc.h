@@ -21,6 +21,7 @@ value::base* alloc(Args&&... args)
 }
 
 void set_current_frame(std::shared_ptr<vm::call_stack> frame);
+void set_current_retval(value::base*& val);
 
 void init();
 void empty();
