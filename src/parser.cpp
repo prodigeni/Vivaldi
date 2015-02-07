@@ -579,10 +579,7 @@ parse_res<> parse_number(vector_ref<std::string> tokens)
   if (find(begin(num), end(num), '.') != end(num)) {
 
     auto value = stod(num);
-    std::unique_ptr<value::base> flt{new value::floating_point{
-                                             value,
-                                             builtin::g_base_env}};
-    std::unique_ptr<ast::expression> literal{new ast::literal{move(flt)}};
+    auto literal = std::make_unique<ast::literal::floating_point>( value );
     return {{ move(literal), tokens.remove_prefix(1) }};
   }
 
@@ -594,9 +591,7 @@ parse_res<> parse_number(vector_ref<std::string> tokens)
     value = std::stoi(num);
   }
 
-  std::unique_ptr<value::base> integer{new value::integer{value,
-                                                          builtin::g_base_env}};
-  std::unique_ptr<ast::expression> literal{new ast::literal{move(integer)}};
+  auto literal = std::make_unique<ast::literal::integer>( value );
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
 
@@ -604,11 +599,9 @@ parse_res<> parse_string(vector_ref<std::string> tokens)
 {
   if (tokens.front().front() != '"')
     return {};
-  std::string str{begin(tokens.front()) + 1, end(tokens.front()) - 1};
+  std::string value{begin(tokens.front()) + 1, end(tokens.front()) - 1};
 
-  std::unique_ptr<value::base> string{new value::string{str,
-                                                        builtin::g_base_env}};
-  std::unique_ptr<ast::expression> literal{new ast::literal{move(string)}};
+  auto literal = std::make_unique<ast::literal::string>( value );
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
 
@@ -621,9 +614,8 @@ parse_res<> parse_bool(vector_ref<std::string> tokens)
     value = false;
   else
     return {};
-  std::unique_ptr<value::base> boolean{new value::boolean{value,
-                                                          builtin::g_base_env}};
-  std::unique_ptr<ast::expression> literal{new ast::literal{move(boolean)}};
+
+  auto literal = std::make_unique<ast::literal::boolean>( value );
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
 
@@ -632,8 +624,7 @@ parse_res<> parse_nil(vector_ref<std::string> tokens)
   if (tokens.front() != "nil")
     return {};
 
-  std::unique_ptr<value::base> nil{new value::nil{builtin::g_base_env}};
-  std::unique_ptr<ast::expression> literal{new ast::literal{move(nil)}};
+  auto literal = std::make_unique<ast::literal::nil>( );
   return {{ move(literal), tokens.remove_prefix(1) }};
 }
 
@@ -641,11 +632,9 @@ parse_res<> parse_symbol(vector_ref<std::string> tokens)
 {
   if (tokens.front() != "'")
     return {};
-  auto sym = symbol{tokens[1]};
+  auto value = symbol{tokens[1]};
 
-  std::unique_ptr<value::base> vsym{new value::symbol{sym,
-                                                      builtin::g_base_env}};
-  std::unique_ptr<ast::expression> literal{new ast::literal{move(vsym)}};
+  auto literal = std::make_unique<ast::literal::symbol>( value );
   return {{ move(literal), tokens.remove_prefix(2) }};
 }
 
