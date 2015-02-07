@@ -10,7 +10,6 @@ add_executable(il
   src/main.cpp
   src/repl.cpp
 
-  src/environment.cpp
   src/gc.cpp
   src/lang_utils.cpp
   src/symbol.cpp
