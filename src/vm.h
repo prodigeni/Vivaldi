@@ -14,12 +14,13 @@ public:
   void run();
 
 private:
-  void push_int(int val);
-  void push_sym(symbol val);
   void push_bool(bool val);
-  void push_str(const std::string& val);
   void push_flt(double val);
   void push_fn(vector_ref<command> val);
+  void push_int(int val);
+  void push_nil();
+  void push_str(const std::string& val);
+  void push_sym(symbol val);
 
   void read(symbol sym);
   void write(symbol sym);
@@ -29,14 +30,15 @@ private:
   void self();
   void push_arg();
   void pop_arg(symbol sym);
-  void member(symbol sym);
+  void mem(symbol sym);
   void call(int args);
 
-  void enter();
-  void leave();
+  void eblk();
+  void lblk();
+  void ret();
 
-  void jump_unless(int offset);
-  void jump(int offset);
+  void jmp_false(int offset);
+  void jmp(int offset);
 
   std::shared_ptr<call_stack> m_stack;
   value::base* m_retval;

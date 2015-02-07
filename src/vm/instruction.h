@@ -14,12 +14,13 @@ namespace vm {
 struct nil_t { };
 
 enum class instruction {
-  push_int,
-  push_sym,
   push_bool,
-  push_str,
   push_flt,
   push_fn,
+  push_int,
+  push_nil,
+  push_str,
+  push_sym,
 
   read,
   write,
@@ -29,14 +30,15 @@ enum class instruction {
   self,
   push_arg,
   pop_arg,
-  member,
+  mem,
   call,
 
-  enter,
-  leave,
+  eblk,
+  lblk,
+  ret,
 
-  jump_unless,
-  jump
+  jmp_false,
+  jmp
 };
 
 struct command {
