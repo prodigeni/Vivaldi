@@ -20,6 +20,13 @@
 
 using namespace il;
 
+vm::machine::machine(std::shared_ptr<call_stack> frame)
+  : m_stack {frame},
+    m_base  {frame}
+{
+  gc::set_current_frame(frame);
+}
+
 void vm::machine::run()
 {
   using boost::get;
@@ -28,7 +35,7 @@ void vm::machine::run()
 
     auto instr = m_stack->instr_ptr.front().instr;
     const auto& arg = m_stack->instr_ptr.front().arg;
-    m_stack->instr_ptr.remove_prefix(1);
+    m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(1);
 
     switch (instr) {
     case instruction::push_bool: push_bool(get<bool>(arg));               break;
@@ -168,12 +175,16 @@ void vm::machine::call(int argc)
                                             move(args),
                                             fn->body );
 
+    gc::set_current_frame(m_stack);
+
   } else if (auto fn = dynamic_cast<value::builtin_function*>(m_retval)) {
     auto stack = std::make_shared<call_stack>( m_stack,
                                                m_base,
                                                move(args),
                                                m_stack->instr_ptr );
+    gc::set_current_frame(stack);
     m_retval = fn->body(*stack);
+    gc::set_current_frame(m_stack);
   }
 }
 
@@ -194,6 +205,7 @@ void vm::machine::ret()
   m_stack = m_stack->parent;
   if (!m_stack)
     exit(0);
+  gc::set_current_frame(m_stack);
 }
 
 void vm::machine::jmp_false(int offset)
