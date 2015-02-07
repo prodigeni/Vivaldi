@@ -15,7 +15,7 @@ builtin_type::builtin_type(
     const std::function<base*(vm::call_stack&)>& ctr,
     const std::unordered_map<
             il::symbol,
-            std::function<base*(vm::call_stack&)>>& fns)
+            value::builtin_function> fns)
   : basic_type {},
     m_ctr      {ctr},
     m_methods  {fns}
@@ -28,9 +28,9 @@ void builtin_type::each_key(
     fn(i.first);
 }
 
-value::base* builtin_type::method(il::symbol name) const
+value::base* builtin_type::method(il::symbol name)
 {
-  return gc::alloc<value::builtin_function>( m_methods.at(name) );
+  return &m_methods.at(name);
 }
 
 std::string builtin_type::value() const
