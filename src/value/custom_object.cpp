@@ -10,11 +10,7 @@ using namespace il;
 value::custom_object::custom_object(custom_type* type,
                                     const std::vector<base*>& args)
   : base {type}
-{
-  const auto fn = gc::push_argument(type->ctr()->eval());
-  fn->call(args);
-  gc::pop_argument();
-}
+{ }
 
 std::string value::custom_object::value() const
 {
