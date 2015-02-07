@@ -40,6 +40,11 @@ value::base* gc::internal::emplace(value::base* val)
   return val;
 }
 
+void gc::set_current_frame(std::shared_ptr<vm::call_stack> frame)
+{
+  g_frame = frame;
+}
+
 void gc::init()
 {
   g_vals.reserve(512);
