@@ -32,7 +32,10 @@ public:
   boost::optional<value::base&> pushed_self;
 
   vector_ref<command> instr_ptr;
+
 };
+
+void mark(call_stack& stack);
 
 }
 

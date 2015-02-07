@@ -2,6 +2,7 @@
 #define IL_GC_H
 
 #include "value.h"
+#include "vm/call_stack.h"
 
 namespace il {
 
@@ -19,18 +20,10 @@ value::base* alloc(Args&&... args)
   return internal::emplace(new T{args...});
 }
 
-// Used to hold unnamed temporaries. Make sure to pop anything you push, and
-// *never* use any value::base*'s that haven't either been assigned to an
-// environment or pushed here!
-// TODO: Implement RAII version
-value::base* push_argument(value::base* arg);
-void pop_argument();
+void set_current_frame(std::shared_ptr<vm::call_stack> frame);
 
 void init();
 void empty();
-
-value::base* push_ast(value::base* ast);
-void pop_ast(value::base* ast);
 
 }
 

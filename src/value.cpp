@@ -5,65 +5,25 @@
 #include "ast/function_definition.h"
 #include "value/builtin_type.h"
 #include "value/function.h"
-#include "environment.h"
 
 using namespace il;
 
-value::base::base(basic_type* type, environment& env)
-  : m_marked {false},
-    m_type   {type},
-    m_env    {std::move(environment::close_on(env))},
-    m_owner  {nullptr}
+value::base::base(basic_type* new_type)
+  : type     {new_type},
+    m_marked {false}
 {
-  m_env.create(builtin::sym::self, this);
-  if (m_type) {
-    m_type->each_key([&](auto sym)
-    {
-      auto tmp = gc::push_argument(m_type->method(sym, m_env));
-      m_members[sym] = tmp;
-      tmp->set_owner(this);
-    });
-    m_type->each_key([&](auto) { gc::pop_argument(); });
-  }
-}
-
-value::base* value::base::call(const std::vector<value::base*>& args)
-{
-  return member(builtin::sym::call)->call(args);
-}
-
-value::base* value::base::member(il::symbol name) const
-{
-  if (!m_members.count(name))
-    throw std::runtime_error{"no such member: '" + to_string(name)};
-  return m_members.at(name);
+  if (type)
+    type->each_key([&](auto sym) { members[sym] = type->method(sym); });
 }
 
 void value::base::mark()
 {
   m_marked = true;
-  m_env.mark();
-  if (m_type && !m_type->marked())
-    m_type->mark();
-  for (const auto& i : m_members) {
+  for (auto& i : members)
     if (!i.second->marked())
       i.second->mark();
-  }
-  if (m_owner && !m_owner->marked())
-    m_owner->mark();
 }
 
-bool value::base::marked() const
-{
-  return m_marked;
-}
-
-void value::base::unmark()
-{
-  m_marked = false;
-}
-
-value::basic_type::basic_type(environment& env)
-  //: base {&builtin::type::custom_type, env}
-  : base {nullptr, env}
+value::basic_type::basic_type()
+  : base {nullptr}
 { }

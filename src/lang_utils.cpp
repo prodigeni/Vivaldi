@@ -7,10 +7,10 @@
 
 bool il::truthy(const value::base* val)
 {
-  if (val->type() == &builtin::type::nil)
+  if (val->type == &builtin::type::nil)
     return false;
-  else if (val->type() == &builtin::type::boolean)
-    return static_cast<const value::boolean*>(val)->bool_val();
+  else if (val->type == &builtin::type::boolean)
+    return static_cast<const value::boolean*>(val)->val;
   return true;
 }
 

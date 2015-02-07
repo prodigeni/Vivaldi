@@ -40,9 +40,8 @@ value::base* fn_print(vm::call_stack& base)
 
 value::base* fn_puts(vm::call_stack& base)
 {
-  auto ret = gc::push_argument(fn_print(base));
+  auto ret = fn_print(base);
   std::cout << '\n';
-  gc::pop_argument();
   return ret;
 }
 
@@ -159,7 +158,7 @@ value::base* fn_array_at(vm::call_stack& base)
     throw std::runtime_error{"out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
                            + std::to_string(val) + ")"};
-  return arr.at(val);
+  return arr.at(static_cast<unsigned>(val));
 }
 
 // }}}

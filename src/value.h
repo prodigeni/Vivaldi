@@ -40,6 +40,13 @@ struct base {
 
   std::unordered_map<il::symbol, value::base*> members;
   basic_type* type;
+
+  virtual void mark();
+  bool marked() const { return m_marked; }
+  void unmark() { m_marked = false; }
+
+private:
+  bool m_marked;
 };
 
 struct basic_type : public base {
