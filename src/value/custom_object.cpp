@@ -8,15 +8,10 @@
 using namespace il;
 
 value::custom_object::custom_object(custom_type* type,
-                                    const std::vector<base*>& args,
-                                    environment& outer_env)
-  : base {type, outer_env}
+                                    const std::vector<base*>& args)
+  : base {type}
 {
-  const auto& mems = type->ctr_args();
-  for (size_t i = mems.size(); i--;)
-    env().create(mems[i], gc::alloc<nil>( env() ));
-
-  const auto fn = gc::push_argument(type->ctr()->eval(env()));
+  const auto fn = gc::push_argument(type->ctr()->eval());
   fn->call(args);
   gc::pop_argument();
 }
@@ -24,14 +19,4 @@ value::custom_object::custom_object(custom_type* type,
 std::string value::custom_object::value() const
 {
   return "<object>";
-}
-
-value::base* value::custom_object::copy() const
-{
-  throw std::runtime_error{"not yet implemented"};
-}
-
-void value::custom_object::mark()
-{
-  base::mark();
 }

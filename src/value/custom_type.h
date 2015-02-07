@@ -8,13 +8,12 @@ namespace il {
 
 namespace value {
 
-class custom_type : public basic_type {
+struct custom_type : public basic_type {
 public:
   custom_type(const std::vector<il::symbol>& args,
               const std::unordered_map<
                         il::symbol,
-                        std::shared_ptr<ast::function_definition>>& methods,
-             environment& outer_env);
+                        std::shared_ptr<ast::function_definition>>& methods);
 
   std::string value() const override;
 
@@ -22,12 +21,6 @@ public:
   ast::function_definition* ctr() const { return m_ctr.get(); }
 
   void each_key(const std::function<void(il::symbol)>& fn) const override;
-  base* method(il::symbol name, environment& env) const override;
-
-  base* call(const std::vector<base*>& args) override;
-  base* copy() const override;
-
-  void mark() override;
 
 private:
   std::vector<il::symbol> m_ctr_args;

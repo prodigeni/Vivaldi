@@ -7,17 +7,13 @@ namespace il {
 
 namespace value {
 
-class integer : public base {
+struct integer : public base {
 public:
-  integer(int val, environment& env);
-
-  int int_val() const { return m_val; }
+  integer(int val);
 
   std::string value() const override;
-  base* copy() const override;
 
-private:
-  int m_val;
+  int val;
 };
 
 }

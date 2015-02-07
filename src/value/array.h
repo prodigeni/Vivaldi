@@ -8,20 +8,13 @@ namespace il {
 
 namespace value {
 
-class array : public base {
+struct array : public base {
 public:
-  array(const std::vector<base*>& mems, environment& env);
-
-  std::vector<base*>& members() { return m_mems; }
-  const std::vector<base*>& members() const { return m_mems; }
+  array(const std::vector<base*>& mems);
 
   std::string value() const override;
-  base* copy() const override;
 
-  void mark() override;
-
-private:
-  std::vector<base*> m_mems;
+  std::vector<base*> mems;
 };
 
 }

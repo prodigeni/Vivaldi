@@ -7,15 +7,9 @@ namespace il {
 
 namespace value {
 
-class nil : public base {
-public:
-  nil(environment& env);
-
+struct nil : public base {
+  nil();
   std::string value() const override;
-  base* copy() const override;
-
-private:
-  static custom_type s_type;
 };
 
 }

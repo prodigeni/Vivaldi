@@ -8,17 +8,12 @@ namespace il {
 
 namespace value {
 
-class function : public base {
+struct function : public base {
 public:
   function(const std::vector<il::symbol>& args,
-           std::shared_ptr<ast::expression> body,
-           environment& outer_env);
+           std::shared_ptr<ast::expression> body);
 
   std::string value() const override;
-
-  base* call(const std::vector<base*>& args) override;
-
-  base* copy() const override;
 
 private:
   std::vector<il::symbol> m_args;

@@ -8,16 +8,12 @@ namespace il {
 
 namespace value {
 
-class custom_object : public base {
+struct custom_object : public base {
 public:
   custom_object(custom_type* type,
-                const std::vector<base*>& args,
-                environment& outer_env);
+                const std::vector<base*>& args);
 
   std::string value() const override;
-  base* copy() const override;
-
-  void mark() override;
 };
 
 }

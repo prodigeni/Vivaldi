@@ -1,7 +1,6 @@
 #ifndef IL_BUILTINS_H
 #define IL_BUILTINS_H
 
-#include "environment.h"
 #include "value.h"
 
 namespace il {
@@ -44,8 +43,6 @@ extern value::builtin_type custom_type;
 extern value::builtin_type custom_object;
 
 }
-
-extern environment g_base_env;
 
 }
 

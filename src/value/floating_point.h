@@ -7,17 +7,13 @@ namespace il {
 
 namespace value {
 
-class floating_point : public base {
+struct floating_point : public base {
 public:
-  floating_point(double val, environment& env);
-
-  double float_val() const { return m_val; }
+  floating_point(double val);
 
   std::string value() const override;
-  base* copy() const override;
 
-private:
-  double m_val;
+  double val;
 };
 
 }

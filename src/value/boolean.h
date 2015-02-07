@@ -7,17 +7,13 @@ namespace il {
 
 namespace value {
 
-class boolean : public base {
+struct boolean : public base {
 public:
-  boolean(bool val, environment& env);
-
-  bool bool_val() const { return m_val; }
+  boolean(bool val);
 
   std::string value() const override;
-  base* copy() const override;
 
-private:
-  bool m_val;
+  bool val;
 };
 
 }

@@ -8,17 +8,13 @@ namespace il {
 
 namespace value {
 
-class symbol : public base {
+struct symbol : public base {
 public:
-  symbol(il::symbol val, environment& env);
-
-  il::symbol sym() const { return m_val; }
+  symbol(il::symbol val);
 
   std::string value() const override;
-  base* copy() const override;
 
-private:
-  il::symbol m_val;
+  il::symbol val;
 };
 
 }

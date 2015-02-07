@@ -8,13 +8,8 @@
 
 using namespace il;
 
-value::nil::nil(environment& env)
-  : base {&builtin::type::nil, env}
+value::nil::nil()
+  : base {&builtin::type::nil}
 { }
 
 std::string value::nil::value() const { return "nil"; }
-
-value::base* value::nil::copy() const
-{
-  return gc::alloc<nil>( *env().parent() );
-}

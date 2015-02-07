@@ -6,17 +6,9 @@
 
 using namespace il;
 
-value::string::string(const std::string& val, environment& env)
-  : base  {&builtin::type::string, env},
-    m_val {val}
+value::string::string(const std::string& val)
+  : base {&builtin::type::string},
+    val  {val}
 { }
 
-std::string value::string::value() const
-{
-  return '"' + m_val += '"';
-}
-
-value::base* value::string::copy() const
-{
-  return gc::alloc<string>( m_val, *env().parent() );
-}
+std::string value::string::value() const { return '"' + val += '"'; }

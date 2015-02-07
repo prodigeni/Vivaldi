@@ -8,17 +8,12 @@
 
 using namespace il;
 
-value::floating_point::floating_point(double value, environment& env)
-  : base  {&builtin::type::floating_point, env},
-    m_val {value}
+value::floating_point::floating_point(double value)
+  : base {&builtin::type::floating_point},
+    val  {value}
 { }
 
 std::string value::floating_point::value() const
 {
-  return std::to_string(m_val);
-}
-
-value::base* value::floating_point::copy() const
-{
-  return gc::alloc<floating_point>( m_val, *env().parent() );
+  return std::to_string(val);
 }

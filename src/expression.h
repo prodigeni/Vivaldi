@@ -2,7 +2,6 @@
 #define IL_EXPRESSION_H
 
 #include "value.h"
-#include "environment.h"
 
 namespace il {
 
@@ -10,7 +9,7 @@ namespace ast {
 
 class expression {
 public:
-  virtual value::base* eval(environment& env) const = 0;
+  virtual value::base* eval() const = 0;
 
   virtual ~expression() { }
 };
