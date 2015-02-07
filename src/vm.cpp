@@ -1,7 +1,16 @@
 #include "vm.h"
 
+#include "gc.h"
 #include "lang_utils.h"
+
 #include "value.h"
+#include "value/boolean.h"
+#include "value/integer.h"
+#include "value/floating_point.h"
+#include "value/nil.h"
+#include "value/string.h"
+#include "value/symbol.h"
+
 #include "vm/instruction.h"
 
 #include <boost/variant/get.hpp>
@@ -49,27 +58,27 @@ void vm::machine::run()
 
 void vm::machine::push_int(int val)
 {
-  static_assert(false, "implement!");
+  m_retval = gc::alloc<value::integer>( val );
 }
 
 void vm::machine::push_sym(symbol val)
 {
-  static_assert(false, "implement!");
+  m_retval = gc::alloc<value::symbol>( val );
 }
 
 void vm::machine::push_bool(bool val)
 {
-  static_assert(false, "implement!");
+  m_retval = gc::alloc<value::boolean>( val );
 }
 
 void vm::machine::push_str(const std::string& val)
 {
-  static_assert(false, "implement!");
+  m_retval = gc::alloc<value::string>( val );
 }
 
 void vm::machine::push_flt(double val)
 {
-  static_assert(false, "implement!");
+  m_retval = gc::alloc<value::floating_point>( val );
 }
 
 void vm::machine::push_fn(vector_ref<command> val)
@@ -121,7 +130,7 @@ void vm::machine::pop_arg(symbol sym)
 
 void vm::machine::member(symbol sym)
 {
-  static_assert(false, "implement!");
+  m_retval = m_retval->members[sym];
 }
 
 void vm::machine::call()
