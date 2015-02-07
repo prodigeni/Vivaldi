@@ -30,8 +30,7 @@ private:
   void push_arg();
   void pop_arg(symbol sym);
   void member(symbol sym);
-  void call();
-  void call_nat();
+  void call(int args);
 
   void enter();
   void leave();
@@ -39,8 +38,10 @@ private:
   void jump_unless(int offset);
   void jump(int offset);
 
-  std::shared_ptr<call_stack> m_base;
+  std::shared_ptr<call_stack> m_stack;
   value::base* m_retval;
+
+  std::shared_ptr<call_stack> m_base;
 };
 
 }

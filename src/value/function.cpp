@@ -7,14 +7,11 @@
 
 using namespace il;
 
-value::function::function(const std::vector<il::symbol>& args,
-                          std::shared_ptr<ast::expression> body)
-  : base   {&builtin::type::function},
-    m_args {args},
-    m_body {body}
+value::function::function(vector_ref<vm::command> new_body,
+                          std::shared_ptr<vm::call_stack> new_enclosure)
+  : base      {&builtin::type::function},
+    body      {new_body},
+    enclosure {new_enclosure}
 { }
 
-std::string value::function::value() const
-{
-  return "<function>";
-}
+std::string value::function::value() const { return "<function>"; }

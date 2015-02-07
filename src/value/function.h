@@ -2,22 +2,22 @@
 #define IL_VALUE_FUNCTION_H
 
 #include "value.h"
-#include "expression.h"
+#include "utils.h"
+#include "vm/call_stack.h"
+#include "vm/instruction.h"
 
 namespace il {
 
 namespace value {
 
 struct function : public base {
-public:
-  function(const std::vector<il::symbol>& args,
-           std::shared_ptr<ast::expression> body);
+  function(vector_ref<vm::command> body,
+           std::shared_ptr<vm::call_stack> enclosure);
 
   std::string value() const override;
 
-private:
-  std::vector<il::symbol> m_args;
-  std::shared_ptr<ast::expression> m_body;
+  vector_ref<vm::command> body;
+  std::shared_ptr<vm::call_stack> enclosure;
 };
 
 }

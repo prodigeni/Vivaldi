@@ -31,7 +31,6 @@ enum class instruction {
   pop_arg,
   member,
   call,
-  call_nat,
 
   enter,
   leave,
