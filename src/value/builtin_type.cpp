@@ -28,6 +28,11 @@ void builtin_type::each_key(
     fn(i.first);
 }
 
+value::base* builtin_type::method(il::symbol name) const
+{
+  return gc::alloc<value::builtin_function>( m_methods.at(name) );
+}
+
 std::string builtin_type::value() const
 {
   return "<builtin type>";
