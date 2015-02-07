@@ -7,7 +7,7 @@
 using namespace il;
 
 value::builtin_function::builtin_function(
-    const std::function<base*(std::shared_ptr<vm::call_stack>)>& new_body)
+    const std::function<base*(vm::call_stack&)>& new_body)
   : base {nullptr},
     body {new_body}
 { }

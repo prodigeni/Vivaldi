@@ -173,7 +173,7 @@ void vm::machine::call(int argc)
                                                m_base,
                                                move(args),
                                                m_stack->instr_ptr );
-    m_retval = fn->body(stack);
+    m_retval = fn->body(*stack);
   }
 }
 

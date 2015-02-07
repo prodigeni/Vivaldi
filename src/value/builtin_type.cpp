@@ -12,10 +12,10 @@ namespace {
 }
 
 builtin_type::builtin_type(
-    const std::function<base*(const std::vector<base*>&)>& ctr,
+    const std::function<base*(vm::call_stack&)>& ctr,
     const std::unordered_map<
             il::symbol,
-            std::function<base*(base*, const std::vector<base*>&)>>& fns)
+            std::function<base*(vm::call_stack&)>>& fns)
   : basic_type {},
     m_ctr      {ctr},
     m_methods  {fns}

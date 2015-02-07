@@ -11,11 +11,11 @@ namespace value {
 struct builtin_function : public base {
 public:
   builtin_function(
-      const std::function<base*(std::shared_ptr<vm::call_stack>)>& body);
+      const std::function<base*(vm::call_stack&)>& body);
 
   std::string value() const override;
 
-  std::function<base*(std::shared_ptr<vm::call_stack>)> body;
+  std::function<base*(vm::call_stack&)> body;
 };
 
 }
