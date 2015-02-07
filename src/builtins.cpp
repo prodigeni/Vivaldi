@@ -469,7 +469,6 @@ void builtin::make_base_env(vm::call_stack& base)
     { {"puts"},    &builtin::function::puts },
     { {"gets"},    &builtin::function::gets },
     { {"quit"},    &builtin::function::quit },
-    { {"size"},    &builtin::function::size },
     { {"type"},    &builtin::function::type },
     { {"Array"},   &builtin::type::array },
     { {"Float"},   &builtin::type::floating_point },

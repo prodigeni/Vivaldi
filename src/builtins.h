@@ -22,7 +22,6 @@ extern value::builtin_function puts;
 extern value::builtin_function gets;
 extern value::builtin_function quit;
 extern value::builtin_function make_array;
-extern value::builtin_function size;
 extern value::builtin_function type;
 
 }
