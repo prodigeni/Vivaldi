@@ -3,6 +3,8 @@
 
 #include "expression.h"
 
+#include "symbol.h"
+
 namespace il {
 
 namespace ast {

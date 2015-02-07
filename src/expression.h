@@ -1,9 +1,17 @@
 #ifndef IL_EXPRESSION_H
 #define IL_EXPRESSION_H
 
-#include "vm/instruction.h"
+#include "symbol.h"
+
+#include <vector>
 
 namespace il {
+
+namespace vm {
+
+struct command;
+
+}
 
 namespace ast {
 

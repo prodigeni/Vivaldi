@@ -1,6 +1,6 @@
 #include "function_call.h"
 
-#include "gc.h"
+#include "vm/instruction.h"
 
 using namespace il;
 

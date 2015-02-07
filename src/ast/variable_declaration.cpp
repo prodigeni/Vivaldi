@@ -1,5 +1,7 @@
 #include "variable_declaration.h"
 
+#include "vm/instruction.h"
+
 using namespace il;
 
 ast::variable_declaration::variable_declaration(

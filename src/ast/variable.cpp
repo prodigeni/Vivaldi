@@ -1,5 +1,7 @@
 #include "variable.h"
 
+#include "vm/instruction.h"
+
 using namespace il;
 
 ast::variable::variable(symbol name) : m_name{name} { }

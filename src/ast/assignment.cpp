@@ -1,6 +1,6 @@
 #include "assignment.h"
 
-#include "gc.h"
+#include "vm/instruction.h"
 
 using namespace il;
 
