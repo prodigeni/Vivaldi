@@ -464,7 +464,7 @@ value::builtin_type type::function {nullptr, { }};
 
 void builtin::make_base_env(vm::call_stack& base)
 {
-  base.local = { {
+  base.local.back() = {
     { {"print"},   &builtin::function::print },
     { {"puts"},    &builtin::function::puts },
     { {"gets"},    &builtin::function::gets },
@@ -478,5 +478,5 @@ void builtin::make_base_env(vm::call_stack& base)
     { {"Nil"},     &builtin::type::nil },
     { {"Symbol"},  &builtin::type::symbol },
     { {"Type"},    &builtin::type::custom_type }
-  } };
+  };
 }

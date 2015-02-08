@@ -34,7 +34,6 @@ void vm::machine::run()
   using boost::get;
 
   while (m_stack->instr_ptr.size()) {
-
     auto instr = m_stack->instr_ptr.front().instr;
     const auto& arg = m_stack->instr_ptr.front().arg;
     m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(1);
@@ -52,11 +51,11 @@ void vm::machine::run()
     case instruction::write: write(get<symbol>(arg)); break;
     case instruction::let:   let(get<symbol>(arg));   break;
 
-    case instruction::self:      self();                    break;
-    case instruction::push_arg:  push_arg();                break;
-    case instruction::pop_arg:   pop_arg(get<symbol>(arg)); break;
-    case instruction::mem:       mem(get<symbol>(arg));  break;
-    case instruction::call:      call(get<int>(arg));       break;
+    case instruction::self:     self();                    break;
+    case instruction::push_arg: push_arg();                break;
+    case instruction::pop_arg:  pop_arg(get<symbol>(arg)); break;
+    case instruction::mem:      mem(get<symbol>(arg));     break;
+    case instruction::call:     call(get<int>(arg));       break;
 
     case instruction::eblk: eblk(); break;
     case instruction::lblk: lblk(); break;
@@ -78,7 +77,7 @@ void vm::machine::push_flt(double val)
   m_retval = gc::alloc<value::floating_point>( val );
 }
 
-void vm::machine::push_fn(vector_ref<command> val)
+void vm::machine::push_fn(const std::vector<command>& val)
 {
   m_retval = gc::alloc<value::function>( val, m_stack );
 }
@@ -106,7 +105,7 @@ void vm::machine::push_sym(symbol val)
 void vm::machine::read(symbol sym)
 {
   auto stack = m_stack;
-  for (;;) {
+  while (stack) {
     auto holder = find_if(rbegin(stack->local), rend(stack->local),
                           [&](const auto& vars) { return vars.count(sym); });
     if (holder != rend(stack->local)) {
@@ -148,8 +147,8 @@ void vm::machine::push_arg()
 
 void vm::machine::pop_arg(symbol sym)
 {
-  m_stack->local.back()[sym] = m_stack->parent->pushed_args.back();
-  m_stack->parent->pushed_args.pop_back();
+  m_stack->local.back()[sym] = m_stack->args.back();
+  m_stack->args.pop_back();
 }
 
 void vm::machine::mem(symbol sym)
@@ -197,8 +196,6 @@ void vm::machine::lblk()
 
 void vm::machine::ret()
 {
-  if (m_stack->parent && m_stack->parent == m_stack->enclosing)
-    m_stack->parent->instr_ptr = m_stack->instr_ptr;
   m_stack = m_stack->parent;
   if (!m_stack)
     exit(0);

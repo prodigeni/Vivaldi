@@ -15,8 +15,20 @@ ast::function_definition::function_definition(symbol name,
 
 std::vector<vm::command> ast::function_definition::generate() const
 {
+  std::vector<vm::command> definition;
+  for (auto i = rbegin(m_args); i != rend(m_args); ++i)
+    definition.emplace_back(vm::instruction::pop_arg, *i);
+
+  auto body = m_body->generate();
+  copy(begin(body), end(body), back_inserter(definition));
+  definition.emplace_back(vm::instruction::ret);
+
+  std::vector<vm::command> vec;
+  vec.emplace_back(vm::instruction::push_fn, move(definition));
+
   const static symbol nonname{""};
-  if (m_name == nonname) {
-  } else {
-  }
+  if (m_name != nonname)
+    vec.emplace_back(vm::instruction::let, m_name);
+
+  return vec;
 }

@@ -7,7 +7,7 @@
 
 using namespace il;
 
-value::function::function(vector_ref<vm::command> new_body,
+value::function::function(const std::vector<vm::command>& new_body,
                           std::shared_ptr<vm::call_stack> new_enclosure)
   : base      {&builtin::type::function},
     body      {new_body},

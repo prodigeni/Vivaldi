@@ -11,12 +11,12 @@ namespace il {
 namespace value {
 
 struct function : public base {
-  function(vector_ref<vm::command> body,
+  function(const std::vector<vm::command>& body,
            std::shared_ptr<vm::call_stack> enclosure);
 
   std::string value() const override;
 
-  vector_ref<vm::command> body;
+  std::vector<vm::command> body;
   std::shared_ptr<vm::call_stack> enclosure;
 };
 

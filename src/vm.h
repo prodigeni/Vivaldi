@@ -16,7 +16,7 @@ public:
 private:
   void push_bool(bool val);
   void push_flt(double val);
-  void push_fn(vector_ref<command> val);
+  void push_fn(const std::vector<command>& val);
   void push_int(int val);
   void push_nil();
   void push_str(const std::string& val);

@@ -8,6 +8,7 @@ vm::call_stack::call_stack(std::shared_ptr<call_stack> new_parent,
                            vector_ref<command>         new_instr_ptr)
   : parent    {new_parent},
     enclosing {new_enclosing},
+    local     {{}},
     args      {new_args},
     instr_ptr {new_instr_ptr}
 {
