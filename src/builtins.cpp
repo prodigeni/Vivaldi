@@ -364,35 +364,25 @@ auto fn_bool_op(const F& op)
 
 auto custom_type_default_ctr_maker(value::type* type)
 {
-  return [=](vm::call_stack&)
-  {
-    std::cerr << "\033[95mallocating new custom object!!!\033[39m\n";
-    auto tmp = gc::alloc<value::base>( type );
-    std::cerr << "\033[95m  allocated; returning\033[39m\n";
-    return tmp;
-  };
+  return [=](vm::call_stack&) { return gc::alloc<value::base>( type ); };
 }
 
 value::base* fn_custom_type_ctr(vm::call_stack& base)
 {
-  std::cerr << "\033[35mconstructing custom type\033[39m\n";
   std::unordered_map<symbol, value::base*> methods;
   for (auto i = base.args.size(); i--; --i) {
     auto name = to_symbol(*base.args[i]);
     auto definition = base.args[i - 1];
     methods[name] = definition;
   }
-  std::cerr << "\033[35m  constructed methods\033[39m\n";
 
   auto type = gc::alloc<value::type>( nullptr, move(methods) );
   gc::set_current_retval(type);
-  std::cerr << "\033[35m  allocated type\033[39m\n";
 
   auto cast_type = static_cast<value::type*>(type);
   auto constructor = custom_type_default_ctr_maker(cast_type);
   cast_type->constructor = gc::alloc<value::builtin_function>(constructor);
 
-  std::cerr << "\033[35m  built constructor; done\033[39m\n";
   return type;
 }
 
