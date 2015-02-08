@@ -193,6 +193,17 @@ tok_res string_token(boost::string_ref line)
 }
 
 // }}}
+// '/' {{{
+
+tok_res slash_token(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '/')
+    return {"/", ltrim(remove_prefix(line, 1))};
+  line.remove_prefix(1 + std::find(begin(line), end(line), '\n') - begin(line));
+  return {"\n", line};
+}
+
+// }}}
 // /./ {{{
 
 tok_res name_token(boost::string_ref line)
@@ -223,7 +234,6 @@ tok_res first_token(boost::string_ref line)
   case '*':
   case '~':
   case '^':
-  case '/':
   case '%':
   case '#':
   case '\'': return {{line.front()}, ltrim(remove_prefix(line, 1))};
@@ -245,6 +255,7 @@ tok_res first_token(boost::string_ref line)
   case '<': return lt_tokens(line);
   case '>': return gt_tokens(line);
   case '"': return string_token(line);
+  case '/': return slash_token(line);
   default:  return name_token(line);
   }
 }
