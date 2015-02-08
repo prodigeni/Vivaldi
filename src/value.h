@@ -32,7 +32,7 @@ struct symbol;
 struct base {
   base(type* type);
 
-  virtual std::string value() const = 0;
+  virtual std::string value() const { return "<object>"; }
 
   virtual ~base() { }
 

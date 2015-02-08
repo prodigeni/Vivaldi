@@ -36,4 +36,7 @@ void value::type::mark()
   base::mark();
   if (constructor && !constructor->marked())
     constructor->mark();
+  for (const auto& i : methods)
+    if (!i.second->marked())
+      i.second->mark();
 }

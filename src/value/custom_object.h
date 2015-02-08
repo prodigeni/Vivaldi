@@ -9,7 +9,6 @@ namespace il {
 namespace value {
 
 struct custom_object : public base {
-public:
   custom_object(value::type* type,
                 const std::vector<base*>& args);
 

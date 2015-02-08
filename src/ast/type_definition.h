@@ -16,7 +16,6 @@ class type_definition : public expression {
 public:
   type_definition(symbol name,
                   symbol parent,
-                  const std::vector<symbol>& public_mems,
                   const std::unordered_map<
                             il::symbol,
                             std::shared_ptr<ast::function_definition>>&
@@ -28,8 +27,6 @@ public:
 private:
   symbol m_name;
   symbol m_parent;
-
-  std::vector<symbol> m_members;
 
   std::unordered_map<il::symbol,
                      std::shared_ptr<ast::function_definition>> m_methods;

@@ -727,26 +727,21 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
   auto name = parse_literal_symbol(tokens);
   tokens = name->second;
 
-  if (auto members_res = parse_bracketed_subexpr(tokens, parse_arg_list,
-                                                 "[", "]")) {
-    tokens = members_res->second;
-    auto methods_res = parse_bracketed_subexpr(tokens,
-                           [](auto t)
-                             { return parse_comma_separated_list(t,
-                                         parse_method); },
-                             "{", "}");
-    if (methods_res) {
-      std::unordered_map<symbol,
-                         std::shared_ptr<ast::function_definition>> methods;
-      for (const auto& i : methods_res->first)
-        methods[i.first] = i.second;
+  auto methods_res = parse_bracketed_subexpr(tokens,
+                         [](auto t)
+                           { return parse_comma_separated_list(t,
+                                       parse_method); },
+                           "{", "}");
+  if (methods_res) {
+    std::unordered_map<symbol,
+                       std::shared_ptr<ast::function_definition>> methods;
+    for (const auto& i : methods_res->first)
+      methods[i.first] = i.second;
 
-      return {{ std::make_unique<ast::type_definition>( name->first,
-                                                        symbol{""},
-                                                        members_res->first,
-                                                        methods ),
-                methods_res->second }};
-    }
+    return {{ std::make_unique<ast::type_definition>( name->first,
+                                                      symbol{""},
+                                                      methods ),
+              methods_res->second }};
   }
 
   return {};
