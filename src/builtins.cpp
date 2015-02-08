@@ -6,7 +6,6 @@
 #include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/builtin_type.h"
-#include "value/custom_type.h"
 #include "value/floating_point.h"
 #include "value/integer.h"
 #include "value/nil.h"
@@ -221,26 +220,6 @@ value::base* fn_floating_point_ctr(vm::call_stack& base)
   throw std::runtime_error{"cannot create Float from " + base.args.front()->value()};
 }
 
-value::base* fn_floating_point_equals(
-                               vm::call_stack& base)
-{
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::floating_point)
-    return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>(
-      to_float(*base.self) == to_float(*base.args.front()) );
-}
-
-value::base* fn_floating_point_unequal(
-                               vm::call_stack& base)
-{
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::floating_point)
-    return gc::alloc<value::boolean>( false );
-  return gc::alloc<value::boolean>(
-      to_float(*base.self) != to_float(*base.args.front()) );
-}
-
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
@@ -400,58 +379,109 @@ value::base* fn_custom_type_ctr(vm::call_stack& base)
 // }}}
 // Types {{{
 
+using value::builtin_function;
+
+namespace {
+builtin_function array_size   {fn_array_size};
+builtin_function array_append {fn_array_append};
+builtin_function array_at     {fn_array_at};
+}
 value::builtin_type type::array {fn_array_ctr, {
-  { {"size"},   {fn_array_size} },
-  { {"append"}, {fn_array_append} },
-  { {"at"},     {fn_array_at} }
+  { {"size"},   &array_size },
+  { {"append"}, &array_append },
+  { {"at"},     &array_at }
 }};
 
+namespace {
+builtin_function int_add            {fn_integer_op(std::plus<int>{})          };
+builtin_function int_subtract       {fn_integer_op(std::minus<int>{})         };
+builtin_function int_times          {fn_integer_op(std::multiplies<int>{})    };
+builtin_function int_divides        {fn_integer_op(std::divides<int>{})       };
+builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})       };
+builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})       };
+builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})        };
+builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})       };
+builtin_function int_equals         {fn_int_bool_op(std::equal_to<int>{})     };
+builtin_function int_unequal        {fn_int_bool_op(std::not_equal_to<int>{}) };
+builtin_function int_less           {fn_int_bool_op(std::less<int>{})         };
+builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})      };
+builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})   };
+builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})};
+}
 value::builtin_type type::integer{{fn_integer_ctr}, {
-  { {"add"},            {fn_integer_op(std::plus<int>{})}           },
-  { {"subtract"},       {fn_integer_op(std::minus<int>{})}          },
-  { {"times"},          {fn_integer_op(std::multiplies<int>{})}     },
-  { {"divides"},        {fn_integer_op(std::divides<int>{})}        },
-  { {"modulo"},         {fn_integer_op(std::modulus<int>{})}        },
-  { {"bitand"},         {fn_integer_op(std::bit_and<int>{})}        },
-  { {"bitor"},          {fn_integer_op(std::bit_or<int>{})}         },
-  { {"xor"},            {fn_integer_op(std::bit_xor<int>{})}        },
-  { {"equals"},         {fn_int_bool_op(std::equal_to<int>{})}      },
-  { {"unequal"},        {fn_int_bool_op(std::not_equal_to<int>{})}  },
-  { {"less"},           {fn_int_bool_op(std::less<int>{})}          },
-  { {"greater"},        {fn_int_bool_op(std::greater<int>{})}       },
-  { {"less_equals"},    {fn_int_bool_op(std::less_equal<int>{})}    },
-  { {"greater_equals"}, {fn_int_bool_op(std::greater_equal<int>{})} }
+  { {"add"},            &int_add            },
+  { {"subtract"},       &int_subtract       },
+  { {"times"},          &int_times          },
+  { {"divides"},        &int_divides        },
+  { {"modulo"},         &int_modulo         },
+  { {"bitand"},         &int_bitand         },
+  { {"bitor"},          &int_bitor          },
+  { {"xor"},            &int_xor            },
+  { {"equals"},         &int_equals         },
+  { {"unequal"},        &int_unequal        },
+  { {"less"},           &int_less           },
+  { {"greater"},        &int_greater        },
+  { {"less_equals"},    &int_less_equals    },
+  { {"greater_equals"}, &int_greater_equals }
 } };
 
+namespace {
+builtin_function flt_add            {fn_floating_point_op(std::plus<double>{})       };
+builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{})      };
+builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}) };
+builtin_function flt_divides        {fn_floating_point_op(std::divides<double>{})    };
+builtin_function flt_equals         {fn_float_bool_op(std::equal_to<double>{})       };
+builtin_function flt_unequal        {fn_float_bool_op(std::not_equal_to<double>{})   };
+builtin_function flt_less           {fn_float_bool_op(std::less<double>{})           };
+builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{})        };
+builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{})     };
+builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{})  };
+}
 value::builtin_type type::floating_point{{fn_floating_point_ctr}, {
-  { {"equals"},         {fn_floating_point_equals}                        },
-  { {"unequal"},        {fn_floating_point_unequal}                       },
-  { {"add"},            {fn_floating_point_op(std::plus<double>{})}       },
-  { {"subtract"},       {fn_floating_point_op(std::minus<double>{})}      },
-  { {"times"},          {fn_floating_point_op(std::multiplies<double>{})} },
-  { {"divides"},        {fn_floating_point_op(std::divides<double>{})}    },
-  { {"less"},           {fn_float_bool_op(std::less<double>{})}           },
-  { {"greater"},        {fn_float_bool_op(std::greater<double>{})}        },
-  { {"less_equals"},    {fn_float_bool_op(std::less_equal<double>{})}     },
-  { {"greater_equals"}, {fn_float_bool_op(std::greater_equal<double>{})}  }
+  { {"equals"},         &flt_equals         },
+  { {"unequal"},        &flt_unequal        },
+  { {"add"},            &flt_add            },
+  { {"subtract"},       &flt_subtract       },
+  { {"times"},          &flt_times          },
+  { {"divides"},        &flt_divides        },
+  { {"less"},           &flt_less           },
+  { {"greater"},        &flt_greater        },
+  { {"less_equals"},    &flt_less_equals    },
+  { {"greater_equals"}, &flt_greater_equals }
 }};
 
+namespace {
+builtin_function string_size    {fn_string_size};
+builtin_function string_append  {fn_string_append};
+builtin_function string_equals  {fn_string_equals};
+builtin_function string_unequal {fn_string_unequal};
+}
 value::builtin_type type::string {{fn_string_ctr}, {
-  { {"size"},    {fn_string_size}    },
-  { {"append"},  {fn_string_append}  },
-  { {"equals"},  {fn_string_equals}  },
-  { {"unequal"}, {fn_string_unequal} }
+  { {"size"},    &string_size    },
+  { {"append"},  &string_append  },
+  { {"equals"},  &string_equals  },
+  { {"unequal"}, &string_unequal }
 }};
 
+
+namespace {
+builtin_function symbol_equals  {fn_symbol_equals};
+builtin_function symbol_unequal {fn_symbol_unequal};
+builtin_function symbol_to_str  {fn_symbol_to_str};
+}
 value::builtin_type type::symbol {{fn_symbol_ctr}, {
-  { {"equals"},  {fn_symbol_equals}  },
-  { {"unequal"}, {fn_symbol_unequal} },
-  { {"to_str"},  {fn_symbol_to_str}  }
+  { {"equals"},  &symbol_equals  },
+  { {"unequal"}, &symbol_unequal },
+  { {"to_str"},  &symbol_to_str  }
 }};
 
+namespace {
+builtin_function bool_equals  {fn_bool_op(std::equal_to<bool>{})};
+builtin_function bool_unequal {fn_bool_op(std::not_equal_to<bool>{})};
+}
 value::builtin_type type::boolean {{fn_bool_ctr}, {
-  { {"equals"},  {fn_bool_op(std::equal_to<bool>{})}     },
-  { {"unequal"}, {fn_bool_op(std::not_equal_to<bool>{})} }
+  { {"equals"},  &bool_equals  },
+  { {"unequal"}, &bool_unequal }
 }};
 
 value::builtin_type type::custom_type {{fn_custom_type_ctr}, {

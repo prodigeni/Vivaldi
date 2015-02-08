@@ -20,12 +20,6 @@ custom_type::custom_type(
   m_ctr = m_methods[{"init"}];
 }
 
-void custom_type::each_key(const std::function<void(il::symbol)>& fn) const
-{
-  for (const auto& i : m_methods)
-    fn(i.first);
-}
-
 std::string custom_type::value() const
 {
   return "<type>";

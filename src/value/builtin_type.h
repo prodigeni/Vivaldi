@@ -16,19 +16,12 @@ public:
       const std::function<base*(vm::call_stack&)>& ctr,
       const std::unordered_map<
               il::symbol,
-              value::builtin_function> fns);
-
-  void each_key(const std::function<void(il::symbol)>& fn) const override;
-
-  value::base* method(il::symbol name) override;
+              value::base*>& fns);
 
   std::string value() const override;
 
 private:
   std::function<base*(vm::call_stack&)> m_ctr;
-  std::unordered_map<
-    il::symbol,
-    value::builtin_function> m_methods;
 };
 
 }

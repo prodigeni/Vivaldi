@@ -13,7 +13,7 @@ value::base::base(basic_type* new_type)
     m_marked {false}
 {
   if (type)
-    type->each_key([&](auto sym) { members[sym] = type->method(sym); });
+    members = type->methods;
 }
 
 void value::base::mark()

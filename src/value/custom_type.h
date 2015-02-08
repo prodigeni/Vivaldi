@@ -20,8 +20,6 @@ public:
   const std::vector<il::symbol>& ctr_args() const { return m_ctr_args; }
   ast::function_definition* ctr() const { return m_ctr.get(); }
 
-  void each_key(const std::function<void(il::symbol)>& fn) const override;
-
 private:
   std::vector<il::symbol> m_ctr_args;
 

@@ -52,8 +52,7 @@ private:
 struct basic_type : public base {
   basic_type();
 
-  virtual void each_key(const std::function<void(il::symbol)>& fn) const = 0;
-  virtual base* method(il::symbol name) = 0;
+  std::unordered_map<il::symbol, value::base*> methods;
 };
 
 }
