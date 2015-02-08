@@ -154,7 +154,10 @@ void vm::machine::pop_arg(symbol sym)
 void vm::machine::mem(symbol sym)
 {
   m_stack->pushed_self = *m_retval;
-  m_retval = m_retval->members[sym];
+  if (m_retval->members.count(sym))
+    m_retval = m_retval->members[sym];
+  else
+    m_retval = m_retval->type->methods[sym];
 }
 
 void vm::machine::call(int argc)

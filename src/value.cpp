@@ -8,12 +8,10 @@
 using namespace il;
 
 value::base::base(struct type* new_type)
-  : type     {new_type},
+  : members  {},
+    type     {new_type},
     m_marked {false}
-{
-  if (type)
-    members = type->methods;
-}
+{ }
 
 void value::base::mark()
 {
