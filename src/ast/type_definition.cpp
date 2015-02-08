@@ -21,7 +21,7 @@ std::vector<vm::command> ast::type_definition::generate() const
   std::vector<vm::command> vec;
   for (const auto& i : m_methods) {
     auto definition = i.second->generate();
-    vec.emplace_back(vm::instruction::push_fn, move(definition));
+    copy(begin(definition), end(definition), back_inserter(vec));
     vec.emplace_back(vm::instruction::push_arg);
 
     vec.emplace_back(vm::instruction::push_sym, i.first);
