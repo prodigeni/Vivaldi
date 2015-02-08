@@ -15,27 +15,27 @@ ast::cond_statement::cond_statement(
 std::vector<vm::command> ast::cond_statement::generate() const
 {
   std::vector<vm::command> vec;
-  std::vector<decltype(begin(vec))> jump_to_end_iterators;
+  std::vector<size_t> jump_to_end_idxs;
 
   for (const auto& i : m_body) {
     auto test = i.first->generate();
     copy(begin(test), end(test), back_inserter(vec));
     vec.emplace_back(vm::instruction::jmp_false);
-    auto jump_to_next_test_iterator = --end(vec);
+    auto jump_to_next_test_idx = vec.size() - 1;
 
     auto body = i.second->generate();
     copy(begin(body), end(body), back_inserter(vec));
     vec.emplace_back(vm::instruction::jmp);
-    jump_to_end_iterators.push_back(--end(vec));
+    jump_to_end_idxs.push_back(vec.size() - 1);
 
-    auto jump_sz = static_cast<int>(end(vec) - jump_to_next_test_iterator);
-    jump_to_next_test_iterator->arg = jump_sz;
+    auto jump_sz = static_cast<int>(vec.size() - jump_to_next_test_idx);
+    vec[jump_to_next_test_idx].arg = jump_sz;
   }
 
   vec.emplace_back(vm::instruction::push_nil);
-  for (auto i : jump_to_end_iterators) {
-    auto jump_sz = static_cast<int>(end(vec) - i);
-    i->arg = jump_sz;
+  for (auto i : jump_to_end_idxs) {
+    auto jump_sz = static_cast<int>(vec.size() - i);
+    vec[i].arg = jump_sz;
   }
 
   return vec;

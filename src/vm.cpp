@@ -63,7 +63,7 @@ void vm::machine::run()
     case instruction::ret:  ret(); break;
 
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
-    case instruction::jmp:       jmp(get<int>(arg));        break;
+    case instruction::jmp:       jmp(get<int>(arg));       break;
     }
   }
 }
@@ -208,10 +208,10 @@ void vm::machine::ret()
 void vm::machine::jmp_false(int offset)
 {
   if (!truthy(m_retval))
-    m_stack->instr_ptr.remove_prefix(offset);
+    m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(offset - 1);
 }
 
 void vm::machine::jmp(int offset)
 {
-  m_stack->instr_ptr.remove_prefix(offset);
+  m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(offset - 1);
 }
