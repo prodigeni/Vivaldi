@@ -185,12 +185,12 @@ void vm::machine::call(int argc)
   }
 }
 
-void vm::machine::lblk()
+void vm::machine::eblk()
 {
   m_stack->local.emplace_back();
 }
 
-void vm::machine::eblk()
+void vm::machine::lblk()
 {
   m_stack->local.pop_back();
 }
