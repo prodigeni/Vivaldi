@@ -21,3 +21,11 @@ std::string value::array::value() const
   str += ']';
   return str;
 }
+
+void value::array::mark()
+{
+  base::mark();
+  for (auto* i : mems)
+    if (!i->marked())
+      i->mark();
+}
