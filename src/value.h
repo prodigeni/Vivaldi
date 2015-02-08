@@ -18,7 +18,6 @@ struct array;
 struct type;
 struct boolean;
 struct builtin_function;
-struct custom_object;
 struct dictionary;
 struct floating_point;
 struct function;
