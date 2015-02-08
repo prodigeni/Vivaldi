@@ -5,7 +5,6 @@
 #include "value/array.h"
 #include "value/boolean.h"
 #include "value/builtin_function.h"
-#include "value/builtin_type.h"
 #include "value/floating_point.h"
 #include "value/integer.h"
 #include "value/nil.h"
@@ -382,17 +381,19 @@ value::base* fn_custom_type_ctr(vm::call_stack& base)
 using value::builtin_function;
 
 namespace {
+builtin_function array_ctr    {fn_array_ctr};
 builtin_function array_size   {fn_array_size};
 builtin_function array_append {fn_array_append};
 builtin_function array_at     {fn_array_at};
 }
-value::builtin_type type::array {fn_array_ctr, {
+value::type type::array {&array_ctr, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at }
 }};
 
 namespace {
+builtin_function int_ctr            {fn_integer_ctr                           };
 builtin_function int_add            {fn_integer_op(std::plus<int>{})          };
 builtin_function int_subtract       {fn_integer_op(std::minus<int>{})         };
 builtin_function int_times          {fn_integer_op(std::multiplies<int>{})    };
@@ -408,7 +409,7 @@ builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})      };
 builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})   };
 builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})};
 }
-value::builtin_type type::integer{{fn_integer_ctr}, {
+value::type type::integer{&int_ctr, {
   { {"add"},            &int_add            },
   { {"subtract"},       &int_subtract       },
   { {"times"},          &int_times          },
@@ -426,6 +427,7 @@ value::builtin_type type::integer{{fn_integer_ctr}, {
 } };
 
 namespace {
+builtin_function flt_ctr            {fn_floating_point_ctr};
 builtin_function flt_add            {fn_floating_point_op(std::plus<double>{})       };
 builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{})      };
 builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}) };
@@ -437,7 +439,7 @@ builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{})   
 builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{})     };
 builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{})  };
 }
-value::builtin_type type::floating_point{{fn_floating_point_ctr}, {
+value::type type::floating_point{&flt_ctr, {
   { {"equals"},         &flt_equals         },
   { {"unequal"},        &flt_unequal        },
   { {"add"},            &flt_add            },
@@ -451,12 +453,13 @@ value::builtin_type type::floating_point{{fn_floating_point_ctr}, {
 }};
 
 namespace {
+builtin_function string_ctr     {fn_string_ctr};
 builtin_function string_size    {fn_string_size};
 builtin_function string_append  {fn_string_append};
 builtin_function string_equals  {fn_string_equals};
 builtin_function string_unequal {fn_string_unequal};
 }
-value::builtin_type type::string {{fn_string_ctr}, {
+value::type type::string {&string_ctr, {
   { {"size"},    &string_size    },
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
@@ -465,30 +468,35 @@ value::builtin_type type::string {{fn_string_ctr}, {
 
 
 namespace {
+builtin_function symbol_ctr     {fn_symbol_ctr};
 builtin_function symbol_equals  {fn_symbol_equals};
 builtin_function symbol_unequal {fn_symbol_unequal};
 builtin_function symbol_to_str  {fn_symbol_to_str};
 }
-value::builtin_type type::symbol {{fn_symbol_ctr}, {
+value::type type::symbol {&symbol_ctr, {
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
   { {"to_str"},  &symbol_to_str  }
 }};
 
 namespace {
+builtin_function bool_ctr     {fn_bool_ctr};
 builtin_function bool_equals  {fn_bool_op(std::equal_to<bool>{})};
 builtin_function bool_unequal {fn_bool_op(std::not_equal_to<bool>{})};
 }
-value::builtin_type type::boolean {{fn_bool_ctr}, {
+value::type type::boolean {&bool_ctr, {
   { {"equals"},  &bool_equals  },
   { {"unequal"}, &bool_unequal }
 }};
 
-value::builtin_type type::custom_type {{fn_custom_type_ctr}, {
+namespace {
+builtin_function custom_type_ctr {fn_custom_type_ctr};
+}
+value::type type::custom_type {&custom_type_ctr, {
 }};
 
-value::builtin_type type::nil      {nullptr, { }};
-value::builtin_type type::function {nullptr, { }};
+value::type type::nil      {nullptr, { }};
+value::type type::function {nullptr, { }};
 
 // }}}
 

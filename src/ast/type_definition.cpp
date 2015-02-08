@@ -1,7 +1,6 @@
 #include "type_definition.h"
 
 #include "gc.h"
-#include "value/custom_type.h"
 
 using namespace il;
 

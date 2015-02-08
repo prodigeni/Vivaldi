@@ -10,7 +10,7 @@ namespace value {
 
 struct custom_object : public base {
 public:
-  custom_object(custom_type* type,
+  custom_object(value::type* type,
                 const std::vector<base*>& args);
 
   std::string value() const override;

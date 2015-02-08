@@ -3,7 +3,6 @@
 #include "builtins.h"
 #include "gc.h"
 #include "lang_utils.h"
-#include "value/builtin_type.h"
 
 using namespace il;
 

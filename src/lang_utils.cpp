@@ -3,7 +3,6 @@
 #include "builtins.h"
 #include "gc.h"
 #include "value/boolean.h"
-#include "value/builtin_type.h"
 
 bool il::truthy(const value::base* val)
 {

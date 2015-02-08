@@ -2,7 +2,6 @@
 
 #include "gc.h"
 #include "builtins.h"
-#include "value/builtin_type.h"
 
 using namespace il;
 

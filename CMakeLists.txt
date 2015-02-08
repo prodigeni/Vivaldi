@@ -37,9 +37,7 @@ add_executable(il
   src/value/array.cpp
   src/value/boolean.cpp
   src/value/builtin_function.cpp
-  src/value/builtin_type.cpp
   src/value/custom_object.cpp
-  src/value/custom_type.cpp
   src/value/floating_point.cpp
   src/value/function.cpp
   src/value/integer.cpp

@@ -15,12 +15,10 @@ class function_definition;
 namespace value {
 
 struct array;
-struct basic_type;
+struct type;
 struct boolean;
 struct builtin_function;
-struct builtin_type;
 struct custom_object;
-struct custom_type;
 struct dictionary;
 struct floating_point;
 struct function;
@@ -32,14 +30,14 @@ struct string;
 struct symbol;
 
 struct base {
-  base(basic_type* type);
+  base(type* type);
 
   virtual std::string value() const = 0;
 
   virtual ~base() { }
 
   std::unordered_map<il::symbol, value::base*> members;
-  basic_type* type;
+  type* type;
 
   virtual void mark();
   bool marked() const { return m_marked; }
@@ -49,10 +47,16 @@ private:
   bool m_marked;
 };
 
-struct basic_type : public base {
-  basic_type();
+struct type : public base {
+  type(value::base* constructor,
+      const std::unordered_map<il::symbol, value::base*>& methods);
 
   std::unordered_map<il::symbol, value::base*> methods;
+  value::base* constructor;
+
+  std::string value() const override;
+
+  void mark() override;
 };
 
 }

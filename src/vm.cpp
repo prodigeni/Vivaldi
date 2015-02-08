@@ -160,12 +160,16 @@ void vm::machine::mem(symbol sym)
 void vm::machine::call(int argc)
 {
   std::vector<value::base*> args;
-  while (argc--) {
-    args.push_back(m_stack->pushed_args.back());
-    m_stack->pushed_args.pop_back();
-  }
+  copy(end(m_stack->pushed_args) - argc, end(m_stack->pushed_args),
+       back_inserter(args));
+  m_stack->pushed_args.erase(end(m_stack->pushed_args) - argc,
+                             end(m_stack->pushed_args));
 
-  if (auto fn = dynamic_cast<value::function*>(m_retval)) {
+  auto function = m_retval;
+  if (auto type = dynamic_cast<value::type*>(function))
+    function = type->constructor;
+
+  if (auto fn = dynamic_cast<value::function*>(function)) {
     m_stack = std::make_shared<call_stack>( m_stack,
                                             fn->enclosure,
                                             move(args),
@@ -173,7 +177,7 @@ void vm::machine::call(int argc)
 
     gc::set_current_frame(m_stack);
 
-  } else if (auto fn = dynamic_cast<value::builtin_function*>(m_retval)) {
+  } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
     auto stack = std::make_shared<call_stack>( m_stack,
                                                m_base,
                                                move(args),
