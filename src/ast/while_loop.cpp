@@ -16,13 +16,13 @@ std::vector<vm::command> ast::while_loop::generate() const
 {
   auto vec = m_test->generate();
   vec.emplace_back(vm::instruction::jmp_false);
-  auto test_jump_iterator = --end(vec);
+  auto test_jump_idx = vec.size() - 1;
 
   auto body = m_body->generate();
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::jmp, -static_cast<int>(vec.size()));
-  test_jump_iterator->arg = static_cast<int>(end(vec) - test_jump_iterator);
+  vec[test_jump_idx].arg = static_cast<int>(vec.size() - test_jump_idx);
 
   return vec;
 }
