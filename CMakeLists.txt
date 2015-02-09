@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 3.0)
-project (il)
+project (vivaldi)
 
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -lc++abi -ggdb")
 
 include_directories("src" SYSTEM "/usr/local/Cellar/boost/1.57.0/include")
 
-add_executable(il
+add_executable(vivaldi
   src/main.cpp
 
   src/gc.cpp
