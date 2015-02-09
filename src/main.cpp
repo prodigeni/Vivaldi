@@ -14,6 +14,7 @@ void run_repl()
       std::shared_ptr<il::vm::call_stack>{},
       std::vector<il::value::base*>{},
       il::vector_ref<il::vm::command>{{}} );
+  il::builtin::make_base_env(*base_stack);
 
   for (;;) {
     std::cout << ">>> ";
