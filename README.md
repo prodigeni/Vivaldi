@@ -4,10 +4,26 @@ Vivaldi is a simple interpreted language inspired by Ruby, Python, Lisp, etc.
 
 ## Overview ##
 
+### Basics ###
+
+Vivaldi can be run either from a file or from the REPL:
+
+<pre><code>
+    $ cat test.vv
+    puts("Hello, world!")
+    $ vivaldi ./test.vv
+    Hello, world!
+    $ ./vivaldi
+    >>> puts("Hello, REPL!")
+    Hello, REPL!
+    => nil
+    >>> quit()
+    $
+</code></pre>
+
 ### Builtins ###
 
 Vivaldi has a fairly limited set of builtin types:
-
 
 #### Nil ####
 `nil` - like `nil` in Ruby and Lisp, or `None` in Python.
@@ -63,6 +79,15 @@ is completely identical to
 
 <pre><code>
     fn five_returner(): 5
+</code></pre>
+
+Once defined, functions work more or less like in Python:
+
+<pre><code>
+    fn id(x): x
+
+    let function = id
+    function(1) // 1
 </code></pre>
 
 #### Types ####
@@ -235,6 +260,7 @@ are expressions.
 #### Prime Number Sieve ####
 
 <pre><code>
+    // This *will* be builtin to later versions
     fn for_each(array, func): {
       let i = 0
       let size = func.size()
