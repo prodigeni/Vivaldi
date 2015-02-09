@@ -195,6 +195,21 @@ Blocks have nested scope:
     { puts(j) } // fine
 </code></pre>
 
+#### Exceptions ####
+
+Like in C++, exceptions in Vivaldi don't have any special type (in fact there is
+no builtin exception type; strings are used instead). Otherwise they work pretty
+much as you'd expect:
+
+<pre><code>
+    let i = try: except 5
+    catch e: e + 1
+    i == 6
+</code></pre>
+
+As everywhere else in Vivaldi, the pieces of code following `try` and `catch`
+are expressions.
+
 ### Example ###
 
 #### FizzBuzz ####
@@ -207,6 +222,14 @@ Blocks have nested scope:
       i % 3 == 0:  puts("Fizz"),
       true:        puts(i)
     }
+</code></pre>
+
+#### Basic I/O ####
+
+<pre><code>
+    print("What's your name? ")
+    let name = gets()
+    print("Hello, ".append(name))
 </code></pre>
 
 #### Prime Number Sieve ####
