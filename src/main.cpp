@@ -9,11 +9,14 @@
 #include <fstream>
 #include <sstream>
 
+void write_error(const std::string& error)
+{
+  std::cerr << "\033[1;31m" << error << "\033[22;39m\n";
+}
+
 vv::value::base* repl_catcher(vv::vm::machine& vm)
 {
-  std::cerr << "\033[1;31mcaught exception: "
-            << vm.stack->args.front()->value()
-            << "\033[22;39m\n";
+  write_error("caught exception: " + vm.stack->args.front()->value());
   return vv::gc::alloc<vv::value::nil>( );
 }
 
@@ -36,13 +39,17 @@ void run_repl()
     getline(std::cin, line);
     std::istringstream linestream{line};
     auto tokens = vv::parser::tokenize(linestream);
-    auto exprs = vv::parser::parse(tokens);
-    for (const auto& expr : exprs) {
-      auto body = expr->generate();
-      base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
-      vv::vm::machine machine{base_stack};
-      machine.run();
-      std::cout << "=> " << machine.retval->value() << '\n';
+    if (!vv::parser::is_valid(tokens)) {
+      write_error("invalid syntax");
+    } else {
+      auto exprs = vv::parser::parse(tokens);
+      for (const auto& expr : exprs) {
+        auto body = expr->generate();
+        base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
+        vv::vm::machine machine{base_stack};
+        machine.run();
+        std::cout << "=> " << machine.retval->value() << '\n';
+      }
     }
   }
 }
