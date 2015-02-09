@@ -12,6 +12,7 @@ public:
   machine(std::shared_ptr<call_stack> base);
 
   void run();
+  const value::base* value() const { return m_retval; }
 
 private:
   void push_bool(bool val);
