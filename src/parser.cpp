@@ -11,6 +11,7 @@
 #include "ast/literal.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
+#include "ast/try_catch.h"
 #include "ast/type_definition.h"
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
@@ -188,6 +189,7 @@ parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
 parse_res<> parse_array_literal(vector_ref<std::string> tokens);
 parse_res<> parse_dict_literal(vector_ref<std::string> tokens);
+parse_res<> parse_try_catch(vector_ref<std::string> tokens);
 parse_res<> parse_type_definition(vector_ref<std::string> tokens);
 parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
 parse_res<> parse_name(vector_ref<std::string> tokens);
@@ -261,6 +263,7 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
       || (res = parse_literal(tokens))
       || (res = parse_dict_literal(tokens))
       || (res = parse_array_literal(tokens))
+      || (res = parse_try_catch(tokens))
       || (res = parse_type_definition(tokens))
       || (res = parse_variable_declaration(tokens))
       || (res = parse_name(tokens))))
@@ -729,6 +732,38 @@ parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
   if (auto args=parse_bracketed_subexpr(tokens, parse_dict_internals, "{", "}"))
     return {{ std::make_unique<ast::cond_statement>(move(args->first)),
               args->second }};
+  return {};
+}
+
+// }}}
+// try_catch {{{
+
+parse_res<> parse_try_catch(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "try")
+    return {};
+
+  if (auto body_res = parse_expression(tokens.remove_prefix(2))) { // 'try' ':'
+    auto body = move(body_res->first);
+    tokens = body_res->second;
+    tokens = ltrim(tokens, {"\n"});
+
+    auto name_res = parse_literal_symbol(tokens.remove_prefix(1)); // 'catch'
+    auto name = name_res->first;
+    tokens = name_res->second;
+
+    auto catch_res = parse_expression(tokens.remove_prefix(1)); // ':'
+    auto catch_body = move(catch_res->first);
+    tokens = catch_res->second;
+
+    auto catch_fn = std::make_unique<ast::function_definition>(
+        symbol{""},
+        move(catch_body),
+        std::vector<symbol>{name} );
+
+    return {{ std::make_unique<ast::try_catch>( move(body), move(catch_fn) ),
+              tokens }};
+  }
   return {};
 }
 

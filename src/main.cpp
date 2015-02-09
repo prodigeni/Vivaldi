@@ -2,19 +2,33 @@
 #include "gc.h"
 #include "parser.h"
 #include "vm.h"
+#include "value/builtin_function.h"
+#include "value/nil.h"
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+vv::value::base* repl_catcher(vv::vm::call_stack& stack)
+{
+  std::cerr << "\033[1;31mcaught exception: "
+            << stack.args.front()->value()
+            << "\033[22;39m\n";
+  return vv::gc::alloc<vv::value::nil>( );
+}
+
 void run_repl()
 {
+  vv::value::builtin_function catcher{repl_catcher};
+
   auto base_stack = std::make_shared<vv::vm::call_stack>(
       std::shared_ptr<vv::vm::call_stack>{},
       std::shared_ptr<vv::vm::call_stack>{},
       std::vector<vv::value::base*>{},
       vv::vector_ref<vv::vm::command>{{}} );
   vv::builtin::make_base_env(*base_stack);
+
+  base_stack->catchers.push_back(&catcher);
 
   for (;;) {
     std::cout << ">>> ";

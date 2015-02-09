@@ -148,9 +148,14 @@ void vm::machine::let(symbol sym)
 void vm::machine::self()
 {
   auto stack = m_stack;
-  while (!m_stack->self)
-    stack = m_stack->enclosing;
-  m_retval = &*stack->self;
+  while (stack && !stack->self)
+    stack = stack->enclosing;
+  if (stack) {
+    m_retval = &*stack->self;
+  } else {
+    push_str("self does not exist outside of objects");
+    except();
+  }
 }
 
 void vm::machine::push_arg()
@@ -247,27 +252,25 @@ void vm::machine::jmp(int offset)
 
 void vm::machine::push_catch()
 {
-  m_stack->catcher = *m_retval;
+  m_stack->catchers.push_back(m_retval);
 }
 
 void vm::machine::pop_catch()
 {
-  m_stack->catcher = {};
+  m_stack->catchers.pop_back();
 }
 
 void vm::machine::except()
 {
-  while (!m_stack->catcher) {
-    if (!m_stack->parent) {
-      std::cerr << "\033[2;91mcaught exception: "
-                << m_retval->value()
-                << "\033[22;39m\n";
-      push_nil();
-      return;
-    }
+  while (m_stack && !m_stack->catchers.size()) {
     m_stack = m_stack->parent;
   }
+  if (!m_stack) {
+    std::cerr << "caught exception: " << m_retval->value() << '\n';
+    gc::empty();
+    exit(0);
+  }
   push_arg();
-  m_retval = &*m_stack->catcher;
+  m_retval = m_stack->catchers.back();
   call(1);
 }

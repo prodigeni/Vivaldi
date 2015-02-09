@@ -32,6 +32,7 @@ val_res val_function_definition( vector_ref<std::string> tokens);
 val_res val_literal(             vector_ref<std::string> tokens);
 val_res val_array_literal(       vector_ref<std::string> tokens);
 val_res val_dict_literal(        vector_ref<std::string> tokens);
+val_res val_try_catch(           vector_ref<std::string> tokens);
 val_res val_type_definition(     vector_ref<std::string> tokens);
 val_res val_variable_declaration(vector_ref<std::string> tokens);
 val_res val_name(                vector_ref<std::string> tokens);
@@ -97,6 +98,7 @@ val_res val_expression(vector_ref<std::string> tokens)
       || (res = val_literal(tokens))
       || (res = val_dict_literal(tokens))
       || (res = val_array_literal(tokens))
+      || (res = val_try_catch(tokens))
       || (res = val_type_definition(tokens))
       || (res = val_variable_declaration(tokens))
       || (res = val_name(tokens))))
@@ -417,6 +419,27 @@ val_res val_dict_internals(vector_ref<std::string> tokens)
 val_res val_dict_literal(vector_ref<std::string> tokens)
 {
   return val_bracketed_subexpr(tokens, val_dict_internals, "{", "}");
+}
+
+// }}}
+// try_catch {{{
+
+val_res val_try_catch(vector_ref<std::string> tokens)
+{
+  if (tokens.size() < 2 || tokens.front() != "try" || tokens[1] != ":")
+    return {};
+  if (auto body_res = val_expression(tokens.remove_prefix(2))) {
+    tokens = *body_res;
+    tokens = ltrim(tokens, {"\n"});
+    if (!tokens.size() || tokens.front() != "catch")
+      return {};
+    if (auto name_res = val_name(tokens.remove_prefix(1))) {
+      if (!tokens.size() || tokens.front() != ":")
+        return {};
+      return val_expression(tokens.remove_prefix(1));
+    }
+  }
+  return {};
 }
 
 // }}}

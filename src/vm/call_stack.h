@@ -31,7 +31,7 @@ public:
   std::vector<value::base*> pushed_args;
   boost::optional<value::base&> pushed_self;
 
-  boost::optional<value::base&> catcher;
+  std::vector<value::base*> catchers;
 
   vector_ref<command> instr_ptr;
 
