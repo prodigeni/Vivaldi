@@ -85,38 +85,38 @@ namespace {
 
 // Converters {{{
 
-int to_int(const value::base& boxed)
+boost::optional<int> to_int(const value::base& boxed) noexcept
 {
   if (boxed.type != &type::integer)
-    throw std::runtime_error{"argument must be an integer"};
+    return {};
   return static_cast<const value::integer&>(boxed).val;
 }
 
-double to_float(const value::base& boxed)
+boost::optional<double> to_float(const value::base& boxed) noexcept
 {
   if (boxed.type != &type::floating_point)
-    throw std::runtime_error{"argument must be a float"};
+    return {};
   return static_cast<const value::floating_point&>(boxed).val;
 }
 
-const std::string& to_string(const value::base& boxed)
+boost::optional<const std::string&> to_string(const value::base& boxed)
 {
   if (boxed.type != &type::string)
-    throw std::runtime_error{"argument must be a string"};
+    return {};
   return static_cast<const value::string&>(boxed).val;
 }
 
-vv::symbol to_symbol(const value::base& boxed)
+boost::optional<vv::symbol> to_symbol(const value::base& boxed)
 {
   if (boxed.type != &type::symbol)
-    throw std::runtime_error{"argument must be a symbol"};
+    return {};
   return static_cast<const value::symbol&>(boxed).val;
 }
 
-bool to_bool(const value::base& boxed)
+boost::optional<bool> to_bool(const value::base& boxed) noexcept
 {
   if (boxed.type != &type::boolean)
-    throw std::runtime_error{"argument must be a symbol"};
+    return {};
   return static_cast<const value::boolean&>(boxed).val;
 }
 
@@ -156,13 +156,14 @@ value::base* fn_array_at(vm::machine& vm)
   if (!check_size(1, vm.stack->args.size(), vm))
     return vm.retval;
   if (vm.stack->args.front()->type != &type::integer)
-    throw std::runtime_error{"index must be an integer"};
+    return throw_exception("Index must be an Integer", vm);
   auto val = static_cast<value::integer*>(vm.stack->args.front())->val;
   const auto& arr = static_cast<value::array&>(*vm.stack->self).mems;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    throw std::runtime_error{"out of range (expected 0-"
+    return throw_exception("out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
-                           + std::to_string(val) + ")"};
+                           + std::to_string(val) + ")",
+                           vm);
   return arr.at(static_cast<unsigned>(val));
 }
 
@@ -180,7 +181,7 @@ value::base* fn_integer_ctr(vm::machine& vm)
 
   if (type == &type::floating_point)
     return gc::alloc<value::integer>(
-        static_cast<int>(to_float(*vm.stack->args.front())) );
+        static_cast<int>(*to_float(*vm.stack->args.front())) );
 
   vm.push_str("cannot create Integer from "
             + vm.stack->args.front()->value());
@@ -195,8 +196,12 @@ auto fn_integer_op(const F& op)
   {
     if (!check_size(1, vm.stack->args.size(), vm))
       return vm.retval;
-    return gc::alloc<value::integer>(
-        op(to_int(*vm.stack->self), to_int(*vm.stack->args.front())));
+
+    auto left = to_int(*vm.stack->self);
+    auto right = to_int(*vm.stack->args.front());
+    if (!right)
+      return throw_exception("Right-hand argument is not an Integer", vm);
+    return gc::alloc<value::integer>( op(*left, *right) );
   };
 }
 
@@ -207,8 +212,12 @@ auto fn_int_bool_op(const F& op)
   {
     if (!check_size(1, vm.stack->args.size(), vm))
       return vm.retval;
-    return gc::alloc<value::boolean>(
-        op(to_int(*vm.stack->self), to_int(*vm.stack->args.front())) );
+
+    auto left = to_int(*vm.stack->self);
+    auto right = to_int(*vm.stack->args.front());
+    if (!right)
+      return throw_exception("Right-hand argument is not an Integer", vm);
+    return gc::alloc<value::boolean>( op(*left, *right) );
   };
 }
 
@@ -225,11 +234,13 @@ value::base* fn_floating_point_ctr(vm::machine& vm)
     return vm.stack->args.front();
 
   if (type == &type::integer) {
-    auto int_val = to_int(*vm.stack->args.front());
+    auto int_val = *to_int(*vm.stack->args.front());
     return gc::alloc<value::floating_point>( static_cast<double>(int_val) );
   }
 
-  throw std::runtime_error{"cannot create Float from " + vm.stack->args.front()->value()};
+  return throw_exception("cannot create Float from "
+                         + vm.stack->args.front()->value(),
+                         vm);
 }
 
 template <typename F>
@@ -239,8 +250,12 @@ auto fn_floating_point_op(const F& op)
   {
     if (!check_size(1, vm.stack->args.size(), vm))
       return vm.retval;
-    return gc::alloc<value::floating_point>( op(to_float(*vm.stack->self),
-                                                to_float(*vm.stack->args.front())) );
+
+    auto left = to_float(*vm.stack->self);
+    auto right = to_float(*vm.stack->args.front());
+    if (!right)
+      return throw_exception("Right-hand argument is not a Float", vm);
+    return gc::alloc<value::floating_point>( op(*left, *right) );
   };
 }
 
@@ -251,8 +266,12 @@ auto fn_float_bool_op(const F& op)
   {
     if (!check_size(1, vm.stack->args.size(), vm))
       return vm.retval;
-    return gc::alloc<value::boolean>( op(to_float(*vm.stack->self),
-                                         to_float(*vm.stack->args.front())) );
+
+    auto left = to_float(*vm.stack->self);
+    auto right = to_float(*vm.stack->args.front());
+    if (!right)
+      return throw_exception("Right-hand argument is not a Float", vm);
+    return gc::alloc<value::boolean>( op(*left, *right) );
   };
 }
 
@@ -264,9 +283,10 @@ value::base* fn_string_ctr(vm::machine& vm)
   if (!check_size(1, vm.stack->args.size(), vm))
     return vm.retval;
   if (vm.stack->args.front()->type == &type::string)
-    return gc::alloc<value::string>( to_string(*vm.stack->args.front()) );
+    return gc::alloc<value::string>( *to_string(*vm.stack->args.front()) );
   if (vm.stack->args.front()->type == &type::symbol)
-    return gc::alloc<value::string>( to_string(to_symbol(*vm.stack->args.front())) );
+    return gc::alloc<value::string>(
+        to_string(*to_symbol(*vm.stack->args.front())) );
   return gc::alloc<value::string>( vm.stack->args.front()->value() );
 }
 
@@ -307,7 +327,9 @@ value::base* fn_string_append(
   if (!check_size(1, vm.stack->args.size(), vm))
     return vm.retval;
   auto str = to_string(*vm.stack->args.front());
-  static_cast<value::string&>(*vm.stack->self).val += str;
+  if (!str)
+    return throw_exception("Only strings can be appended to other strings", vm);
+  static_cast<value::string&>(*vm.stack->self).val += *str;
   return &*vm.stack->self;
 }
 
@@ -321,10 +343,11 @@ value::base* fn_symbol_ctr(vm::machine& vm)
   if (vm.stack->args.front()->type == &type::symbol)
     return vm.stack->args.front();
   if (vm.stack->args.front()->type == &type::string)
-    return gc::alloc<value::symbol>( symbol{to_string(*vm.stack->args.front())} );
-  throw std::runtime_error {
-    "can only construct a Symbol from a String or another Symbol"
-  };
+    return gc::alloc<value::symbol>(
+        symbol{*to_string(*vm.stack->args.front())} );
+  return throw_exception(
+    "Symbols can only be constructed a String or another Symbol",
+    vm);
 }
 
 value::base* fn_symbol_equals(
@@ -354,7 +377,7 @@ value::base* fn_symbol_to_str(
 {
   if (!check_size(0, vm.stack->args.size(), vm))
     return vm.retval;
-  return gc::alloc<value::string>( to_string(to_symbol(*vm.stack->self)) );
+  return gc::alloc<value::string>( to_string(*to_symbol(*vm.stack->self)) );
 }
 
 // }}}
@@ -379,8 +402,11 @@ auto fn_bool_op(const F& op)
   {
     if (!check_size(1, vm.stack->args.size(), vm))
       return vm.retval;
-    return gc::alloc<value::boolean>(
-        op(to_bool(*vm.stack->self), to_bool(*vm.stack->args.front())) );
+    auto left = to_bool(*vm.stack->self);
+    auto right = to_bool(*vm.stack->args.front());
+    if (!right)
+      return throw_exception("Right-hand argument is not a Bool", vm);
+    return gc::alloc<value::boolean>( op(*left, *right) );
   };
 }
 
@@ -397,8 +423,10 @@ value::base* fn_custom_type_ctr(vm::machine& vm)
   std::unordered_map<symbol, value::base*> methods;
   for (auto i = vm.stack->args.size(); i--; --i) {
     auto name = to_symbol(*vm.stack->args[i]);
+    if (!name)
+      return throw_exception("Type names must be symbols", vm);
     auto definition = vm.stack->args[i - 1];
-    methods[name] = definition;
+    methods[*name] = definition;
   }
 
   auto type = gc::alloc<value::type>( nullptr, move(methods) );
