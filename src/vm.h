@@ -30,7 +30,8 @@ private:
   void self();
   void push_arg();
   void pop_arg(symbol sym);
-  void mem(symbol sym);
+  void readm(symbol sym);
+  void writem(symbol sym);
   void call(int args);
 
   void eblk();

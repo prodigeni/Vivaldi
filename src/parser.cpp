@@ -10,6 +10,7 @@
 #include "ast/function_definition.h"
 #include "ast/literal.h"
 #include "ast/member.h"
+#include "ast/member_assignment.h"
 #include "ast/type_definition.h"
 #include "ast/variable.h"
 #include "ast/variable_declaration.h"
@@ -179,6 +180,8 @@ parse_res<> parse_monop_call(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
 parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
   parse_binop_call(vector_ref<std::string> tokens);
+parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
+  parse_member_assignment(vector_ref<std::string> tokens);
 parse_res<symbol> parse_member(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
@@ -270,10 +273,23 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
                                                         move(fres->first));
       tokens = fres->second;
 
-    } else if (auto mres = parse_member(tokens)) {
-      res->first = std::make_unique<ast::member>(move(res->first), mres->first);
+    // This HAS to come before parse_member, since of course 'a.b' is a subset
+    // of 'a.b = c'
+    } else if (auto member_asgt_res = parse_member_assignment(tokens)) {
 
-      tokens = mres->second;
+      auto mem_name = member_asgt_res->first.first;
+      auto& mem_value = member_asgt_res->first.second;
+      res->first = std::make_unique<ast::member_assignment>( move(res->first),
+                                                             mem_name,
+                                                             move(mem_value) );
+
+      tokens = member_asgt_res->second;
+
+    } else if (auto member_res = parse_member(tokens)) {
+      res->first = std::make_unique<ast::member>( move(res->first),
+                                                  member_res->first );
+
+      tokens = member_res->second;
 
     } else if (auto bres = parse_binop_call(tokens)) {
       arg_t args{};
@@ -509,6 +525,26 @@ parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
     return {{ move(pair), tokens }};
   }
   return {};
+}
+
+// }}}
+// member_assignment {{{
+
+parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
+  parse_member_assignment(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != ".")
+    return {};
+  tokens = tokens.remove_prefix(1);
+  symbol member_name{tokens.front()};
+
+  tokens = tokens.remove_prefix(1);
+  if (!tokens.size() || tokens.front() != "=")
+    return {};
+
+  auto expr = parse_expression(tokens.remove_prefix(1));
+  auto pair = std::make_pair(member_name, move(expr->first));
+  return {{ move(pair), expr->second }};
 }
 
 // }}}

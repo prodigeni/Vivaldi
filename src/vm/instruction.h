@@ -29,7 +29,8 @@ enum class instruction {
   self,
   push_arg,
   pop_arg,
-  mem,
+  readm,
+  writem,
   call,
 
   eblk,

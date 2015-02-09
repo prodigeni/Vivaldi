@@ -284,7 +284,10 @@ val_res val_member(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != ".")
     return {};
- return val_name(tokens.remove_prefix(1));
+  tokens = tokens.remove_prefix(1);
+  if (tokens.size() && tokens.front() == "=")
+    return val_expression(tokens.remove_prefix(1));
+  return tokens;
 }
 
 // }}}

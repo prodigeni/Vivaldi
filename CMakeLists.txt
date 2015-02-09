@@ -29,6 +29,7 @@ add_executable(vivaldi
   src/ast/function_definition.cpp
   src/ast/literal.cpp
   src/ast/member.cpp
+  src/ast/member_assignment.cpp
   src/ast/type_definition.cpp
   src/ast/variable.cpp
   src/ast/variable_declaration.cpp

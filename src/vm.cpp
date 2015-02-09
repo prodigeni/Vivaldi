@@ -54,7 +54,8 @@ void vm::machine::run()
     case instruction::self:     self();                    break;
     case instruction::push_arg: push_arg();                break;
     case instruction::pop_arg:  pop_arg(get<symbol>(arg)); break;
-    case instruction::mem:      mem(get<symbol>(arg));     break;
+    case instruction::readm:    readm(get<symbol>(arg));   break;
+    case instruction::writem:   writem(get<symbol>(arg));  break;
     case instruction::call:     call(get<int>(arg));       break;
 
     case instruction::eblk: eblk(); break;
@@ -151,13 +152,22 @@ void vm::machine::pop_arg(symbol sym)
   m_stack->args.pop_back();
 }
 
-void vm::machine::mem(symbol sym)
+void vm::machine::readm(symbol sym)
 {
   m_stack->pushed_self = *m_retval;
   if (m_retval->members.count(sym))
     m_retval = m_retval->members[sym];
   else
     m_retval = m_retval->type->methods[sym];
+}
+
+void vm::machine::writem(symbol sym)
+{
+  auto value = m_stack->pushed_args.back();
+  m_stack->pushed_args.pop_back();
+
+  m_retval->members[sym] = value;
+  m_retval = value;
 }
 
 void vm::machine::call(int argc)

@@ -28,6 +28,7 @@ class for_loop;
 class function_call;
 class function_definition;
 class member;
+class member_assignment;
 class type_definition;
 class while_loop;
 class variable;
