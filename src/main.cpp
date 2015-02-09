@@ -9,10 +9,10 @@
 #include <fstream>
 #include <sstream>
 
-vv::value::base* repl_catcher(vv::vm::call_stack& stack)
+vv::value::base* repl_catcher(vv::vm::machine& vm)
 {
   std::cerr << "\033[1;31mcaught exception: "
-            << stack.args.front()->value()
+            << vm.stack->args.front()->value()
             << "\033[22;39m\n";
   return vv::gc::alloc<vv::value::nil>( );
 }

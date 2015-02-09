@@ -208,13 +208,15 @@ void vm::machine::call(int argc)
     gc::set_current_frame(stack);
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
-    auto cur_stack = std::make_shared<call_stack>( stack,
-                                                   m_base,
-                                                   move(args),
-                                                   stack->instr_ptr );
-    gc::set_current_frame(cur_stack);
-    retval = fn->body(*cur_stack);
+    stack = std::make_shared<call_stack>( stack,
+                                          m_base,
+                                          move(args),
+                                          stack->instr_ptr );
+    auto except_flag = stack.get();
     gc::set_current_frame(stack);
+    retval = fn->body(*this);
+    if (except_flag == stack.get())
+      ret();
   } else {
     push_str("Only functions and types can be called");
     except();

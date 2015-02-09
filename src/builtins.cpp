@@ -27,44 +27,47 @@ vv::symbol sym::call{"call"};
 
 namespace {
 
-value::base* fn_print(vm::call_stack& base)
+value::base* fn_print(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type == &type::string)
-    std::cout << static_cast<value::string*>(base.args.front())->val;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type == &type::string)
+    std::cout << static_cast<value::string*>(vm.stack->args.front())->val;
   else
-    std::cout << base.args.front()->value();
+    std::cout << vm.stack->args.front()->value();
   return gc::alloc<value::nil>( );
 }
 
-value::base* fn_puts(vm::call_stack& base)
+value::base* fn_puts(vm::machine& vm)
 {
-  auto ret = fn_print(base);
+  auto ret = fn_print(vm);
   std::cout << '\n';
   return ret;
 }
 
-value::base* fn_gets(vm::call_stack& base)
+value::base* fn_gets(vm::machine& vm)
 {
-  check_size(0, base.args.size());
+  if (!check_size(0, vm.stack->args.size(), vm))
+    return vm.retval;
   std::string str;
   getline(std::cin, str);
 
   return gc::alloc<value::string>( str );
 }
 
-[[noreturn]]
-value::base* fn_quit(vm::call_stack& base)
+value::base* fn_quit(vm::machine& vm)
 {
-  check_size(0, base.args.size());
+  if (!check_size(0, vm.stack->args.size(), vm))
+    return vm.retval;
   gc::empty();
   exit(0);
 }
 
-value::base* fn_type(vm::call_stack& base)
+value::base* fn_type(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  return base.args.front()->type;
+  if (!check_size(1, vm.stack->args.size(), vm))
+  return vm.retval;
+  return vm.stack->args.front()->type;
 }
 
 }
@@ -121,38 +124,41 @@ bool to_bool(const value::base& boxed)
 
 // array {{{
 
-value::base* fn_array_ctr(vm::call_stack& base)
+value::base* fn_array_ctr(vm::machine& vm)
 {
-  return gc::alloc<value::array>( base.args );
+  return gc::alloc<value::array>( vm.stack->args );
 }
 
-value::base* fn_array_size(vm::call_stack& base)
+value::base* fn_array_size(vm::machine& vm)
 {
-  check_size(0, base.args.size());
-  auto sz = static_cast<value::array&>(*base.self).mems.size();
+  if (!check_size(0, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto sz = static_cast<value::array&>(*vm.stack->self).mems.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
-value::base* fn_array_append(vm::call_stack& base)
+value::base* fn_array_append(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type == &type::array) {
-    auto& arr = static_cast<value::array&>(*base.self).mems;
-    const auto& new_mems = static_cast<value::array*>(base.args.front())->mems;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type == &type::array) {
+    auto& arr = static_cast<value::array&>(*vm.stack->self).mems;
+    const auto& new_mems = static_cast<value::array*>(vm.stack->args.front())->mems;
     copy(begin(new_mems), end(new_mems), back_inserter(arr));
   } else {
-    static_cast<value::array&>(*base.self).mems.push_back(base.args.front());
+    static_cast<value::array&>(*vm.stack->self).mems.push_back(vm.stack->args.front());
   }
-  return &*base.self;
+  return &*vm.stack->self;
 }
 
-value::base* fn_array_at(vm::call_stack& base)
+value::base* fn_array_at(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::integer)
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type != &type::integer)
     throw std::runtime_error{"index must be an integer"};
-  auto val = static_cast<value::integer*>(base.args.front())->val;
-  const auto& arr = static_cast<value::array&>(*base.self).mems;
+  auto val = static_cast<value::integer*>(vm.stack->args.front())->val;
+  const auto& arr = static_cast<value::array&>(*vm.stack->self).mems;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
     throw std::runtime_error{"out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
@@ -163,199 +169,218 @@ value::base* fn_array_at(vm::call_stack& base)
 // }}}
 // integer {{{
 
-value::base* fn_integer_ctr(vm::call_stack& base)
+value::base* fn_integer_ctr(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  auto type = base.args.front()->type;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto type = vm.stack->args.front()->type;
 
   if (type == &type::integer)
-    return base.args.front();
+    return vm.stack->args.front();
 
   if (type == &type::floating_point)
     return gc::alloc<value::integer>(
-        static_cast<int>(to_float(*base.args.front())) );
+        static_cast<int>(to_float(*vm.stack->args.front())) );
 
-  throw std::runtime_error{"cannot create Integer from "
-                          + base.args.front()->value()};
+  vm.push_str("cannot create Integer from "
+            + vm.stack->args.front()->value());
+  vm.except();
+  return vm.retval;
 }
 
 template <typename F>
 auto fn_integer_op(const F& op)
 {
-  return [=](vm::call_stack& base)
+  return [=](vm::machine& vm)
   {
-    check_size(1, base.args.size());
+    if (!check_size(1, vm.stack->args.size(), vm))
+      return vm.retval;
     return gc::alloc<value::integer>(
-        op(to_int(*base.self), to_int(*base.args.front())));
+        op(to_int(*vm.stack->self), to_int(*vm.stack->args.front())));
   };
 }
 
 template <typename F>
 auto fn_int_bool_op(const F& op)
 {
-  return [=](vm::call_stack& base)
+  return [=](vm::machine& vm)
   {
-    check_size(1, base.args.size());
+    if (!check_size(1, vm.stack->args.size(), vm))
+      return vm.retval;
     return gc::alloc<value::boolean>(
-        op(to_int(*base.self), to_int(*base.args.front())) );
+        op(to_int(*vm.stack->self), to_int(*vm.stack->args.front())) );
   };
 }
 
 // }}}
 // floating_point {{{
 
-value::base* fn_floating_point_ctr(vm::call_stack& base)
+value::base* fn_floating_point_ctr(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  auto type = base.args.front()->type;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto type = vm.stack->args.front()->type;
 
   if (type == &type::floating_point)
-    return base.args.front();
+    return vm.stack->args.front();
 
   if (type == &type::integer) {
-    auto int_val = to_int(*base.args.front());
+    auto int_val = to_int(*vm.stack->args.front());
     return gc::alloc<value::floating_point>( static_cast<double>(int_val) );
   }
 
-  throw std::runtime_error{"cannot create Float from " + base.args.front()->value()};
+  throw std::runtime_error{"cannot create Float from " + vm.stack->args.front()->value()};
 }
 
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
-  return [=](vm::call_stack& base)
+  return [=](vm::machine& vm)
   {
-    check_size(1, base.args.size());
-    return gc::alloc<value::floating_point>( op(to_float(*base.self),
-                                                to_float(*base.args.front())) );
+    if (!check_size(1, vm.stack->args.size(), vm))
+      return vm.retval;
+    return gc::alloc<value::floating_point>( op(to_float(*vm.stack->self),
+                                                to_float(*vm.stack->args.front())) );
   };
 }
 
 template <typename F>
 auto fn_float_bool_op(const F& op)
 {
-  return [=](vm::call_stack& base)
+  return [=](vm::machine& vm)
   {
-    check_size(1, base.args.size());
-    return gc::alloc<value::boolean>( op(to_float(*base.self),
-                                         to_float(*base.args.front())) );
+    if (!check_size(1, vm.stack->args.size(), vm))
+      return vm.retval;
+    return gc::alloc<value::boolean>( op(to_float(*vm.stack->self),
+                                         to_float(*vm.stack->args.front())) );
   };
 }
 
 // }}}
 // string {{{
 
-value::base* fn_string_ctr(vm::call_stack& base)
+value::base* fn_string_ctr(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type == &type::string)
-    return gc::alloc<value::string>( to_string(*base.args.front()) );
-  if (base.args.front()->type == &type::symbol)
-    return gc::alloc<value::string>( to_string(to_symbol(*base.args.front())) );
-  return gc::alloc<value::string>( base.args.front()->value() );
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type == &type::string)
+    return gc::alloc<value::string>( to_string(*vm.stack->args.front()) );
+  if (vm.stack->args.front()->type == &type::symbol)
+    return gc::alloc<value::string>( to_string(to_symbol(*vm.stack->args.front())) );
+  return gc::alloc<value::string>( vm.stack->args.front()->value() );
 }
 
 value::base* fn_string_size(
-                            vm::call_stack& base)
+                            vm::machine& vm)
 {
-  check_size(0, base.args.size());
-  auto sz = static_cast<value::string&>(*base.self).val.size();
+  if (!check_size(0, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto sz = static_cast<value::string&>(*vm.stack->self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_string_equals(
-                               vm::call_stack& base)
+                               vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::string)
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type != &type::string)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
-      to_string(*base.self) == to_string(*base.args.front()) );
+      to_string(*vm.stack->self) == to_string(*vm.stack->args.front()) );
 }
 
 value::base* fn_string_unequal(
-                               vm::call_stack& base)
+                               vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::string)
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type != &type::string)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
-      to_string(*base.self) != to_string(*base.args.front()) );
+      to_string(*vm.stack->self) != to_string(*vm.stack->args.front()) );
 }
 
 value::base* fn_string_append(
-                              vm::call_stack& base)
+                              vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  auto str = to_string(*base.args.front());
-  static_cast<value::string&>(*base.self).val += str;
-  return &*base.self;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto str = to_string(*vm.stack->args.front());
+  static_cast<value::string&>(*vm.stack->self).val += str;
+  return &*vm.stack->self;
 }
 
 // }}}
 // symbol {{{
 
-value::base* fn_symbol_ctr(vm::call_stack& base)
+value::base* fn_symbol_ctr(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type == &type::symbol)
-    return base.args.front();
-  if (base.args.front()->type == &type::string)
-    return gc::alloc<value::symbol>( symbol{to_string(*base.args.front())} );
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type == &type::symbol)
+    return vm.stack->args.front();
+  if (vm.stack->args.front()->type == &type::string)
+    return gc::alloc<value::symbol>( symbol{to_string(*vm.stack->args.front())} );
   throw std::runtime_error {
     "can only construct a Symbol from a String or another Symbol"
   };
 }
 
 value::base* fn_symbol_equals(
-                               vm::call_stack& base)
+                               vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::symbol)
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
-      to_symbol(*base.self) == to_symbol(*base.args.front()) );
+      to_symbol(*vm.stack->self) == to_symbol(*vm.stack->args.front()) );
 }
 
 value::base* fn_symbol_unequal(
-                               vm::call_stack& base)
+                               vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  if (base.args.front()->type != &type::symbol)
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  if (vm.stack->args.front()->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
   return gc::alloc<value::boolean>(
-      to_symbol(*base.self) != to_symbol(*base.args.front()) );
+      to_symbol(*vm.stack->self) != to_symbol(*vm.stack->args.front()) );
 }
 
 value::base* fn_symbol_to_str(
-                              vm::call_stack& base)
+                              vm::machine& vm)
 {
-  check_size(0, base.args.size());
-  return gc::alloc<value::string>( to_string(to_symbol(*base.self)) );
+  if (!check_size(0, vm.stack->args.size(), vm))
+    return vm.retval;
+  return gc::alloc<value::string>( to_string(to_symbol(*vm.stack->self)) );
 }
 
 // }}}
 // boolean {{{
 
-value::base* fn_bool_ctr(vm::call_stack& base)
+value::base* fn_bool_ctr(vm::machine& vm)
 {
-  check_size(1, base.args.size());
-  auto type = base.args.front()->type;
+  if (!check_size(1, vm.stack->args.size(), vm))
+    return vm.retval;
+  auto type = vm.stack->args.front()->type;
 
   if (type == &type::boolean)
-    return base.args.front();
+    return vm.stack->args.front();
 
-  return gc::alloc<value::boolean>( truthy(base.args.front()) );
+  return gc::alloc<value::boolean>( truthy(vm.stack->args.front()) );
 }
 
 template <typename F>
 auto fn_bool_op(const F& op)
 {
-  return [=](vm::call_stack& base)
+  return [=](vm::machine& vm)
   {
-    check_size(1, base.args.size());
+    if (!check_size(1, vm.stack->args.size(), vm))
+      return vm.retval;
     return gc::alloc<value::boolean>(
-        op(to_bool(*base.self), to_bool(*base.args.front())) );
+        op(to_bool(*vm.stack->self), to_bool(*vm.stack->args.front())) );
   };
 }
 
@@ -364,15 +389,15 @@ auto fn_bool_op(const F& op)
 
 auto custom_type_default_ctr_maker(value::type* type)
 {
-  return [=](vm::call_stack&) { return gc::alloc<value::base>( type ); };
+  return [=](vm::machine&) { return gc::alloc<value::base>( type ); };
 }
 
-value::base* fn_custom_type_ctr(vm::call_stack& base)
+value::base* fn_custom_type_ctr(vm::machine& vm)
 {
   std::unordered_map<symbol, value::base*> methods;
-  for (auto i = base.args.size(); i--; --i) {
-    auto name = to_symbol(*base.args[i]);
-    auto definition = base.args[i - 1];
+  for (auto i = vm.stack->args.size(); i--; --i) {
+    auto name = to_symbol(*vm.stack->args[i]);
+    auto definition = vm.stack->args[i - 1];
     methods[name] = definition;
   }
 

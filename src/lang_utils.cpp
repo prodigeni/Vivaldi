@@ -13,10 +13,21 @@ bool vv::truthy(const value::base* val)
   return true;
 }
 
-void vv::check_size(size_t expected, size_t receieved)
+vv::value::base* vv::throw_exception(const std::string& value, vm::machine& vm)
 {
-  if (expected != receieved)
-    throw std::runtime_error{"wrong number of arguments (expected "    +
-                             std::to_string(expected)  += ", got " +
-                             std::to_string(receieved) += ")"};
+  vm.push_str(value);
+  vm.except();
+  return vm.retval;
+}
+
+bool vv::check_size(size_t expected, size_t receieved, vm::machine& vm)
+{
+  if (expected != receieved) {
+    throw_exception("wrong number of arguments (expected "    +
+                    std::to_string(expected)  += ", got " +
+                    std::to_string(receieved) += ")",
+                    vm);
+    return false;
+  }
+  return true;
 }
