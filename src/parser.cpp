@@ -5,6 +5,7 @@
 #include "ast/assignment.h"
 #include "ast/block.h"
 #include "ast/cond_statement.h"
+#include "ast/except.h"
 #include "ast/for_loop.h"
 #include "ast/function_call.h"
 #include "ast/function_definition.h"
@@ -175,6 +176,7 @@ parse_res<> parse_expression(vector_ref<std::string> tokens);
 parse_res<> parse_assignment(vector_ref<std::string> tokens);
 parse_res<> parse_block(vector_ref<std::string> tokens);
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
+parse_res<> parse_except(vector_ref<std::string> tokens);
 parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_while_loop(vector_ref<std::string> tokens);
 parse_res<> parse_monop_call(vector_ref<std::string> tokens);
@@ -256,6 +258,7 @@ parse_res<> parse_expression(vector_ref<std::string> tokens)
   if (!( (res = parse_assignment(tokens))
       || (res = parse_block(tokens))
       || (res = parse_cond_statement(tokens))
+      || (res = parse_except(tokens))
       || (res = parse_for_loop(tokens))
       || (res = parse_while_loop(tokens))
       || (res = parse_function_definition(tokens))
@@ -410,6 +413,21 @@ parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
    auto res = parse_bracketed_subexpr(tokens.remove_prefix(1), parse_inner_cond,
                                       "{", "}");
    return {{ move(res->first), res->second }};
+}
+
+// }}}
+// expr_list {{{
+
+parse_res<> parse_except(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "except")
+    return {};
+  if (auto body_res = parse_expression(tokens.remove_prefix(1))) {
+    auto body = move(body_res->first);
+    tokens = body_res->second;
+    return {{ std::make_unique<ast::except>( move(body) ), tokens }};
+  }
+  return {};
 }
 
 // }}}

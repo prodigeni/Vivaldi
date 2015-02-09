@@ -24,6 +24,7 @@ add_executable(vivaldi
   src/ast/assignment.cpp
   src/ast/block.cpp
   src/ast/cond_statement.cpp
+  src/ast/except.cpp
   src/ast/for_loop.cpp
   src/ast/function_call.cpp
   src/ast/function_definition.cpp

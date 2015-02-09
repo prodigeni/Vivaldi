@@ -27,6 +27,7 @@ val_res val_function_call(       vector_ref<std::string> tokens);
 val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
 val_res val_member(              vector_ref<std::string> tokens);
+val_res val_except(              vector_ref<std::string> tokens);
 val_res val_expr_list(           vector_ref<std::string> tokens);
 val_res val_function_definition( vector_ref<std::string> tokens);
 val_res val_literal(             vector_ref<std::string> tokens);
@@ -91,6 +92,7 @@ val_res val_expression(vector_ref<std::string> tokens)
   if (!( (res = val_assignment(tokens))
       || (res = val_block(tokens))
       || (res = val_cond_statement(tokens))
+      || (res = val_except(tokens))
       || (res = val_for_loop(tokens))
       || (res = val_while_loop(tokens))
       || (res = val_function_definition(tokens))
@@ -290,6 +292,16 @@ val_res val_member(vector_ref<std::string> tokens)
   if (tokens.size() && tokens.front() == "=")
     return val_expression(tokens.remove_prefix(1));
   return tokens;
+}
+
+// }}}
+// except {{{
+
+val_res val_except(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "except")
+    return {};
+  return val_expression(tokens.remove_prefix(1));
 }
 
 // }}}
