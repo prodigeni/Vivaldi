@@ -60,6 +60,14 @@ inline bool isnamechar(char c)
   return !ispunct(c) || c == '_';
 }
 
+template <typename T>
+vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
+{
+  auto last = find_if(begin(vec), end(vec),
+                      [&](const auto& i) { return i != item; });
+  return vec.remove_prefix(last - begin(vec));
+}
+
 }
 
 #endif

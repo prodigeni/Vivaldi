@@ -214,7 +214,7 @@ auto parse_comma_separated_list(vector_ref<std::string> tokens,
     tokens = expr_res->second;
     if (!tokens.size() || tokens.front() != ",")
       return {{ move(res), tokens }};
-    tokens = tokens.remove_prefix(1);
+    tokens = ltrim(tokens.remove_prefix(1), {"\n"});;
   } while ((expr_res = parse_item(tokens)));
   return {};
 }
@@ -229,8 +229,9 @@ auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
                              const std::string&) -> decltype(parse_item(tokens))
 {
   if (tokens.size() && tokens.front() == opening) {
-    if (auto item_res = parse_item(tokens.remove_prefix(1))) {
-      tokens = item_res->second;
+    tokens = ltrim(tokens.remove_prefix(1), {"\n"});
+    if (auto item_res = parse_item(tokens)) {
+      tokens = ltrim(item_res->second, {"\n"});
       return {{ move(item_res->first), tokens.remove_prefix(1) }};
     }
   }
