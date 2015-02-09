@@ -18,6 +18,8 @@
 
 #include <boost/variant/get.hpp>
 
+#include <iostream>
+
 using namespace vv;
 
 vm::machine::machine(std::shared_ptr<call_stack> frame)
@@ -67,6 +69,10 @@ void vm::machine::run()
 
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
     case instruction::jmp:       jmp(get<int>(arg));       break;
+
+    case instruction::push_catch: push_catch(); break;
+    case instruction::pop_catch:  pop_catch();  break;
+    case instruction::except:     except();     break;
     }
   }
 }
@@ -204,6 +210,9 @@ void vm::machine::call(int argc)
     gc::set_current_frame(stack);
     m_retval = fn->body(*stack);
     gc::set_current_frame(m_stack);
+  } else {
+    push_str("Only functions and types can be called");
+    except();
   }
 }
 
@@ -234,4 +243,31 @@ void vm::machine::jmp_false(int offset)
 void vm::machine::jmp(int offset)
 {
   m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(offset - 1);
+}
+
+void vm::machine::push_catch()
+{
+  m_stack->catcher = *m_retval;
+}
+
+void vm::machine::pop_catch()
+{
+  m_stack->catcher = {};
+}
+
+void vm::machine::except()
+{
+  while (!m_stack->catcher) {
+    if (!m_stack->parent) {
+      std::cerr << "\033[2;91mcaught exception: "
+                << m_retval->value()
+                << "\033[22;39m\n";
+      push_nil();
+      return;
+    }
+    m_stack = m_stack->parent;
+  }
+  push_arg();
+  m_retval = &*m_stack->catcher;
+  call(1);
 }

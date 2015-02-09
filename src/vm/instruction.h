@@ -38,7 +38,10 @@ enum class instruction {
   ret,
 
   jmp_false,
-  jmp
+  jmp,
+  push_catch,
+  pop_catch,
+  except
 };
 
 struct command {

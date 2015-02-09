@@ -41,6 +41,10 @@ private:
   void jmp_false(int offset);
   void jmp(int offset);
 
+  void push_catch();
+  void pop_catch();
+  void except();
+
   std::shared_ptr<call_stack> m_stack;
   value::base* m_retval;
 

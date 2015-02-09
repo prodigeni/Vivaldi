@@ -24,11 +24,13 @@ public:
 class assignment;
 class block;
 class cond_statement;
+class except;
 class for_loop;
 class function_call;
 class function_definition;
 class member;
 class member_assignment;
+class try_catch;
 class type_definition;
 class while_loop;
 class variable;
