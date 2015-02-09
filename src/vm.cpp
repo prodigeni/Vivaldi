@@ -23,25 +23,25 @@
 using namespace vv;
 
 vm::machine::machine(std::shared_ptr<call_stack> frame)
-  : m_stack  {frame},
-    m_retval {nullptr},
-    m_base   {frame}
+  : stack  {frame},
+    retval {nullptr},
+    m_base {frame}
 {
   gc::set_current_frame(frame);
-  gc::set_current_retval(m_retval);
+  gc::set_current_retval(retval);
 }
 
 void vm::machine::run()
 {
   using boost::get;
 
-  while (m_stack->instr_ptr.size()) {
-    auto instr = m_stack->instr_ptr.front().instr;
-    const auto& arg = m_stack->instr_ptr.front().arg;
-    m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(1);
+  while (stack->instr_ptr.size()) {
+    auto instr = stack->instr_ptr.front().instr;
+    const auto& arg = stack->instr_ptr.front().arg;
+    stack->instr_ptr = stack->instr_ptr.remove_prefix(1);
 
     if (instr != instruction::call)
-      m_stack->pushed_self = {};
+      stack->pushed_self = {};
 
     switch (instr) {
     case instruction::push_bool: push_bool(get<bool>(arg));               break;
@@ -79,61 +79,61 @@ void vm::machine::run()
 
 void vm::machine::push_bool(bool val)
 {
-  m_retval = gc::alloc<value::boolean>( val );
+  retval = gc::alloc<value::boolean>( val );
 }
 
 void vm::machine::push_flt(double val)
 {
-  m_retval = gc::alloc<value::floating_point>( val );
+  retval = gc::alloc<value::floating_point>( val );
 }
 
 void vm::machine::push_fn(const std::vector<command>& val)
 {
-  m_retval = gc::alloc<value::function>( val, m_stack );
+  retval = gc::alloc<value::function>( val, stack );
 }
 
 void vm::machine::push_int(int val)
 {
-  m_retval = gc::alloc<value::integer>( val );
+  retval = gc::alloc<value::integer>( val );
 }
 
 void vm::machine::push_nil()
 {
-  m_retval = gc::alloc<value::nil>( );
+  retval = gc::alloc<value::nil>( );
 }
 
 void vm::machine::push_str(const std::string& val)
 {
-  m_retval = gc::alloc<value::string>( val );
+  retval = gc::alloc<value::string>( val );
 }
 
 void vm::machine::push_sym(symbol val)
 {
-  m_retval = gc::alloc<value::symbol>( val );
+  retval = gc::alloc<value::symbol>( val );
 }
 
 void vm::machine::read(symbol sym)
 {
-  auto stack = m_stack;
-  while (stack) {
-    auto holder = find_if(rbegin(stack->local), rend(stack->local),
+  auto cur_stack = stack;
+  while (cur_stack) {
+    auto holder = find_if(rbegin(cur_stack->local), rend(cur_stack->local),
                           [&](const auto& vars) { return vars.count(sym); });
-    if (holder != rend(stack->local)) {
-      m_retval = holder->at(sym);
+    if (holder != rend(cur_stack->local)) {
+      retval = holder->at(sym);
       return;
     }
-    stack = stack->enclosing;
+    cur_stack = cur_stack->enclosing;
   }
 }
 
 void vm::machine::write(symbol sym)
 {
-  auto stack = m_stack;
+  auto cur_stack = stack;
   for (;;) {
-    auto holder = find_if(rbegin(stack->local), rend(stack->local),
+    auto holder = find_if(rbegin(cur_stack->local), rend(cur_stack->local),
                           [&](const auto& vars) { return vars.count(sym); });
-    if (holder != rend(stack->local)) {
-      holder->at(sym) = m_retval;
+    if (holder != rend(cur_stack->local)) {
+      holder->at(sym) = retval;
       return;
     }
     stack = stack->enclosing;
@@ -142,16 +142,16 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  m_stack->local.back()[sym] = m_retval;
+  stack->local.back()[sym] = retval;
 }
 
 void vm::machine::self()
 {
-  auto stack = m_stack;
-  while (stack && !stack->self)
-    stack = stack->enclosing;
-  if (stack) {
-    m_retval = &*stack->self;
+  auto cur_stack = stack;
+  while (cur_stack && !cur_stack->self)
+    cur_stack = cur_stack->enclosing;
+  if (cur_stack) {
+    retval = &*cur_stack->self;
   } else {
     push_str("self does not exist outside of objects");
     except();
@@ -160,61 +160,61 @@ void vm::machine::self()
 
 void vm::machine::push_arg()
 {
-  m_stack->pushed_args.push_back(m_retval);
+  stack->pushed_args.push_back(retval);
 }
 
 void vm::machine::pop_arg(symbol sym)
 {
-  m_stack->local.back()[sym] = m_stack->args.back();
-  m_stack->args.pop_back();
+  stack->local.back()[sym] = stack->args.back();
+  stack->args.pop_back();
 }
 
 void vm::machine::readm(symbol sym)
 {
-  m_stack->pushed_self = *m_retval;
-  if (m_retval->members.count(sym))
-    m_retval = m_retval->members[sym];
+  stack->pushed_self = *retval;
+  if (retval->members.count(sym))
+    retval = retval->members[sym];
   else
-    m_retval = m_retval->type->methods[sym];
+    retval = retval->type->methods[sym];
 }
 
 void vm::machine::writem(symbol sym)
 {
-  auto value = m_stack->pushed_args.back();
-  m_stack->pushed_args.pop_back();
+  auto value = stack->pushed_args.back();
+  stack->pushed_args.pop_back();
 
-  m_retval->members[sym] = value;
-  m_retval = value;
+  retval->members[sym] = value;
+  retval = value;
 }
 
 void vm::machine::call(int argc)
 {
   std::vector<value::base*> args;
-  copy(end(m_stack->pushed_args) - argc, end(m_stack->pushed_args),
+  copy(end(stack->pushed_args) - argc, end(stack->pushed_args),
        back_inserter(args));
-  m_stack->pushed_args.erase(end(m_stack->pushed_args) - argc,
-                             end(m_stack->pushed_args));
+  stack->pushed_args.erase(end(stack->pushed_args) - argc,
+                           end(stack->pushed_args));
 
-  auto function = m_retval;
+  auto function = retval;
   if (auto type = dynamic_cast<value::type*>(function))
     function = type->constructor;
 
   if (auto fn = dynamic_cast<value::function*>(function)) {
-    m_stack = std::make_shared<call_stack>( m_stack,
-                                            fn->enclosure,
-                                            move(args),
-                                            fn->body );
+    stack = std::make_shared<call_stack>( stack,
+                                          fn->enclosure,
+                                          move(args),
+                                          fn->body );
 
-    gc::set_current_frame(m_stack);
+    gc::set_current_frame(stack);
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
-    auto stack = std::make_shared<call_stack>( m_stack,
-                                               m_base,
-                                               move(args),
-                                               m_stack->instr_ptr );
+    auto cur_stack = std::make_shared<call_stack>( stack,
+                                                   m_base,
+                                                   move(args),
+                                                   stack->instr_ptr );
+    gc::set_current_frame(cur_stack);
+    retval = fn->body(*cur_stack);
     gc::set_current_frame(stack);
-    m_retval = fn->body(*stack);
-    gc::set_current_frame(m_stack);
   } else {
     push_str("Only functions and types can be called");
     except();
@@ -223,54 +223,54 @@ void vm::machine::call(int argc)
 
 void vm::machine::eblk()
 {
-  m_stack->local.emplace_back();
+  stack->local.emplace_back();
 }
 
 void vm::machine::lblk()
 {
-  m_stack->local.pop_back();
+  stack->local.pop_back();
 }
 
 void vm::machine::ret()
 {
-  m_stack = m_stack->parent;
-  if (!m_stack)
+  stack = stack->parent;
+  if (!stack)
     exit(0);
-  gc::set_current_frame(m_stack);
+  gc::set_current_frame(stack);
 }
 
 void vm::machine::jmp_false(int offset)
 {
-  if (!truthy(m_retval))
-    m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(offset - 1);
+  if (!truthy(retval))
+    stack->instr_ptr = stack->instr_ptr.remove_prefix(offset - 1);
 }
 
 void vm::machine::jmp(int offset)
 {
-  m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(offset - 1);
+  stack->instr_ptr = stack->instr_ptr.remove_prefix(offset - 1);
 }
 
 void vm::machine::push_catch()
 {
-  m_stack->catchers.push_back(m_retval);
+  stack->catchers.push_back(retval);
 }
 
 void vm::machine::pop_catch()
 {
-  m_stack->catchers.pop_back();
+  stack->catchers.pop_back();
 }
 
 void vm::machine::except()
 {
-  while (m_stack && !m_stack->catchers.size()) {
-    m_stack = m_stack->parent;
+  while (stack && !stack->catchers.size()) {
+    stack = stack->parent;
   }
-  if (!m_stack) {
-    std::cerr << "caught exception: " << m_retval->value() << '\n';
+  if (!stack) {
+    std::cerr << "caught exception: " << retval->value() << '\n';
     gc::empty();
     exit(0);
   }
   push_arg();
-  m_retval = m_stack->catchers.back();
+  retval = stack->catchers.back();
   call(1);
 }

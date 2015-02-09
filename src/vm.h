@@ -12,9 +12,7 @@ public:
   machine(std::shared_ptr<call_stack> base);
 
   void run();
-  const value::base* value() const { return m_retval; }
 
-private:
   void push_bool(bool val);
   void push_flt(double val);
   void push_fn(const std::vector<command>& val);
@@ -45,9 +43,10 @@ private:
   void pop_catch();
   void except();
 
-  std::shared_ptr<call_stack> m_stack;
-  value::base* m_retval;
+  std::shared_ptr<call_stack> stack;
+  value::base* retval;
 
+private:
   std::shared_ptr<call_stack> m_base;
 };
 

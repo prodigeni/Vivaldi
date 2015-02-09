@@ -42,7 +42,7 @@ void run_repl()
       base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
       vv::vm::machine machine{base_stack};
       machine.run();
-      std::cout << "=> " << machine.value()->value() << '\n';
+      std::cout << "=> " << machine.retval->value() << '\n';
     }
   }
 }
