@@ -38,6 +38,9 @@ void vm::machine::run()
     const auto& arg = m_stack->instr_ptr.front().arg;
     m_stack->instr_ptr = m_stack->instr_ptr.remove_prefix(1);
 
+    if (instr != instruction::call)
+      m_stack->pushed_self = {};
+
     switch (instr) {
     case instruction::push_bool: push_bool(get<bool>(arg));               break;
     case instruction::push_flt:  push_flt(get<double>(arg));              break;
@@ -138,7 +141,10 @@ void vm::machine::let(symbol sym)
 
 void vm::machine::self()
 {
-  m_retval = &*m_stack->self;
+  auto stack = m_stack;
+  while (!m_stack->self)
+    stack = m_stack->enclosing;
+  m_retval = &*stack->self;
 }
 
 void vm::machine::push_arg()
