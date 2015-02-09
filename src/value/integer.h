@@ -1,9 +1,9 @@
-#ifndef IL_VALUE_INTEGER_H
-#define IL_VALUE_INTEGER_H
+#ifndef VV_VALUE_INTEGER_H
+#define VV_VALUE_INTEGER_H
 
 #include "value.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 

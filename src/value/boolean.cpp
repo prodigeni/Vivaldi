@@ -6,7 +6,7 @@
 
 #include <string>
 
-using namespace il;
+using namespace vv;
 
 value::boolean::boolean(bool new_val)
   : base {&builtin::type::boolean},

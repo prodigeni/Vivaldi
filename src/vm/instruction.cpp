@@ -1,6 +1,6 @@
 #include "instruction.h"
 
-using namespace il;
+using namespace vv;
 
 namespace {
 

@@ -1,10 +1,10 @@
-#ifndef IL_UTILS_H
-#define IL_UTILS_H
+#ifndef VV_UTILS_H
+#define VV_UTILS_H
 
 #include <vector>
 #include <boost/utility/string_ref.hpp>
 
-namespace il {
+namespace vv {
 
 inline boost::string_ref ltrim(boost::string_ref str)
 {

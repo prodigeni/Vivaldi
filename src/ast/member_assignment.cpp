@@ -2,11 +2,11 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::member_assignment::member_assignment(
     std::unique_ptr<ast::expression>&& object,
-    il::symbol name,
+    vv::symbol name,
     std::unique_ptr<ast::expression>&& value)
   : m_object {move(object)},
     m_name   {name},

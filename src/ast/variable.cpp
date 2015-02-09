@@ -2,7 +2,7 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::variable::variable(symbol name) : m_name{name} { }
 

@@ -1,9 +1,9 @@
-#ifndef IL_AST_LITERAL_H
-#define IL_AST_LITERAL_H
+#ifndef VV_AST_LITERAL_H
+#define VV_AST_LITERAL_H
 
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 
@@ -48,10 +48,10 @@ private:
 
 class symbol : public expression {
 public:
-  symbol(il::symbol val) : m_val{val} { }
+  symbol(vv::symbol val) : m_val{val} { }
   std::vector<vm::command> generate() const override;
 private:
-  il::symbol m_val;
+  vv::symbol m_val;
 };
 
 }

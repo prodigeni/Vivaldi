@@ -1,10 +1,10 @@
-#ifndef IL_GC_H
-#define IL_GC_H
+#ifndef VV_GC_H
+#define VV_GC_H
 
 #include "value.h"
 #include "vm/call_stack.h"
 
-namespace il {
+namespace vv {
 
 namespace gc {
 

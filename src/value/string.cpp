@@ -3,7 +3,7 @@
 #include "builtins.h"
 #include "gc.h"
 
-using namespace il;
+using namespace vv;
 
 value::string::string(const std::string& val)
   : base {&builtin::type::string},

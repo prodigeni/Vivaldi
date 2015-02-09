@@ -1,5 +1,5 @@
-#ifndef IL_VM_INSTRUCTIONS_H
-#define IL_VM_INSTRUCTIONS_H
+#ifndef VV_VM_INSTRUCTIONS_H
+#define VV_VM_INSTRUCTIONS_H
 
 #include "expression.h"
 #include "symbol.h"
@@ -7,7 +7,7 @@
 
 #include <boost/variant/variant.hpp>
 
-namespace il {
+namespace vv {
 
 namespace vm {
 

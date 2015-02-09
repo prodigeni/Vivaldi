@@ -1,6 +1,6 @@
 #include "for_loop.h"
 
-using namespace il;
+using namespace vv;
 
 ast::for_loop::for_loop(symbol iterator,
                         std::unique_ptr<expression>&& range,

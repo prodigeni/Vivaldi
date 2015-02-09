@@ -1,6 +1,6 @@
 #include "call_stack.h"
 
-using namespace il;
+using namespace vv;
 
 vm::call_stack::call_stack(std::shared_ptr<call_stack> new_parent,
                            std::shared_ptr<call_stack> new_enclosing,

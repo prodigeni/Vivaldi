@@ -1,20 +1,20 @@
-#ifndef IL_VALUE_SYMBOL_H
-#define IL_VALUE_SYMBOL_H
+#ifndef VV_VALUE_SYMBOL_H
+#define VV_VALUE_SYMBOL_H
 
 #include "../symbol.h"
 #include "value.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 
 struct symbol : public base {
 public:
-  symbol(il::symbol val);
+  symbol(vv::symbol val);
 
   std::string value() const override;
 
-  il::symbol val;
+  vv::symbol val;
 };
 
 }

@@ -2,13 +2,13 @@
 
 #include "gc.h"
 
-using namespace il;
+using namespace vv;
 
 ast::type_definition::type_definition(
     symbol name,
     symbol parent,
     const std::unordered_map<
-              il::symbol,
+              vv::symbol,
               std::shared_ptr<ast::function_definition>>& m_methods)
 
   : m_name    {name},

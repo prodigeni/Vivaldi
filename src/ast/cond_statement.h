@@ -1,9 +1,9 @@
-#ifndef IL_AST_COND_STATEMENT_H
-#define IL_AST_COND_STATEMENT_H
+#ifndef VV_AST_COND_STATEMENT_H
+#define VV_AST_COND_STATEMENT_H
 
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 

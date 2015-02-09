@@ -9,24 +9,24 @@
 
 void run_repl()
 {
-  auto base_stack = std::make_shared<il::vm::call_stack>(
-      std::shared_ptr<il::vm::call_stack>{},
-      std::shared_ptr<il::vm::call_stack>{},
-      std::vector<il::value::base*>{},
-      il::vector_ref<il::vm::command>{{}} );
-  il::builtin::make_base_env(*base_stack);
+  auto base_stack = std::make_shared<vv::vm::call_stack>(
+      std::shared_ptr<vv::vm::call_stack>{},
+      std::shared_ptr<vv::vm::call_stack>{},
+      std::vector<vv::value::base*>{},
+      vv::vector_ref<vv::vm::command>{{}} );
+  vv::builtin::make_base_env(*base_stack);
 
   for (;;) {
     std::cout << ">>> ";
     std::string line;
     getline(std::cin, line);
     std::istringstream linestream{line};
-    auto tokens = il::parser::tokenize(linestream);
-    auto exprs = il::parser::parse(tokens);
+    auto tokens = vv::parser::tokenize(linestream);
+    auto exprs = vv::parser::parse(tokens);
     for (const auto& expr : exprs) {
       auto body = expr->generate();
-      base_stack->instr_ptr = il::vector_ref<il::vm::command>{body};
-      il::vm::machine machine{base_stack};
+      base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
+      vv::vm::machine machine{base_stack};
       machine.run();
       std::cout << "=> " << machine.value()->value() << '\n';
     }
@@ -45,22 +45,22 @@ int main(int argc, char** argv)
   }
 
   std::ifstream file{argv[1]};
-  auto tokens = il::parser::tokenize(file);
-  auto exprs = il::parser::parse(tokens);
-  std::vector<il::vm::command> body;
+  auto tokens = vv::parser::tokenize(file);
+  auto exprs = vv::parser::parse(tokens);
+  std::vector<vv::vm::command> body;
   for (const auto& i : exprs) {
     auto code = i->generate();
     copy(begin(code), end(code), back_inserter(body));
   }
-  auto base_stack = std::make_shared<il::vm::call_stack>(
-      std::shared_ptr<il::vm::call_stack>{},
-      std::shared_ptr<il::vm::call_stack>{},
-      std::vector<il::value::base*>{},
-      il::vector_ref<il::vm::command>{body} );
+  auto base_stack = std::make_shared<vv::vm::call_stack>(
+      std::shared_ptr<vv::vm::call_stack>{},
+      std::shared_ptr<vv::vm::call_stack>{},
+      std::vector<vv::value::base*>{},
+      vv::vector_ref<vv::vm::command>{body} );
 
-  il::builtin::make_base_env(*base_stack);
-  il::vm::machine machine{base_stack};
+  vv::builtin::make_base_env(*base_stack);
+  vv::vm::machine machine{base_stack};
   machine.run();
 
-  il::gc::empty();
+  vv::gc::empty();
 }

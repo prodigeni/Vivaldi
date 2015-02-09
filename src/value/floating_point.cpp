@@ -5,7 +5,7 @@
 
 #include <string>
 
-using namespace il;
+using namespace vv;
 
 value::floating_point::floating_point(double value)
   : base {&builtin::type::floating_point},

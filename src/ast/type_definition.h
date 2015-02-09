@@ -1,5 +1,5 @@
-#ifndef IL_AST_TYPE_DEFINITION_H
-#define IL_AST_TYPE_DEFINITION_H
+#ifndef VV_AST_TYPE_DEFINITION_H
+#define VV_AST_TYPE_DEFINITION_H
 
 #include "expression.h"
 
@@ -8,7 +8,7 @@
 
 #include <unordered_map>
 
-namespace il {
+namespace vv {
 
 namespace ast {
 
@@ -17,7 +17,7 @@ public:
   type_definition(symbol name,
                   symbol parent,
                   const std::unordered_map<
-                            il::symbol,
+                            vv::symbol,
                             std::shared_ptr<ast::function_definition>>&
                           m_methods);
 
@@ -28,7 +28,7 @@ private:
   symbol m_name;
   symbol m_parent;
 
-  std::unordered_map<il::symbol,
+  std::unordered_map<vv::symbol,
                      std::shared_ptr<ast::function_definition>> m_methods;
 };
 

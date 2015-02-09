@@ -4,7 +4,7 @@
 #include "value/nil.h"
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::while_loop::while_loop(std::unique_ptr<expression>&& test,
                             std::unique_ptr<expression>&& body)

@@ -1,9 +1,9 @@
-#ifndef IL_AST_ASSIGNMENT_H
-#define IL_AST_ASSIGNMENT_H
+#ifndef VV_AST_ASSIGNMENT_H
+#define VV_AST_ASSIGNMENT_H
 
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 

@@ -4,7 +4,7 @@
 #include "value/nil.h"
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::cond_statement::cond_statement(
     std::vector<std::pair<std::unique_ptr<expression>,

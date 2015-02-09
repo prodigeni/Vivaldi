@@ -25,7 +25,7 @@
 #include <boost/utility/string_ref.hpp>
 #include <boost/optional/optional.hpp>
 
-using namespace il;
+using namespace vv;
 
 // Grammar {{{
 
@@ -735,7 +735,7 @@ parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
 // }}}
 // type_definition {{{
 
-parse_res<std::pair<il::symbol, std::shared_ptr<ast::function_definition>>>
+parse_res<std::pair<vv::symbol, std::shared_ptr<ast::function_definition>>>
   parse_method(vector_ref<std::string> tokens)
 {
   if (tokens.front() != "mem")

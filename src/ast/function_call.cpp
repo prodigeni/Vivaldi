@@ -2,7 +2,7 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::function_call::function_call(
     std::unique_ptr<ast::expression>&& name,

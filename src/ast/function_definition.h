@@ -1,9 +1,9 @@
-#ifndef IL_AST_FUNCTION_DEFINITION_H
-#define IL_AST_FUNCTION_DEFINITION_H
+#ifndef VV_AST_FUNCTION_DEFINITION_H
+#define VV_AST_FUNCTION_DEFINITION_H
 
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 

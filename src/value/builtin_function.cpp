@@ -3,7 +3,7 @@
 #include "builtins.h"
 #include "gc.h"
 
-using namespace il;
+using namespace vv;
 
 value::builtin_function::builtin_function(
     const std::function<base*(vm::call_stack&)>& new_body)

@@ -1,9 +1,9 @@
-#ifndef IL_VALUE_FLOATING_POINT_H
-#define IL_VALUE_FLOATING_POINT_H
+#ifndef VV_VALUE_FLOATING_POINT_H
+#define VV_VALUE_FLOATING_POINT_H
 
 #include "value.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 

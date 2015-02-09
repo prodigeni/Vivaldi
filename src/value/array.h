@@ -1,10 +1,10 @@
-#ifndef IL_VALUE_ARRAY_H
-#define IL_VALUE_ARRAY_H
+#ifndef VV_VALUE_ARRAY_H
+#define VV_VALUE_ARRAY_H
 
 #include "value.h"
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 

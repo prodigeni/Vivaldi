@@ -2,7 +2,7 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::assignment::assignment(symbol name, std::unique_ptr<expression>&& value)
   : m_name  {name},

@@ -3,7 +3,7 @@
 #include "gc.h"
 #include "builtins.h"
 
-using namespace il;
+using namespace vv;
 
 value::array::array(const std::vector<base*>& new_mems)
   : base {&builtin::type::array},

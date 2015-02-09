@@ -1,11 +1,11 @@
-#ifndef IL_VALUE_STRING_H
-#define IL_VALUE_STRING_H
+#ifndef VV_VALUE_STRING_H
+#define VV_VALUE_STRING_H
 
 #include "value.h"
 
 #include <string>
 
-namespace il {
+namespace vv {
 
 namespace value {
 

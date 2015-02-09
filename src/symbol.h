@@ -1,10 +1,10 @@
-#ifndef IL_SYMBOL_H
-#define IL_SYMBOL_H
+#ifndef VV_SYMBOL_H
+#define VV_SYMBOL_H
 
 #include <string>
 #include <unordered_set>
 
-namespace il {
+namespace vv {
 
 class symbol {
 public:
@@ -19,14 +19,14 @@ private:
   const std::string* m_ptr;
   static std::unordered_set<std::string> s_symbol_table;
 
-  friend struct std::hash<il::symbol>;
+  friend struct std::hash<vv::symbol>;
 };
 
 }
 
 template <>
-struct std::hash<il::symbol> {
-  size_t operator()(const il::symbol& sym) const;
+struct std::hash<vv::symbol> {
+  size_t operator()(const vv::symbol& sym) const;
 };
 
 #endif

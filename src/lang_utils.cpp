@@ -4,7 +4,7 @@
 #include "gc.h"
 #include "value/boolean.h"
 
-bool il::truthy(const value::base* val)
+bool vv::truthy(const value::base* val)
 {
   if (val->type == &builtin::type::nil)
     return false;
@@ -13,7 +13,7 @@ bool il::truthy(const value::base* val)
   return true;
 }
 
-void il::check_size(size_t expected, size_t receieved)
+void vv::check_size(size_t expected, size_t receieved)
 {
   if (expected != receieved)
     throw std::runtime_error{"wrong number of arguments (expected "    +

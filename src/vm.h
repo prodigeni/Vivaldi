@@ -1,9 +1,9 @@
-#ifndef IL_VM_H
-#define IL_VM_H
+#ifndef VV_VM_H
+#define VV_VM_H
 
 #include "vm/call_stack.h"
 
-namespace il {
+namespace vv {
 
 namespace vm {
 

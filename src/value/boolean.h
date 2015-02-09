@@ -1,9 +1,9 @@
-#ifndef IL_VALUE_BOOLEAN_H
-#define IL_VALUE_BOOLEAN_H
+#ifndef VV_VALUE_BOOLEAN_H
+#define VV_VALUE_BOOLEAN_H
 
 #include "value.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 

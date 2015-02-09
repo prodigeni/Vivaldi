@@ -1,17 +1,17 @@
-#ifndef IL_BUILTINS_H
-#define IL_BUILTINS_H
+#ifndef VV_BUILTINS_H
+#define VV_BUILTINS_H
 
 #include "value.h"
 #include "vm/call_stack.h"
 
-namespace il {
+namespace vv {
 
 namespace builtin {
 
 namespace sym {
 
-extern il::symbol self;
-extern il::symbol call;
+extern vv::symbol self;
+extern vv::symbol call;
 
 }
 

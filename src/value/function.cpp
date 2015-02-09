@@ -4,7 +4,7 @@
 #include "gc.h"
 #include "lang_utils.h"
 
-using namespace il;
+using namespace vv;
 
 value::function::function(const std::vector<vm::command>& new_body,
                           std::shared_ptr<vm::call_stack> new_enclosure)

@@ -1,5 +1,5 @@
-#ifndef IL_VM_CALL_STACK_H
-#define IL_VM_CALL_STACK_H
+#ifndef VV_VM_CALL_STACK_H
+#define VV_VM_CALL_STACK_H
 
 #include "instruction.h"
 
@@ -11,7 +11,7 @@
 
 #include <unordered_map>
 
-namespace il {
+namespace vv {
 
 namespace vm {
 

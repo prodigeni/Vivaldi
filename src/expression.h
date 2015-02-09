@@ -1,11 +1,11 @@
-#ifndef IL_EXPRESSION_H
-#define IL_EXPRESSION_H
+#ifndef VV_EXPRESSION_H
+#define VV_EXPRESSION_H
 
 #include "symbol.h"
 
 #include <vector>
 
-namespace il {
+namespace vv {
 
 namespace vm {
 

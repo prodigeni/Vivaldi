@@ -1,11 +1,11 @@
-#ifndef IL_AST_VARIABLE_DECLARATION_H
-#define IL_AST_VARIABLE_DECLARATION_H
+#ifndef VV_AST_VARIABLE_DECLARATION_H
+#define VV_AST_VARIABLE_DECLARATION_H
 
 #include "expression.h"
 
 #include "symbol.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 

@@ -2,9 +2,9 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
-ast::member::member(std::unique_ptr<ast::expression>&& object, il::symbol name)
+ast::member::member(std::unique_ptr<ast::expression>&& object, vv::symbol name)
   : m_object {move(object)},
     m_name   {name}
 { }

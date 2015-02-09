@@ -5,7 +5,7 @@
 #include "ast/function_definition.h"
 #include "value/function.h"
 
-using namespace il;
+using namespace vv;
 
 value::base::base(struct type* new_type)
   : members  {},
@@ -23,7 +23,7 @@ void value::base::mark()
 
 value::type::type(
     value::base* new_ctr,
-    const std::unordered_map<il::symbol, value::base*>& new_methods)
+    const std::unordered_map<vv::symbol, value::base*>& new_methods)
   : base        {nullptr},
     methods     {new_methods},
     constructor {new_ctr}

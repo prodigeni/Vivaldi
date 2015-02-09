@@ -1,12 +1,12 @@
-#ifndef IL_VALUE_FUNCTION_H
-#define IL_VALUE_FUNCTION_H
+#ifndef VV_VALUE_FUNCTION_H
+#define VV_VALUE_FUNCTION_H
 
 #include "value.h"
 #include "utils.h"
 #include "vm/call_stack.h"
 #include "vm/instruction.h"
 
-namespace il {
+namespace vv {
 
 namespace value {
 

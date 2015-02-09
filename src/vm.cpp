@@ -18,7 +18,7 @@
 
 #include <boost/variant/get.hpp>
 
-using namespace il;
+using namespace vv;
 
 vm::machine::machine(std::shared_ptr<call_stack> frame)
   : m_stack  {frame},

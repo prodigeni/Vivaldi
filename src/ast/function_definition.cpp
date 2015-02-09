@@ -3,7 +3,7 @@
 #include "gc.h"
 #include "value/function.h"
 
-using namespace il;
+using namespace vv;
 
 ast::function_definition::function_definition(symbol name,
                                               std::unique_ptr<expression>&&body,

@@ -3,9 +3,9 @@
 #include "builtins.h"
 #include "gc.h"
 
-using namespace il;
+using namespace vv;
 
-value::symbol::symbol(il::symbol val)
+value::symbol::symbol(vv::symbol val)
   : base {&builtin::type::symbol},
     val  {val}
 { }

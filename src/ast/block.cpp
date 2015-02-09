@@ -2,7 +2,7 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 ast::block::block(std::vector<std::unique_ptr<expression>>&& subexpressions)
   : m_subexpressions {move(subexpressions)}

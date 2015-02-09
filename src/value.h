@@ -1,12 +1,12 @@
-#ifndef IL_VALUE_H
-#define IL_VALUE_H
+#ifndef VV_VALUE_H
+#define VV_VALUE_H
 
 #include "symbol.h"
 
 #include <unordered_map>
 #include <vector>
 
-namespace il {
+namespace vv {
 
 namespace ast {
 class function_definition;
@@ -35,7 +35,7 @@ struct base {
 
   virtual ~base() { }
 
-  std::unordered_map<il::symbol, value::base*> members;
+  std::unordered_map<vv::symbol, value::base*> members;
   type* type;
 
   virtual void mark();
@@ -48,9 +48,9 @@ private:
 
 struct type : public base {
   type(value::base* constructor,
-      const std::unordered_map<il::symbol, value::base*>& methods);
+      const std::unordered_map<vv::symbol, value::base*>& methods);
 
-  std::unordered_map<il::symbol, value::base*> methods;
+  std::unordered_map<vv::symbol, value::base*> methods;
   value::base* constructor;
 
   std::string value() const override;

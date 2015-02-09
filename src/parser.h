@@ -1,5 +1,5 @@
-#ifndef IL_PARSER_H
-#define IL_PARSER_H
+#ifndef VV_PARSER_H
+#define VV_PARSER_H
 
 #include "expression.h"
 #include "utils.h"
@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace il {
+namespace vv {
 
 namespace parser {
 

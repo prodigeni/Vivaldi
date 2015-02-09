@@ -1,9 +1,9 @@
-#ifndef IL_AST_BLOCK_H
-#define IL_AST_BLOCK_H
+#ifndef VV_AST_BLOCK_H
+#define VV_AST_BLOCK_H
 
 #include "expression.h"
 
-namespace il {
+namespace vv {
 
 namespace ast {
 

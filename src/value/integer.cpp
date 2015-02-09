@@ -5,7 +5,7 @@
 
 #include <string>
 
-using namespace il;
+using namespace vv;
 
 value::integer::integer(int val)
   : base {&builtin::type::integer},

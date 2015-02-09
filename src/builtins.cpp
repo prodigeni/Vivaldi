@@ -14,13 +14,13 @@
 
 #include <iostream>
 
-using namespace il;
+using namespace vv;
 using namespace builtin;
 
 // Symbols {{{
 
-il::symbol sym::self{"self"};
-il::symbol sym::call{"call"};
+vv::symbol sym::self{"self"};
+vv::symbol sym::call{"call"};
 
 // }}}
 // Freestanding functions {{{
@@ -103,7 +103,7 @@ const std::string& to_string(const value::base& boxed)
   return static_cast<const value::string&>(boxed).val;
 }
 
-il::symbol to_symbol(const value::base& boxed)
+vv::symbol to_symbol(const value::base& boxed)
 {
   if (boxed.type != &type::symbol)
     throw std::runtime_error{"argument must be a symbol"};

@@ -2,7 +2,7 @@
 
 #include "vm/instruction.h"
 
-using namespace il;
+using namespace vv;
 
 std::vector<vm::command> ast::literal::boolean::generate() const
 {
