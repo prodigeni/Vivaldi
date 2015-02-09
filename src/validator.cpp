@@ -1,12 +1,11 @@
 #include "parser.h"
 
-#include <boost/optional/optional.hpp>
+#include <iostream>
 
 using namespace vv;
+using namespace parser;
 
 namespace {
-
-using val_res = boost::optional<vector_ref<std::string>>;
 
 template <typename F>
 val_res val_comma_separated_list(vector_ref<std::string> tokens,
@@ -68,11 +67,12 @@ val_res val_bracketed_subexpr(vector_ref<std::string> tokens,
                               const std::string& closing)
 {
   if (tokens.size() && tokens.front() == opening) {
-    if (auto item_res = val_item(tokens.remove_prefix(1))) {
-      tokens = *item_res;
-      if (tokens.size() && tokens.front() == closing)
-        return tokens.remove_prefix(1);
-    }
+    auto item_res = val_item(tokens.remove_prefix(1));
+    if (!item_res)
+      return item_res;
+    tokens = *item_res;
+    if (tokens.size() && tokens.front() == closing)
+      return tokens.remove_prefix(1);
   }
   return {};
 }
@@ -89,22 +89,25 @@ val_res val_expression(vector_ref<std::string> tokens)
 
   val_res res{};
 
-  if (!( (res = val_assignment(tokens))
-      || (res = val_block(tokens))
-      || (res = val_cond_statement(tokens))
-      || (res = val_except(tokens))
-      || (res = val_for_loop(tokens))
-      || (res = val_while_loop(tokens))
-      || (res = val_function_definition(tokens))
-      || (res = val_monop_call(tokens))
-      || (res = val_literal(tokens))
-      || (res = val_dict_literal(tokens))
-      || (res = val_array_literal(tokens))
-      || (res = val_try_catch(tokens))
-      || (res = val_type_definition(tokens))
-      || (res = val_variable_declaration(tokens))
-      || (res = val_name(tokens))))
-    return {};
+  // Try each, and return on successful validation or on error
+  if (!( ((res = val_assignment(tokens))           || res.invalid())
+      || ((res = val_block(tokens))                || res.invalid())
+      || ((res = val_cond_statement(tokens))       || res.invalid())
+      || ((res = val_except(tokens))               || res.invalid())
+      || ((res = val_for_loop(tokens))             || res.invalid())
+      || ((res = val_while_loop(tokens))           || res.invalid())
+      || ((res = val_function_definition(tokens))  || res.invalid())
+      || ((res = val_monop_call(tokens))           || res.invalid())
+      || ((res = val_literal(tokens))              || res.invalid())
+      || ((res = val_dict_literal(tokens))         || res.invalid())
+      || ((res = val_array_literal(tokens))        || res.invalid())
+      || ((res = val_try_catch(tokens))            || res.invalid())
+      || ((res = val_type_definition(tokens))      || res.invalid())
+      || ((res = val_variable_declaration(tokens)) || res.invalid())
+      || ((res = val_name(tokens)))                || res.invalid()))
+    return res;
+  if (res.invalid())
+    return res;
 
   auto nres = res;
   for (;;) {
@@ -147,18 +150,18 @@ val_res val_block(vector_ref<std::string> tokens)
   while (tokens.size() && tokens.front() != "}") {
     val_res expr_res;
     if (!(expr_res = val_expression(tokens)))
-      return {};
+      return {tokens, "expected expression"};
     tokens = *expr_res;
     if (tokens.size() && (tokens.front() == "\n" || tokens.front() == ";")) {
       auto first_nonsep = std::find_if(begin(tokens), end(tokens),
                                        [](const auto& t)
                                          { return t != "\n" && t != ";"; });
       tokens = tokens.remove_prefix(first_nonsep - begin(tokens));
-    } else {
-      return tokens.size() ? val_res{tokens.remove_prefix(1)} : val_res{};
     }
   }
-  return tokens.size() ? val_res{tokens.remove_prefix(1)} : val_res{};
+  if (tokens.size() && tokens.front() == "}")
+    return tokens.remove_prefix(1);
+  return {tokens, "expected '}'"};
 }
 
 // }}}
@@ -170,10 +173,15 @@ val_res val_if_statement(vector_ref<std::string> tokens)
     return {};
   if (auto test_res = val_expression(tokens.remove_prefix(1))) {
     tokens = *test_res;
-    if (tokens.size() && tokens.front() == ":")
-      return val_expression(tokens.remove_prefix(1));
+    if (tokens.size() && tokens.front() == ":") {
+      auto val = val_expression(tokens.remove_prefix(1));
+      if (val)
+        return val;
+      return {tokens, "expected expression"};
+    }
+    return {tokens, "expected ':'"};
   }
-  return {};
+  return {tokens, "expected expression"};
 }
 
 val_res val_cond_statement(vector_ref<std::string> tokens)
@@ -214,10 +222,12 @@ val_res val_while_loop(vector_ref<std::string> tokens)
   if (auto test_res = val_expression(tokens.remove_prefix(1))) {
     tokens = *test_res;
     if (!tokens.size() || tokens.front() != ":")
-      return {};
-    return val_expression(tokens.remove_prefix(1));
+      return {tokens, "expected ':'"};
+    auto value = val_expression(tokens.remove_prefix(1));
+    if (value)
+      return value;
   }
-  return {};
+  return {tokens, "expected expression"};
 }
 
 // }}}
@@ -244,8 +254,12 @@ val_res val_monop(vector_ref<std::string> tokens)
 
 val_res val_monop_call(vector_ref<std::string> tokens)
 {
-  if (auto op_res = val_monop(tokens))
-    return val_expression(*op_res);
+  if (auto op_res = val_monop(tokens)) {
+    auto expr = val_expression(*op_res);
+    if (expr)
+      return expr;
+    return {*op_res, "expected argument"};
+  }
   return {};
 }
 
@@ -276,8 +290,12 @@ val_res val_binop(vector_ref<std::string> tokens)
 
 val_res val_binop_call(vector_ref<std::string> tokens)
 {
-  if (auto op_res = val_binop(tokens))
-    return val_expression(*op_res);
+  if (auto op_res = val_binop(tokens)) {
+    auto right_arg = val_expression(*op_res);
+    if (right_arg)
+      return right_arg;
+    return {*op_res, "expected right-hand argument"};
+  }
   return {};
 }
 
@@ -301,7 +319,9 @@ val_res val_except(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "except")
     return {};
-  return val_expression(tokens.remove_prefix(1));
+  if (auto expr = val_expression(tokens.remove_prefix(1)))
+    return expr;
+  return {tokens, "expected expression"};
 }
 
 // }}}
@@ -333,10 +353,13 @@ val_res val_function_definition(vector_ref<std::string> tokens)
                                              "(", ")")) {
     tokens = *param_res;
     if (!tokens.size() || tokens.front() != ":")
-      return {};
-    return val_expression(tokens.remove_prefix(1));
+      return {tokens, "expected ':'"};
+    auto expr = val_expression(tokens.remove_prefix(1));
+    if (expr || expr.invalid())
+      return expr;
+    return {tokens, "expected expression"};
   }
-  return {};
+  return {tokens, "expected parameter list"};
 }
 
 // }}}
@@ -405,7 +428,10 @@ val_res val_literal(vector_ref<std::string> tokens)
 
 val_res val_array_literal(vector_ref<std::string> tokens)
 {
-  return val_bracketed_subexpr(tokens, val_expr_list, "[", "]");
+  auto arr = val_bracketed_subexpr(tokens, val_expr_list, "[", "]");
+  if (arr || !tokens.size() || tokens.front() != "[")
+    return arr;
+  return {tokens.remove_prefix(1), "expected array literal"};
 }
 
 // }}}
@@ -438,17 +464,21 @@ val_res val_dict_literal(vector_ref<std::string> tokens)
 
 val_res val_try_catch(vector_ref<std::string> tokens)
 {
-  if (tokens.size() < 2 || tokens.front() != "try" || tokens[1] != ":")
+  if (!tokens.size() || tokens.front() != "try")
     return {};
+  if (tokens.size() < 2 || tokens[1] != ":")
+    return { tokens, "expected ':' after 'try'" };
+
   if (auto body_res = val_expression(tokens.remove_prefix(2))) {
     tokens = *body_res;
     tokens = ltrim(tokens, {"\n"});
     if (!tokens.size() || tokens.front() != "catch")
-      return {};
+      return { tokens, "expected 'catch'" };
     if (auto name_res = val_name(tokens.remove_prefix(1))) {
+      tokens = *name_res;
       if (!tokens.size() || tokens.front() != ":")
-        return {};
-      return val_expression(tokens.remove_prefix(1));
+        return { tokens, "expected ':' after 'catch'" };
+      return val_expression(tokens.remove_prefix(1)); // ':'
     }
   }
   return {};
@@ -463,17 +493,18 @@ val_res val_method_definition(vector_ref<std::string> tokens)
     return {};
   tokens = tokens.remove_prefix(1);
 
-  if (tokens.size() && val_name(tokens))
-    tokens = tokens.remove_prefix(1);
+  if (!tokens.size() || val_name(tokens))
+    return {tokens, "expected method name"};
+  tokens = tokens.remove_prefix(1);
 
   if (auto param_res = val_bracketed_subexpr(tokens, val_parameter_list,
                                              "(", ")")) {
     tokens = *param_res;
     if (!tokens.size() || tokens.front() != ":")
-      return {};
+      return {tokens, "expected ':'"};
     return val_expression(tokens.remove_prefix(1));
   }
-  return {};
+  return {tokens, "expected parameter list"};
 }
 
 val_res val_type_definition(vector_ref<std::string> tokens)
@@ -482,15 +513,15 @@ val_res val_type_definition(vector_ref<std::string> tokens)
     return {};
   if (auto name_res = val_name(tokens.remove_prefix(1))) {
 
-    if (auto mems_res = val_bracketed_subexpr(*name_res, val_parameter_list,
-                                              "[", "]")) {
-      return val_bracketed_subexpr(*mems_res,
-           [](auto t)
-             { return val_comma_separated_list(t, val_method_definition); },
-            "{", "}");
-    }
+    auto body = val_bracketed_subexpr(*name_res,
+         [](auto t)
+           { return val_comma_separated_list(t, val_method_definition); },
+          "{", "}");
+    if (body || body.invalid())
+      return body;
+    return {*name_res, "expected method list"};
   }
-  return {};
+  return {tokens, "expected type name"};
 }
 
 // }}}
@@ -503,10 +534,13 @@ val_res val_variable_declaration(vector_ref<std::string> tokens)
   if (auto name_res = val_name(tokens.remove_prefix(1))) {
     tokens = *name_res;
     if (!tokens.size() || tokens.front() != "=")
-      return {};
-    return val_expression(tokens.remove_prefix(1));
+      return {tokens, "expected '='"};
+    auto expr = val_expression(tokens.remove_prefix(1));
+    if (expr)
+      return expr;
+    return {tokens, "expected expression"};
   }
-  return {};
+  return {tokens, "expected variable name"};
 }
 
 // }}}
@@ -530,20 +564,20 @@ val_res val_name(vector_ref<std::string> tokens)
 
 }
 
-bool parser::is_valid(parser::token_string tokens)
+val_res parser::is_valid(parser::token_string tokens)
 {
   auto first_nonline = std::find_if(begin(tokens), end(tokens),
                                     [](const auto& s) { return s != "\n"; });
   tokens = tokens.remove_prefix(first_nonline - begin(tokens));
 
   while (tokens.size()) {
-    if (auto res = val_expression(tokens))
-      tokens = *res;
-    else
-      return false;
+    auto res = val_expression(tokens);
+    if (!res)
+      return res;
+    tokens = *res;
     auto first_nonline = std::find_if(begin(tokens), end(tokens),
                                       [](const auto& s) { return s != "\n"; });
     tokens = tokens.remove_prefix(first_nonline - begin(tokens));
   }
-  return true;
+  return tokens;
 }

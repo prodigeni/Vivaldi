@@ -20,6 +20,41 @@ vv::value::base* repl_catcher(vv::vm::machine& vm)
   return vv::gc::alloc<vv::value::nil>( );
 }
 
+std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
+{
+  std::cout << ">>> ";
+  std::vector<std::string> tokens;
+  vv::parser::val_res validator;
+  for (;;) {
+    std::string line;
+    getline(std::cin, line);
+    std::istringstream linestream{line};
+
+    auto new_tokens = vv::parser::tokenize(linestream);
+    copy(begin(new_tokens), end(new_tokens), back_inserter(tokens));
+    validator = vv::parser::is_valid(tokens);
+    if (validator.valid())
+      break;
+
+    if (validator.valid() || validator->size()) {
+      std::string error{"invalid syntax"};
+      if (validator.invalid())
+        error += " at "
+              + (validator->front() == "\n"
+                  ? "end of line: "
+                  : '\'' + validator->front() + "': ")
+              + validator.error();
+      write_error(error);
+      tokens.clear();
+      std::cout << ">>> ";
+    } else {
+      std::cout << "... ";
+    }
+  }
+
+  return vv::parser::parse(tokens);
+}
+
 void run_repl()
 {
   vv::value::builtin_function catcher{repl_catcher};
@@ -34,22 +69,12 @@ void run_repl()
   base_stack->catchers.push_back(&catcher);
 
   for (;;) {
-    std::cout << ">>> ";
-    std::string line;
-    getline(std::cin, line);
-    std::istringstream linestream{line};
-    auto tokens = vv::parser::tokenize(linestream);
-    if (!vv::parser::is_valid(tokens)) {
-      write_error("invalid syntax");
-    } else {
-      auto exprs = vv::parser::parse(tokens);
-      for (const auto& expr : exprs) {
-        auto body = expr->generate();
-        base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
-        vv::vm::machine machine{base_stack};
-        machine.run();
-        std::cout << "=> " << machine.retval->value() << '\n';
-      }
+    for (const auto& expr : get_valid_line()) {
+      auto body = expr->generate();
+      base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
+      vv::vm::machine machine{base_stack};
+      machine.run();
+      std::cout << "=> " << machine.retval->value() << '\n';
     }
   }
 }
