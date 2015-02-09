@@ -124,6 +124,8 @@ void vm::machine::read(symbol sym)
     }
     cur_stack = cur_stack->enclosing;
   }
+  push_str("no such variable");
+  except();
 }
 
 void vm::machine::write(symbol sym)
