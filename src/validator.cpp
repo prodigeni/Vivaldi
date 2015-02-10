@@ -486,9 +486,14 @@ val_res val_try_catch(vector_ref<std::string> tokens)
 // }}}
 // type_definition {{{
 
+// Extremely similar, but not quite identical, to function validation---
+// function names are optional in functions (i.e. lambdas) but not in methods,
+// so they have to be evaluated separately. That could just be a bool parameter
+// to one validator function, but having them separate future-proofs it and
+// makes error messages marginally friendlier
 val_res val_method_definition(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "mem")
+  if (!tokens.size() || tokens.front() != "fn")
     return {};
   tokens = tokens.remove_prefix(1);
 

@@ -791,7 +791,7 @@ parse_res<> parse_try_catch(vector_ref<std::string> tokens)
 parse_res<std::pair<vv::symbol, std::shared_ptr<ast::function_definition>>>
   parse_method(vector_ref<std::string> tokens)
 {
-  if (tokens.front() != "mem")
+  if (tokens.front() != "fn")
     return {};
   symbol name{tokens[1]};
   tokens = tokens.remove_prefix(2);
