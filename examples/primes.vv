@@ -1,0 +1,38 @@
+fn for_each(arr, func): {
+  let i = 0
+  let sz = arr.size()
+  while i < sz: {
+    func(arr.at(i))
+    i = i + 1
+  }
+}
+
+fn filter(arr, pred): {
+  let new_arr = []
+  for_each(arr, fn (i): if pred(i): new_arr.append(i))
+  new_arr
+}
+
+fn range(first, last): {
+  let arr = []
+  while first < last: {
+    arr.append(first)
+    first = first + 1
+  }
+  arr
+}
+
+fn primes(upto): {
+  let candidates = range(2, upto)
+  let found = []
+  while candidates.size() > 0: {
+    let prime = candidates.at(0)
+    found.append(prime)
+    candidates = filter(candidates, fn (x): 0 != x % prime)
+  }
+  found
+}
+
+let p = primes(10000)
+puts(p)
+puts(p.size())
