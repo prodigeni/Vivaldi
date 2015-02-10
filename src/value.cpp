@@ -16,6 +16,8 @@ value::base::base(struct type* new_type)
 void value::base::mark()
 {
   m_marked = true;
+  if (type && !type->marked())
+    type->mark();
   for (auto& i : members)
     if (!i.second->marked())
       i.second->mark();
