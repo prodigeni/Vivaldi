@@ -12,6 +12,10 @@ namespace ast {
 class function_definition;
 }
 
+namespace vm {
+class machine;
+}
+
 namespace value {
 
 struct array;
@@ -47,13 +51,13 @@ private:
 };
 
 struct type : public base {
-  type(value::base* constructor,
-      const std::unordered_map<vv::symbol, value::base*>& methods,
-      value::base& parent,
-      vv::symbol name);
+  type(const std::function<value::base*(vm::machine&)>& constructor,
+       const std::unordered_map<vv::symbol, value::base*>& methods,
+       value::base& parent,
+       vv::symbol name);
 
   std::unordered_map<vv::symbol, value::base*> methods;
-  value::base* constructor;
+  std::function<value::base*(vm::machine&)> constructor;
 
   value::base& parent;
   vv::symbol name;

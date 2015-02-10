@@ -186,9 +186,14 @@ value::base* fn_bool_ctr(vm::machine& vm)
 // }}}
 // custom_type {{{
 
-auto custom_type_default_ctr_maker(value::type* type)
+auto fn_custom_type_ctr_maker(value::type* type)
 {
-  return [=](vm::machine&) { return gc::alloc<value::base>( type ); };
+  return [=] (vm::machine& vm)
+  {
+    auto obj = static_cast<value::type&>(type->parent).constructor(vm);
+    obj->type = type;
+    return obj;
+  };
 }
 
 value::base* fn_custom_type_ctr(vm::machine& vm)
@@ -207,20 +212,22 @@ value::base* fn_custom_type_ctr(vm::machine& vm)
   }
 
   auto parent = pop_arg(vm);
+  if (parent->type != &type::custom_type)
+    return throw_exception("Types can only inherit from other Types", vm);
 
   auto type_name = to_symbol(*pop_arg(vm));
   if (!type_name)
     return throw_exception("Type names must be symbols", vm);
 
-  auto type = gc::alloc<value::type>( nullptr,
-                                      move(methods),
-                                      *parent,
-                                      *type_name );
-  gc::set_current_retval(type);
+  auto type = gc::alloc<value::type>(
+      nullptr,
+      move(methods),
+      *parent,
+      *type_name );
 
-  auto cast_type = static_cast<value::type*>(type);
-  auto constructor = custom_type_default_ctr_maker(cast_type);
-  cast_type->constructor = gc::alloc<value::builtin_function>(constructor);
+  auto* cast_type = static_cast<value::type*>(type);
+  cast_type->constructor = fn_custom_type_ctr_maker(cast_type);
+  gc::set_current_retval(type);
 
   return type;
 }
@@ -485,31 +492,28 @@ value::base* fn_symbol_to_str(vm::machine& vm)
 using value::builtin_function;
 
 namespace {
-builtin_function obj_ctr     {fn_object_ctr};
 builtin_function obj_equals  {fn_object_equals};
 builtin_function obj_unequal {fn_object_unequal};
 builtin_function obj_type    {fn_object_type};
 }
-value::type type::object {&obj_ctr, {
+value::type type::object {fn_object_ctr, {
   { {"equals"},  &obj_equals },
   { {"unequal"}, &obj_unequal },
   { {"type"},    &obj_type }
 }, builtin::type::object, {"Object"}};
 
 namespace {
-builtin_function array_ctr    {fn_array_ctr};
 builtin_function array_size   {fn_array_size};
 builtin_function array_append {fn_array_append};
 builtin_function array_at     {fn_array_at};
 }
-value::type type::array {&array_ctr, {
+value::type type::array {fn_array_ctr, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at }
 }, builtin::type::object, {"Array"}};
 
 namespace {
-builtin_function int_ctr            {fn_integer_ctr                           };
 builtin_function int_add            {fn_integer_op(std::plus<int>{})          };
 builtin_function int_subtract       {fn_integer_op(std::minus<int>{})         };
 builtin_function int_times          {fn_integer_op(std::multiplies<int>{})    };
@@ -525,7 +529,7 @@ builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})      };
 builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})   };
 builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})};
 }
-value::type type::integer{&int_ctr, {
+value::type type::integer{fn_integer_ctr, {
   { {"add"},            &int_add            },
   { {"subtract"},       &int_subtract       },
   { {"times"},          &int_times          },
@@ -543,7 +547,6 @@ value::type type::integer{&int_ctr, {
 }, builtin::type::object, {"Integer"}};
 
 namespace {
-builtin_function flt_ctr            {fn_floating_point_ctr};
 builtin_function flt_add            {fn_floating_point_op(std::plus<double>{})       };
 builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{})      };
 builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}) };
@@ -555,7 +558,7 @@ builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{})   
 builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{})     };
 builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{})  };
 }
-value::type type::floating_point{&flt_ctr, {
+value::type type::floating_point{fn_floating_point_ctr, {
   { {"equals"},         &flt_equals         },
   { {"unequal"},        &flt_unequal        },
   { {"add"},            &flt_add            },
@@ -569,13 +572,12 @@ value::type type::floating_point{&flt_ctr, {
 }, builtin::type::object, {"Float"}};
 
 namespace {
-builtin_function string_ctr     {fn_string_ctr};
 builtin_function string_size    {fn_string_size};
 builtin_function string_append  {fn_string_append};
 builtin_function string_equals  {fn_string_equals};
 builtin_function string_unequal {fn_string_unequal};
 }
-value::type type::string {&string_ctr, {
+value::type type::string {fn_string_ctr, {
   { {"size"},    &string_size    },
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
@@ -584,28 +586,23 @@ value::type type::string {&string_ctr, {
 
 
 namespace {
-builtin_function symbol_ctr     {fn_symbol_ctr};
 builtin_function symbol_equals  {fn_symbol_equals};
 builtin_function symbol_unequal {fn_symbol_unequal};
 builtin_function symbol_to_str  {fn_symbol_to_str};
 }
-value::type type::symbol {&symbol_ctr, {
+value::type type::symbol {fn_symbol_ctr, {
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
   { {"to_str"},  &symbol_to_str  }
 }, builtin::type::object, {"Symbol"}};
 
-namespace {
-builtin_function bool_ctr     {fn_bool_ctr};
-}
-value::type type::boolean {&bool_ctr, {
+value::type type::boolean {fn_bool_ctr, {
 }, builtin::type::object, {"Bool"}};
 
 namespace {
-builtin_function custom_type_ctr    {fn_custom_type_ctr};
 builtin_function custom_type_parent {fn_custom_type_parent};
 }
-value::type type::custom_type {&custom_type_ctr, {
+value::type type::custom_type {fn_custom_type_ctr, {
   { {"parent"}, &custom_type_parent }
 }, builtin::type::object, {"Type"}};
 

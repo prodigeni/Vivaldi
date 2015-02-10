@@ -24,13 +24,13 @@ void value::base::mark()
 }
 
 value::type::type(
-    value::base* new_ctr,
+    const std::function<value::base*(vm::machine&)>& new_constructor,
     const std::unordered_map<vv::symbol, value::base*>& new_methods,
     value::base& new_parent,
     vv::symbol new_name)
   : base        {&builtin::type::custom_type},
     methods     {new_methods},
-    constructor {new_ctr},
+    constructor {new_constructor},
     parent      {new_parent},
     name        {new_name}
 { }
@@ -40,8 +40,6 @@ std::string value::type::value() const { return to_string(name); }
 void value::type::mark()
 {
   base::mark();
-  if (constructor && !constructor->marked())
-    constructor->mark();
   for (const auto& i : methods)
     if (!i.second->marked())
       i.second->mark();

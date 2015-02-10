@@ -220,10 +220,17 @@ void vm::machine::call(int argc)
   std::vector<value::base*> args;
 
   auto function = retval;
-  if (auto type = dynamic_cast<value::type*>(function))
-    function = type->constructor;
+  if (auto type = dynamic_cast<value::type*>(function)) {
+    stack = std::make_shared<call_stack>(stack, m_base, argc, stack->instr_ptr);
+    stack->caller = *function;
 
-  if (auto fn = dynamic_cast<value::function*>(function)) {
+    auto except_flag = stack.get();
+    gc::set_current_frame(stack);
+    retval = type->constructor(*this);
+    if (except_flag == stack.get())
+      ret();
+
+  } else if (auto fn = dynamic_cast<value::function*>(function)) {
     stack = std::make_shared<call_stack>(stack, fn->enclosure, argc, fn->body);
     stack->caller = *function;
 
