@@ -39,9 +39,8 @@ void vm::mark(call_stack& stack)
   for (auto* i : stack.pushed_args)
     if (!i->marked())
       i->mark();
-  for (auto* i : stack.catchers)
-    if (!i->marked())
-      i->mark();
+  if (stack.catcher && !stack.catcher->marked())
+    stack.catcher->mark();
   if (stack.caller && !stack.caller->marked())
     stack.caller->mark();
   if (stack.pushed_self && !stack.pushed_self->marked())

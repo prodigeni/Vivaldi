@@ -22,10 +22,12 @@
 
 using namespace vv;
 
-vm::machine::machine(std::shared_ptr<call_stack> frame)
-  : stack  {frame},
-    retval {nullptr},
-    m_base {frame}
+vm::machine::machine(std::shared_ptr<call_stack> frame,
+                     const std::function<void(vm::machine&)>& exception_handler)
+  : stack               {frame},
+    retval              {nullptr},
+    m_base              {frame},
+    m_exception_handler {exception_handler}
 {
   gc::set_current_frame(frame);
   gc::set_current_retval(retval);
@@ -272,28 +274,27 @@ void vm::machine::jmp(int offset)
 
 void vm::machine::push_catch()
 {
-  stack->catchers.push_back(retval);
+  stack->catcher = *retval;
 }
 
 void vm::machine::pop_catch()
 {
-  stack->catchers.pop_back();
+  stack->catcher = {};
 }
 
 void vm::machine::except()
 {
-  while (stack && !stack->catchers.size()) {
+  while (stack->parent && !stack->catcher)
     stack = stack->parent;
+
+  if (!stack->catcher) {
+    m_exception_handler(*this);
+  } else {
+    push_arg();
+    retval = &*stack->catcher;
+    call(1);
+    pop_catch();
   }
-  if (!stack) {
-    std::cerr << "caught exception: " << retval->value() << '\n';
-    gc::empty();
-    exit(0);
-  }
-  push_arg();
-  retval = stack->catchers.back();
-  call(1);
-  pop_catch();
 }
 
 // }}}

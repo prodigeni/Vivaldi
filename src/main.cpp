@@ -14,10 +14,21 @@ void write_error(const std::string& error)
   std::cerr << "\033[1;31m" << error << "\033[22;39m\n";
 }
 
-vv::value::base* repl_catcher(vv::vm::machine& vm)
+void repl_catcher(vv::vm::machine& vm)
 {
-  write_error("caught exception: " + vm.stack->args.front()->value());
-  return vv::gc::alloc<vv::value::nil>( );
+  write_error("caught exception: " + vm.retval->value());
+
+  // Clear out remaining instructions once the current line's borked
+  auto remaining = static_cast<long>(vm.stack->instr_ptr.size());
+  vm.stack->instr_ptr = vm.stack->instr_ptr.remove_prefix(remaining);
+  vm.retval = vv::gc::alloc<vv::value::nil>( );
+}
+
+void normal_catcher(vv::vm::machine& vm)
+{
+  std::cerr << "caught exception: " << vm.retval->value() << '\n';
+  vv::gc::empty();
+  exit(0);
 }
 
 std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
@@ -57,8 +68,6 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
 
 void run_repl()
 {
-  vv::value::builtin_function catcher{repl_catcher};
-
   auto base_stack = std::make_shared<vv::vm::call_stack>(
       std::shared_ptr<vv::vm::call_stack>{},
       std::shared_ptr<vv::vm::call_stack>{},
@@ -66,13 +75,11 @@ void run_repl()
       vv::vector_ref<vv::vm::command>{{}} );
   vv::builtin::make_base_env(*base_stack);
 
-  base_stack->catchers.push_back(&catcher);
-
   for (;;) {
     for (const auto& expr : get_valid_line()) {
       auto body = expr->generate();
       base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
-      vv::vm::machine machine{base_stack};
+      vv::vm::machine machine{base_stack, repl_catcher};
       machine.run();
       std::cout << "=> " << machine.retval->value() << '\n';
     }
@@ -105,7 +112,7 @@ int main(int argc, char** argv)
       vv::vector_ref<vv::vm::command>{body} );
 
   vv::builtin::make_base_env(*base_stack);
-  vv::vm::machine machine{base_stack};
+  vv::vm::machine machine{base_stack, normal_catcher};
   machine.run();
 
   vv::gc::empty();

@@ -40,8 +40,8 @@ public:
   /// Self to be passed in eventual method call
   boost::optional<value::base&> pushed_self;
 
-  /// Any catch expressions provided by try...catch blocks
-  std::vector<value::base*> catchers;
+  /// Catch expression provided by try...catch blocks
+  boost::optional<value::base&> catcher;
   /// Function from whom the current instruction pointer originates (stored here
   /// solely to avoid GC'ing it)
   boost::optional<value::base&> caller;

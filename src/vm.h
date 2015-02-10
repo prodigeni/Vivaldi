@@ -9,7 +9,8 @@ namespace vm {
 
 class machine {
 public:
-  machine(std::shared_ptr<call_stack> base);
+  machine(std::shared_ptr<call_stack> base,
+          const std::function<void(vm::machine&)>& exception_handler);
 
   void run();
 
@@ -48,6 +49,7 @@ public:
 
 private:
   std::shared_ptr<call_stack> m_base;
+  const std::function<void(machine&)> m_exception_handler;
 };
 
 }
