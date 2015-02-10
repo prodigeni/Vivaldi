@@ -97,6 +97,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  vv::gc::init();
+
   std::ifstream file{argv[1]};
   auto tokens = vv::parser::tokenize(file);
   auto exprs = vv::parser::parse(tokens);

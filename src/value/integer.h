@@ -9,7 +9,7 @@ namespace value {
 
 struct integer : public base {
 public:
-  integer(int val);
+  integer(int val = 0);
 
   std::string value() const override;
 

@@ -4,6 +4,12 @@
 
 using namespace vv;
 
+
+value::nil gc::internal::g_nil{};
+value::boolean gc::internal::g_true{true};
+value::boolean gc::internal::g_false{false};
+std::array<value::integer, 1024> gc::internal::g_ints;
+
 namespace {
 
 std::shared_ptr<vm::call_stack> g_frame{nullptr};
@@ -59,6 +65,9 @@ void gc::set_current_retval(value::base* retval)
 
 void gc::init()
 {
+  int value = 0;
+  for (auto& i : internal::g_ints)
+    i = value++;
   g_vals.reserve(512);
 }
 
