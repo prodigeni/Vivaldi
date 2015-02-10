@@ -148,8 +148,11 @@ val_res val_block(vector_ref<std::string> tokens)
   tokens = tokens.remove_prefix(first_nonsep - begin(tokens));
   while (tokens.size() && tokens.front() != "}") {
     val_res expr_res;
-    if (!(expr_res = val_expression(tokens)))
+    if (!(expr_res = val_expression(tokens))) {
+      if (expr_res.invalid())
+        return expr_res;
       return {tokens, "expected expression"};
+    }
     tokens = *expr_res;
     if (tokens.size() && (tokens.front() == "\n" || tokens.front() == ";")) {
       auto first_nonsep = std::find_if(begin(tokens), end(tokens),
@@ -218,13 +221,16 @@ val_res val_while_loop(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "while")
     return {};
-  if (auto test_res = val_expression(tokens.remove_prefix(1))) {
+  auto test_res = val_expression(tokens.remove_prefix(1));
+  if (test_res) {
     tokens = *test_res;
     if (!tokens.size() || tokens.front() != ":")
       return {tokens, "expected ':'"};
     auto value = val_expression(tokens.remove_prefix(1));
-    if (value)
+    if (value || value.invalid())
       return value;
+  } else if (test_res.invalid()) {
+    return test_res;
   }
   return {tokens, "expected expression"};
 }
@@ -306,6 +312,15 @@ val_res val_member(vector_ref<std::string> tokens)
   if (!tokens.size() || tokens.front() != ".")
     return {};
   tokens = tokens.remove_prefix(1);
+
+  auto name_res = val_name(tokens);
+  if (!name_res) {
+    if (name_res.invalid())
+      return name_res;
+    return {tokens, "expected member name"};
+  }
+  tokens = *name_res;
+
   if (tokens.size() && tokens.front() == "=")
     return val_expression(tokens.remove_prefix(1));
   return tokens;
