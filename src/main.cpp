@@ -102,6 +102,19 @@ int main(int argc, char** argv)
 
   std::ifstream file{argv[1]};
   auto tokens = vv::parser::tokenize(file);
+  auto validator = vv::parser::is_valid(tokens);
+  if (!validator) {
+    if (validator.invalid()) {
+      const std::string* first{tokens.data()};
+      auto line = count(first, begin(*validator), "\n");
+      std::cerr << "Invalid syntax at '" << validator->front()
+                << "' on line " << (line + 1) << ": "
+                << validator.error() << '\n';
+    } else {
+      std::cerr << "Invalid syntax\n";
+    }
+    return 2;
+  }
   auto exprs = vv::parser::parse(tokens);
   std::vector<vv::vm::command> body;
   for (const auto& i : exprs) {
