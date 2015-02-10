@@ -236,6 +236,9 @@ value::base* fn_custom_type_parent(vm::machine& vm)
 
 value::base* fn_integer_ctr(vm::machine& vm)
 {
+  if (vm.stack->args == 0)
+    return gc::alloc<value::integer>( 0 );
+
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
   auto arg = pop_arg(vm);
@@ -289,6 +292,9 @@ auto fn_int_bool_op(const F& op)
 
 value::base* fn_floating_point_ctr(vm::machine& vm)
 {
+  if (vm.stack->args == 0)
+    return gc::alloc<value::floating_point>( 0.0 );
+
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
   auto arg = pop_arg(vm);
@@ -374,6 +380,9 @@ value::base* fn_object_type(vm::machine& vm)
 
 value::base* fn_string_ctr(vm::machine& vm)
 {
+  if (vm.stack->args == 0)
+    return gc::alloc<value::string>( "" );
+
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
   auto arg = pop_arg(vm);

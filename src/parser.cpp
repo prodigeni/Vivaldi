@@ -817,6 +817,13 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
   auto name = parse_literal_symbol(tokens);
   tokens = name->second;
 
+  symbol parent{"Object"};
+  if (tokens.size() && tokens.front() == ":") {
+    auto parent_res = parse_literal_symbol(tokens.remove_prefix(1));
+    parent = parent_res->first;
+    tokens = parent_res->second;
+  }
+
   auto methods_res = parse_bracketed_subexpr(tokens,
                          [](auto t)
                            { return parse_comma_separated_list(t,
@@ -829,7 +836,7 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
       methods[i.first] = i.second;
 
     return {{ std::make_unique<ast::type_definition>( name->first,
-                                                      symbol{"Object"},
+                                                      parent,
                                                       methods ),
               methods_res->second }};
   }

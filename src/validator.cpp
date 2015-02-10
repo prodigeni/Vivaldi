@@ -520,8 +520,19 @@ val_res val_type_definition(vector_ref<std::string> tokens)
   if (!tokens.size() || tokens.front() != "class")
     return {};
   if (auto name_res = val_name(tokens.remove_prefix(1))) {
+    tokens = *name_res;
 
-    auto body = val_bracketed_subexpr(*name_res,
+    if (tokens.size() && tokens.front() == ":") {
+      auto parent_res = val_name(tokens.remove_prefix(1));
+      if (!parent_res) {
+        if (parent_res.invalid())
+          return parent_res;
+        return {tokens, "expected name of parent class"};
+      }
+      tokens = *parent_res;
+    }
+
+    auto body = val_bracketed_subexpr(tokens,
          [](auto t)
            { return val_comma_separated_list(t, val_method_definition); },
           "{", "}");
