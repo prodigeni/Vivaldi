@@ -65,20 +65,12 @@ value::base* fn_quit(vm::machine& vm)
   exit(0);
 }
 
-value::base* fn_type(vm::machine& vm)
-{
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
-  return pop_arg(vm)->type;
-}
-
 }
 
 value::builtin_function function::print{fn_print};
 value::builtin_function function::puts{ fn_puts};
 value::builtin_function function::gets{ fn_gets};
 value::builtin_function function::quit{ fn_quit};
-value::builtin_function function::type{ fn_type};
 
 // }}}
 // Methods and constructors {{{
@@ -618,7 +610,6 @@ void builtin::make_base_env(vm::call_stack& base)
     { {"puts"},    &builtin::function::puts },
     { {"gets"},    &builtin::function::gets },
     { {"quit"},    &builtin::function::quit },
-    { {"type"},    &builtin::function::type },
     { {"Array"},   &builtin::type::array },
     { {"Bool"},    &builtin::type::boolean },
     { {"Float"},   &builtin::type::floating_point },
