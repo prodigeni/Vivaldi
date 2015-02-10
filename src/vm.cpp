@@ -186,12 +186,14 @@ void vm::machine::pop_arg(symbol sym)
 void vm::machine::readm(symbol sym)
 {
   stack->pushed_self = *retval;
-  if (retval->members.count(sym))
+  if (retval->members.count(sym)) {
     retval = retval->members[sym];
-  else if (retval->type->methods.count(sym))
+  } else if (retval->type && retval->type->methods.count(sym)) {
     retval = retval->type->methods[sym];
-  push_str("no such member");
-  except();
+  } else {
+    push_str("no such member: " + to_string(sym));
+    except();
+  }
 }
 
 void vm::machine::writem(symbol sym)
