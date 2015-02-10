@@ -31,3 +31,10 @@ bool vv::check_size(size_t expected, size_t receieved, vm::machine& vm)
   }
   return true;
 }
+
+vv::value::base* vv::pop_arg(vm::machine& vm)
+{
+  auto arg = vm.stack->parent->pushed_args.front();
+  vm.stack->parent->pushed_args.pop_back();
+  return arg;
+}

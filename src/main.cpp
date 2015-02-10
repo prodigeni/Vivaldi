@@ -71,7 +71,7 @@ void run_repl()
   auto base_stack = std::make_shared<vv::vm::call_stack>(
       std::shared_ptr<vv::vm::call_stack>{},
       std::shared_ptr<vv::vm::call_stack>{},
-      std::vector<vv::value::base*>{},
+      0,
       vv::vector_ref<vv::vm::command>{{}} );
   vv::builtin::make_base_env(*base_stack);
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
   auto base_stack = std::make_shared<vv::vm::call_stack>(
       std::shared_ptr<vv::vm::call_stack>{},
       std::shared_ptr<vv::vm::call_stack>{},
-      std::vector<vv::value::base*>{},
+      0,
       vv::vector_ref<vv::vm::command>{body} );
 
   vv::builtin::make_base_env(*base_stack);

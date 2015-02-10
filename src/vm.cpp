@@ -179,8 +179,14 @@ void vm::machine::push_arg()
 
 void vm::machine::pop_arg(symbol sym)
 {
-  stack->local.back()[sym] = stack->args.back();
-  stack->args.pop_back();
+  if (stack->args != 0) {
+    stack->local.back()[sym] = stack->parent->pushed_args.back();
+    stack->parent->pushed_args.pop_back();
+    --stack->args;
+  } else {
+    push_str("wrong number of arguments");
+    except();
+  }
 }
 
 void vm::machine::readm(symbol sym)
@@ -209,29 +215,19 @@ void vm::machine::writem(symbol sym)
 void vm::machine::call(int argc)
 {
   std::vector<value::base*> args;
-  copy(end(stack->pushed_args) - argc, end(stack->pushed_args),
-       back_inserter(args));
-  stack->pushed_args.erase(end(stack->pushed_args) - argc,
-                           end(stack->pushed_args));
 
   auto function = retval;
   if (auto type = dynamic_cast<value::type*>(function))
     function = type->constructor;
 
   if (auto fn = dynamic_cast<value::function*>(function)) {
-    stack = std::make_shared<call_stack>( stack,
-                                          fn->enclosure,
-                                          move(args),
-                                          fn->body );
+    stack = std::make_shared<call_stack>(stack, fn->enclosure, argc, fn->body);
     stack->caller = *function;
 
     gc::set_current_frame(stack);
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
-    stack = std::make_shared<call_stack>( stack,
-                                          m_base,
-                                          move(args),
-                                          stack->instr_ptr );
+    stack = std::make_shared<call_stack>(stack, m_base, argc, stack->instr_ptr);
     stack->caller = *function;
 
     auto except_flag = stack.get();

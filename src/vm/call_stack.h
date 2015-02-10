@@ -21,7 +21,7 @@ class call_stack {
 public:
   call_stack(std::shared_ptr<call_stack> parent,
              std::shared_ptr<call_stack> enclosing,
-             std::vector<value::base*>&& args,
+             size_t                      args,
              vector_ref<command>         instr_ptr);
 
   /// Frame from which current function was called
@@ -33,10 +33,10 @@ public:
   /// self, if this is a method call
   boost::optional<value::base&> self;
 
-  /// Passed function arguments
-  std::vector<value::base*> args;
   /// Arguments to be passed in eventual function call
   std::vector<value::base*> pushed_args;
+  /// Number of function arguments --- stored in parent's pushed_args
+  size_t args;
   /// Self to be passed in eventual method call
   boost::optional<value::base&> pushed_self;
 

@@ -67,7 +67,7 @@ void gc::init()
 {
   int value = 0;
   for (auto& i : internal::g_ints)
-    i = value++;
+    i.val = value++;
   g_vals.reserve(512);
 }
 
