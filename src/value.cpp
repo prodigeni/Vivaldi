@@ -26,7 +26,7 @@ void value::base::mark()
 value::type::type(
     value::base* new_ctr,
     const std::unordered_map<vv::symbol, value::base*>& new_methods)
-  : base        {nullptr},
+  : base        {&builtin::type::custom_type},
     methods     {new_methods},
     constructor {new_ctr}
 { }
