@@ -23,6 +23,6 @@ const std::string& vv::to_string(symbol sym)
 
 size_t std::hash<vv::symbol>::operator()(const vv::symbol& sym) const
 {
-  const static std::hash<const std::string*> str_hash{};
-  return str_hash(sym.m_ptr);
+  // Use *simplest possible hash*
+  return reinterpret_cast<size_t>(sym.m_ptr);
 }
