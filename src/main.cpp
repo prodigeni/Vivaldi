@@ -36,7 +36,7 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
   std::cout << ">>> ";
   std::vector<std::string> tokens;
   vv::parser::val_res validator;
-  for (;;) {
+  while (!std::cin.eof()) {
     std::string line;
     getline(std::cin, line);
     std::istringstream linestream{line};
@@ -75,7 +75,7 @@ void run_repl()
       vv::vector_ref<vv::vm::command>{{}} );
   vv::builtin::make_base_env(*base_stack);
 
-  for (;;) {
+  while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
       auto body = expr->generate();
       base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
@@ -84,6 +84,7 @@ void run_repl()
       std::cout << "=> " << machine.retval->value() << '\n';
     }
   }
+  std::cout << '\n'; // stick prompt on newline on ^D
 }
 
 int main(int argc, char** argv)
