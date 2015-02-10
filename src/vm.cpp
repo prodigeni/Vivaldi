@@ -36,7 +36,9 @@ void vm::machine::run()
   using boost::get;
 
   while (stack->instr_ptr.size()) {
-    auto instr = stack->instr_ptr.front().instr;
+    auto instrp = stack->instr_ptr;
+    auto instrf = instrp.front();
+    auto instr = instrf.instr;
     const auto& arg = stack->instr_ptr.front().arg;
     stack->instr_ptr = stack->instr_ptr.remove_prefix(1);
 
@@ -70,9 +72,9 @@ void vm::machine::run()
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
     case instruction::jmp:       jmp(get<int>(arg));       break;
 
-    case instruction::push_catch: push_catch(); break;
-    case instruction::pop_catch:  pop_catch();  break;
-    case instruction::except:     except();     break;
+    case instruction::push_catch: push_catch();            break;
+    case instruction::pop_catch: pop_catch();              break;
+    case instruction::except:     except();                break;
     }
   }
 }
@@ -176,8 +178,10 @@ void vm::machine::readm(symbol sym)
   stack->pushed_self = *retval;
   if (retval->members.count(sym))
     retval = retval->members[sym];
-  else
+  else if (retval->type->methods.count(sym))
     retval = retval->type->methods[sym];
+  push_str("no such member");
+  except();
 }
 
 void vm::machine::writem(symbol sym)
@@ -206,6 +210,7 @@ void vm::machine::call(int argc)
                                           fn->enclosure,
                                           move(args),
                                           fn->body );
+    stack->caller = *function;
 
     gc::set_current_frame(stack);
 
@@ -214,6 +219,8 @@ void vm::machine::call(int argc)
                                           m_base,
                                           move(args),
                                           stack->instr_ptr );
+    stack->caller = *function;
+
     auto except_flag = stack.get();
     gc::set_current_frame(stack);
     retval = fn->body(*this);
@@ -277,4 +284,5 @@ void vm::machine::except()
   push_arg();
   retval = stack->catchers.back();
   call(1);
+  pop_catch();
 }

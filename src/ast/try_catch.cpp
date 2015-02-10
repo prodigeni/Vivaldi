@@ -1,7 +1,6 @@
 #include "try_catch.h"
 
 #include "gc.h"
-#include "value/function.h"
 
 using namespace vv;
 
@@ -15,8 +14,12 @@ std::vector<vm::command> ast::try_catch::generate() const
 {
   auto vec = m_catcher->generate();
   vec.emplace_back(vm::instruction::push_catch);
+
   auto body = m_body->generate();
-  copy(begin(body), end(body), back_inserter(vec));
+  body.emplace_back(vm::instruction::ret);
+  vec.emplace_back(vm::instruction::push_fn, move(body));
+  vec.emplace_back(vm::instruction::call, 0);
+
   vec.emplace_back(vm::instruction::pop_catch);
   return vec;
 }
