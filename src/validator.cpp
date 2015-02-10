@@ -1,7 +1,5 @@
 #include "parser.h"
 
-#include <iostream>
-
 using namespace vv;
 using namespace parser;
 
@@ -54,7 +52,7 @@ val_res val_comma_separated_list(vector_ref<std::string> tokens,
     tokens = tokens.remove_prefix(1);
   } while ((expr_res = val_item(tokens)));
 
-  return {};
+  return expr_res;
 }
 
 // }}}
@@ -73,6 +71,7 @@ val_res val_bracketed_subexpr(vector_ref<std::string> tokens,
     tokens = *item_res;
     if (tokens.size() && tokens.front() == closing)
       return tokens.remove_prefix(1);
+    return {tokens, "expected '" + closing + '\''};
   }
   return {};
 }
@@ -493,7 +492,7 @@ val_res val_method_definition(vector_ref<std::string> tokens)
     return {};
   tokens = tokens.remove_prefix(1);
 
-  if (!tokens.size() || val_name(tokens))
+  if (!tokens.size() || !val_name(tokens))
     return {tokens, "expected method name"};
   tokens = tokens.remove_prefix(1);
 
@@ -502,14 +501,18 @@ val_res val_method_definition(vector_ref<std::string> tokens)
     tokens = *param_res;
     if (!tokens.size() || tokens.front() != ":")
       return {tokens, "expected ':'"};
-    return val_expression(tokens.remove_prefix(1));
+
+    auto expr = val_expression(tokens.remove_prefix(1));
+    if (expr || expr.invalid())
+      return expr;
+    return {tokens, "expected expression"};
   }
   return {tokens, "expected parameter list"};
 }
 
 val_res val_type_definition(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "newtype")
+  if (!tokens.size() || tokens.front() != "class")
     return {};
   if (auto name_res = val_name(tokens.remove_prefix(1))) {
 

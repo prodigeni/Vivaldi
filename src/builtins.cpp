@@ -192,7 +192,7 @@ value::base* fn_integer_ctr(vm::machine& vm)
   if (type == &type::floating_point)
     return gc::alloc<value::integer>( static_cast<int>(*to_float(*arg)) );
 
-  return throw_exception("Cannot create Integer from " + arg->value(), vm);
+  return throw_exception("Cannot create Integer from " + arg->type->value(), vm);
 }
 
 template <typename F>
@@ -432,15 +432,23 @@ auto custom_type_default_ctr_maker(value::type* type)
 value::base* fn_custom_type_ctr(vm::machine& vm)
 {
   std::unordered_map<symbol, value::base*> methods;
-  for (auto i = vm.stack->args; i--; --i) {
+  for (auto i = vm.stack->args; i-- > 2; --i) {
     auto name = to_symbol(*pop_arg(vm));
     if (!name)
-      return throw_exception("Type names must be symbols", vm);
+      return throw_exception("Method names must be symbols", vm);
     auto definition = pop_arg(vm);
+    if (definition->type != &type::function)
+      return throw_exception("Method must be a function, not a "
+                             + definition->type->value(),
+                             vm);
     methods[*name] = definition;
   }
 
-  auto type = gc::alloc<value::type>( nullptr, move(methods) );
+  auto type_name = to_symbol(*pop_arg(vm));
+  if (!type_name)
+    return throw_exception("Type names must be symbols", vm);
+
+  auto type = gc::alloc<value::type>( nullptr, move(methods), *type_name );
   gc::set_current_retval(type);
 
   auto cast_type = static_cast<value::type*>(type);
@@ -469,7 +477,7 @@ value::type type::array {&array_ctr, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at }
-}};
+}, {"Array"}};
 
 namespace {
 builtin_function int_ctr            {fn_integer_ctr                           };
@@ -503,7 +511,7 @@ value::type type::integer{&int_ctr, {
   { {"greater"},        &int_greater        },
   { {"less_equals"},    &int_less_equals    },
   { {"greater_equals"}, &int_greater_equals }
-} };
+}, {"Integer"}};
 
 namespace {
 builtin_function flt_ctr            {fn_floating_point_ctr};
@@ -529,7 +537,7 @@ value::type type::floating_point{&flt_ctr, {
   { {"greater"},        &flt_greater        },
   { {"less_equals"},    &flt_less_equals    },
   { {"greater_equals"}, &flt_greater_equals }
-}};
+}, {"Float"}};
 
 namespace {
 builtin_function string_ctr     {fn_string_ctr};
@@ -543,7 +551,7 @@ value::type type::string {&string_ctr, {
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
   { {"unequal"}, &string_unequal }
-}};
+}, {"String"}};
 
 
 namespace {
@@ -556,7 +564,7 @@ value::type type::symbol {&symbol_ctr, {
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
   { {"to_str"},  &symbol_to_str  }
-}};
+}, {"Symbol"}};
 
 namespace {
 builtin_function bool_ctr     {fn_bool_ctr};
@@ -566,16 +574,16 @@ builtin_function bool_unequal {fn_bool_op(std::not_equal_to<bool>{})};
 value::type type::boolean {&bool_ctr, {
   { {"equals"},  &bool_equals  },
   { {"unequal"}, &bool_unequal }
-}};
+}, {"Bool"}};
 
 namespace {
 builtin_function custom_type_ctr {fn_custom_type_ctr};
 }
 value::type type::custom_type {&custom_type_ctr, {
-}};
+}, {"Type"}};
 
-value::type type::nil      {nullptr, { }};
-value::type type::function {nullptr, { }};
+value::type type::nil      {nullptr, { }, {"Nil"}};
+value::type type::function {nullptr, { }, {"Function"}};
 
 // }}}
 

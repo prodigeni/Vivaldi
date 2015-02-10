@@ -25,13 +25,15 @@ void value::base::mark()
 
 value::type::type(
     value::base* new_ctr,
-    const std::unordered_map<vv::symbol, value::base*>& new_methods)
+    const std::unordered_map<vv::symbol, value::base*>& new_methods,
+    vv::symbol new_name)
   : base        {&builtin::type::custom_type},
     methods     {new_methods},
-    constructor {new_ctr}
+    constructor {new_ctr},
+    name        {new_name}
 { }
 
-std::string value::type::value() const { return "<type>"; }
+std::string value::type::value() const { return to_string(name); }
 
 void value::type::mark()
 {

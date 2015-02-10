@@ -811,7 +811,7 @@ parse_res<std::pair<vv::symbol, std::shared_ptr<ast::function_definition>>>
 
 parse_res<> parse_type_definition(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "newtype")
+  if (!tokens.size() || tokens.front() != "class")
     return {};
   tokens = tokens.remove_prefix(1);
   auto name = parse_literal_symbol(tokens);

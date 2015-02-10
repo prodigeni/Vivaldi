@@ -48,10 +48,12 @@ private:
 
 struct type : public base {
   type(value::base* constructor,
-      const std::unordered_map<vv::symbol, value::base*>& methods);
+      const std::unordered_map<vv::symbol, value::base*>& methods,
+      vv::symbol name);
 
   std::unordered_map<vv::symbol, value::base*> methods;
   value::base* constructor;
+  vv::symbol name;
 
   std::string value() const override;
 

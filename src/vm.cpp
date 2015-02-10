@@ -18,8 +18,6 @@
 
 #include <boost/variant/get.hpp>
 
-#include <iostream>
-
 using namespace vv;
 
 vm::machine::machine(std::shared_ptr<call_stack> frame,
