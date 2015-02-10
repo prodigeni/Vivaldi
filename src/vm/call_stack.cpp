@@ -18,6 +18,9 @@ vm::call_stack::call_stack(std::shared_ptr<call_stack> new_parent,
 
 void vm::mark(call_stack& stack)
 {
+  // Tedious; just call mark on every extant member (unless it's already marked,
+  // in which case don't--- both because it's redundant and because of circular
+  // references)
   if (stack.parent)
     mark(*stack.parent);
   if (stack.enclosing && stack.parent != stack.enclosing)

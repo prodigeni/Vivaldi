@@ -36,12 +36,18 @@ void vm::machine::run()
   using boost::get;
 
   while (stack->instr_ptr.size()) {
-    auto instrp = stack->instr_ptr;
-    auto instrf = instrp.front();
-    auto instr = instrf.instr;
+    // Get next instruction (and argument, if it exists), and increment the
+    // instruction pointer
+    auto instr = stack->instr_ptr.front().instr;
     const auto& arg = stack->instr_ptr.front().arg;
     stack->instr_ptr = stack->instr_ptr.remove_prefix(1);
 
+    // HACK--- avoid weirdness like the following:
+    //   let i = 1
+    //   let add = i.add // pushed_self is now i
+    //   add(2)          // => 3
+    //   5 + 1           // pushed self is now 5
+    //   add(2)          // => 7
     if (instr != instruction::call)
       stack->pushed_self = {};
 
@@ -78,6 +84,8 @@ void vm::machine::run()
     }
   }
 }
+
+// Instruction implementations {{{
 
 void vm::machine::push_bool(bool val)
 {
@@ -193,6 +201,7 @@ void vm::machine::writem(symbol sym)
   retval = value;
 }
 
+// TODO: make suck less.
 void vm::machine::call(int argc)
 {
   std::vector<value::base*> args;
@@ -286,3 +295,5 @@ void vm::machine::except()
   call(1);
   pop_catch();
 }
+
+// }}}
