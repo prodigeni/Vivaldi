@@ -114,7 +114,7 @@ boost::optional<vv::symbol> to_symbol(const value::base& boxed)
 value::base* fn_array_ctr(vm::machine& vm)
 {
   std::vector<value::base*> args;
-  while (vm.stack->args)
+  for (auto i = vm.stack->args; i--;)
     args.push_back(pop_arg(vm));
   return gc::alloc<value::array>( args );
 }
