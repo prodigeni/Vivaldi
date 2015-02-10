@@ -113,16 +113,16 @@ Everything in Vivaldi is an object, and has
 * A type
 
 <pre><code>
-    let int_type = type(int)
+    let int_type = int.type()
     int_type == Integer
 </code></pre>
 
 Defining custom types is simple:
 
 <pre><code>
-    newtype MyType {
-      mem init(x): self.x = x
-      mem x_is_equal_to(y): self.x = y
+    class MyType {
+      fn init(x): self.x = x,
+      fn x_is_equal_to(y): self.x = y
     }
 
     let my_obj = MyType(5)
