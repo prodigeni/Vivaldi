@@ -68,6 +68,8 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
 
 void run_repl()
 {
+  vv::gc::init();
+
   auto base_stack = std::make_shared<vv::vm::call_stack>(
       std::shared_ptr<vv::vm::call_stack>{},
       std::shared_ptr<vv::vm::call_stack>{},
