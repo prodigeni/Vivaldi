@@ -169,11 +169,11 @@ value::base* fn_array_at(vm::machine& vm)
   auto val = static_cast<value::integer*>(arg)->val;
   const auto& arr = static_cast<value::array&>(*vm.stack->self).mems;
   if (arr.size() <= static_cast<unsigned>(val) || val < 0)
-    return throw_exception("out of range (expected 0-"
+    return throw_exception("Out of range (expected 0-"
                            + std::to_string(arr.size()) + ", got "
                            + std::to_string(val) + ")",
                            vm);
-  return arr.at(static_cast<unsigned>(val));
+  return arr[static_cast<unsigned>(val)];
 }
 
 // }}}
@@ -192,9 +192,7 @@ value::base* fn_integer_ctr(vm::machine& vm)
   if (type == &type::floating_point)
     return gc::alloc<value::integer>( static_cast<int>(*to_float(*arg)) );
 
-  vm.push_str("cannot create Integer from " + arg->value());
-  vm.except();
-  return vm.retval;
+  return throw_exception("Cannot create Integer from " + arg->value(), vm);
 }
 
 template <typename F>
@@ -249,7 +247,7 @@ value::base* fn_floating_point_ctr(vm::machine& vm)
     return gc::alloc<value::floating_point>( static_cast<double>(int_val) );
   }
 
-  return throw_exception("cannot create Float from " + arg->value(), vm);
+  return throw_exception("Cannot create Float from " + arg->value(), vm);
 }
 
 template <typename F>
