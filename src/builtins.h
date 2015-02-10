@@ -28,6 +28,7 @@ extern value::builtin_function type;
 
 namespace type {
 
+extern value::type object;
 extern value::type string;
 extern value::type integer;
 extern value::type floating_point;

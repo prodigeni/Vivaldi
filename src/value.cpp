@@ -26,10 +26,12 @@ void value::base::mark()
 value::type::type(
     value::base* new_ctr,
     const std::unordered_map<vv::symbol, value::base*>& new_methods,
+    value::base& new_parent,
     vv::symbol new_name)
   : base        {&builtin::type::custom_type},
     methods     {new_methods},
     constructor {new_ctr},
+    parent      {new_parent},
     name        {new_name}
 { }
 
@@ -43,4 +45,6 @@ void value::type::mark()
   for (const auto& i : methods)
     if (!i.second->marked())
       i.second->mark();
+  if (!parent.marked())
+    parent.mark();
 }

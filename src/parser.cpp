@@ -829,7 +829,7 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
       methods[i.first] = i.second;
 
     return {{ std::make_unique<ast::type_definition>( name->first,
-                                                      symbol{""},
+                                                      symbol{"Object"},
                                                       methods ),
               methods_res->second }};
   }

@@ -115,13 +115,6 @@ boost::optional<vv::symbol> to_symbol(const value::base& boxed)
   return static_cast<const value::symbol&>(boxed).val;
 }
 
-boost::optional<bool> to_bool(const value::base& boxed) noexcept
-{
-  if (boxed.type != &type::boolean)
-    return {};
-  return static_cast<const value::boolean&>(boxed).val;
-}
-
 // }}}
 
 // array {{{
@@ -174,6 +167,69 @@ value::base* fn_array_at(vm::machine& vm)
                            + std::to_string(val) + ")",
                            vm);
   return arr[static_cast<unsigned>(val)];
+}
+
+// }}}
+// boolean {{{
+
+value::base* fn_bool_ctr(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto arg = pop_arg(vm);
+
+  if (arg->type == &type::boolean)
+    return arg;
+  return gc::alloc<value::boolean>( truthy(arg) );
+}
+
+// }}}
+// custom_type {{{
+
+auto custom_type_default_ctr_maker(value::type* type)
+{
+  return [=](vm::machine&) { return gc::alloc<value::base>( type ); };
+}
+
+value::base* fn_custom_type_ctr(vm::machine& vm)
+{
+  std::unordered_map<symbol, value::base*> methods;
+  for (auto i = vm.stack->args; i-- > 2; --i) {
+    auto name = to_symbol(*pop_arg(vm));
+    if (!name)
+      return throw_exception("Method names must be symbols", vm);
+    auto definition = pop_arg(vm);
+    if (definition->type != &type::function)
+      return throw_exception("Method must be a function, not a "
+                             + definition->type->value(),
+                             vm);
+    methods[*name] = definition;
+  }
+
+  auto parent = pop_arg(vm);
+
+  auto type_name = to_symbol(*pop_arg(vm));
+  if (!type_name)
+    return throw_exception("Type names must be symbols", vm);
+
+  auto type = gc::alloc<value::type>( nullptr,
+                                      move(methods),
+                                      *parent,
+                                      *type_name );
+  gc::set_current_retval(type);
+
+  auto cast_type = static_cast<value::type*>(type);
+  auto constructor = custom_type_default_ctr_maker(cast_type);
+  cast_type->constructor = gc::alloc<value::builtin_function>(constructor);
+
+  return type;
+}
+
+value::base* fn_custom_type_parent(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  return &static_cast<value::type&>(*vm.stack->self).parent;
 }
 
 // }}}
@@ -283,6 +339,38 @@ auto fn_float_bool_op(const F& op)
 }
 
 // }}}
+// object {{{
+
+
+value::base* fn_object_ctr(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  return gc::alloc<value::base>( &type::object );
+}
+
+value::base* fn_object_equals(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  return gc::alloc<value::boolean>( &*vm.stack->self == pop_arg(vm) );
+}
+
+value::base* fn_object_unequal(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  return gc::alloc<value::boolean>( &*vm.stack->self != pop_arg(vm) );
+}
+
+value::base* fn_object_type(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  return vm.stack->self->type;
+}
+
+// }}}
 // string {{{
 
 value::base* fn_string_ctr(vm::machine& vm)
@@ -297,8 +385,7 @@ value::base* fn_string_ctr(vm::machine& vm)
   return gc::alloc<value::string>( arg->value() );
 }
 
-value::base* fn_string_size(
-                            vm::machine& vm)
+value::base* fn_string_size(vm::machine& vm)
 {
   if (!check_size(0, vm.stack->args, vm))
     return vm.retval;
@@ -328,8 +415,7 @@ value::base* fn_string_unequal(vm::machine& vm)
       to_string(*vm.stack->self) != to_string(*arg) );
 }
 
-value::base* fn_string_append(
-                              vm::machine& vm)
+value::base* fn_string_append(vm::machine& vm)
 {
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
@@ -358,8 +444,7 @@ value::base* fn_symbol_ctr(vm::machine& vm)
     vm);
 }
 
-value::base* fn_symbol_equals(
-                               vm::machine& vm)
+value::base* fn_symbol_equals(vm::machine& vm)
 {
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
@@ -371,8 +456,7 @@ value::base* fn_symbol_equals(
       to_symbol(*vm.stack->self) == to_symbol(*arg) );
 }
 
-value::base* fn_symbol_unequal(
-                               vm::machine& vm)
+value::base* fn_symbol_unequal(vm::machine& vm)
 {
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
@@ -384,78 +468,11 @@ value::base* fn_symbol_unequal(
       to_symbol(*vm.stack->self) != to_symbol(*arg) );
 }
 
-value::base* fn_symbol_to_str(
-                              vm::machine& vm)
+value::base* fn_symbol_to_str(vm::machine& vm)
 {
   if (!check_size(0, vm.stack->args, vm))
     return vm.retval;
   return gc::alloc<value::string>( to_string(*to_symbol(*vm.stack->self)) );
-}
-
-// }}}
-// boolean {{{
-
-value::base* fn_bool_ctr(vm::machine& vm)
-{
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
-  auto arg = pop_arg(vm);
-
-  if (arg->type == &type::boolean)
-    return arg;
-  return gc::alloc<value::boolean>( truthy(arg) );
-}
-
-template <typename F>
-auto fn_bool_op(const F& op)
-{
-  return [=](vm::machine& vm)
-  {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
-    auto left = to_bool(*vm.stack->self);
-    auto right = to_bool(*pop_arg(vm));
-    if (!right)
-      return throw_exception("Right-hand argument is not a Bool", vm);
-    return gc::alloc<value::boolean>( op(*left, *right) );
-  };
-}
-
-// }}}
-// custom_type {{{
-
-auto custom_type_default_ctr_maker(value::type* type)
-{
-  return [=](vm::machine&) { return gc::alloc<value::base>( type ); };
-}
-
-value::base* fn_custom_type_ctr(vm::machine& vm)
-{
-  std::unordered_map<symbol, value::base*> methods;
-  for (auto i = vm.stack->args; i-- > 2; --i) {
-    auto name = to_symbol(*pop_arg(vm));
-    if (!name)
-      return throw_exception("Method names must be symbols", vm);
-    auto definition = pop_arg(vm);
-    if (definition->type != &type::function)
-      return throw_exception("Method must be a function, not a "
-                             + definition->type->value(),
-                             vm);
-    methods[*name] = definition;
-  }
-
-  auto type_name = to_symbol(*pop_arg(vm));
-  if (!type_name)
-    return throw_exception("Type names must be symbols", vm);
-
-  auto type = gc::alloc<value::type>( nullptr, move(methods), *type_name );
-  gc::set_current_retval(type);
-
-  auto cast_type = static_cast<value::type*>(type);
-  auto constructor = custom_type_default_ctr_maker(cast_type);
-  cast_type->constructor = gc::alloc<value::builtin_function>(constructor);
-
-  return type;
 }
 
 // }}}
@@ -468,6 +485,18 @@ value::base* fn_custom_type_ctr(vm::machine& vm)
 using value::builtin_function;
 
 namespace {
+builtin_function obj_ctr     {fn_object_ctr};
+builtin_function obj_equals  {fn_object_equals};
+builtin_function obj_unequal {fn_object_unequal};
+builtin_function obj_type    {fn_object_type};
+}
+value::type type::object {&obj_ctr, {
+  { {"equals"},  &obj_equals },
+  { {"unequal"}, &obj_unequal },
+  { {"type"},    &obj_type }
+}, builtin::type::object, {"Object"}};
+
+namespace {
 builtin_function array_ctr    {fn_array_ctr};
 builtin_function array_size   {fn_array_size};
 builtin_function array_append {fn_array_append};
@@ -477,7 +506,7 @@ value::type type::array {&array_ctr, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at }
-}, {"Array"}};
+}, builtin::type::object, {"Array"}};
 
 namespace {
 builtin_function int_ctr            {fn_integer_ctr                           };
@@ -511,7 +540,7 @@ value::type type::integer{&int_ctr, {
   { {"greater"},        &int_greater        },
   { {"less_equals"},    &int_less_equals    },
   { {"greater_equals"}, &int_greater_equals }
-}, {"Integer"}};
+}, builtin::type::object, {"Integer"}};
 
 namespace {
 builtin_function flt_ctr            {fn_floating_point_ctr};
@@ -537,7 +566,7 @@ value::type type::floating_point{&flt_ctr, {
   { {"greater"},        &flt_greater        },
   { {"less_equals"},    &flt_less_equals    },
   { {"greater_equals"}, &flt_greater_equals }
-}, {"Float"}};
+}, builtin::type::object, {"Float"}};
 
 namespace {
 builtin_function string_ctr     {fn_string_ctr};
@@ -551,7 +580,7 @@ value::type type::string {&string_ctr, {
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
   { {"unequal"}, &string_unequal }
-}, {"String"}};
+}, builtin::type::object, {"String"}};
 
 
 namespace {
@@ -564,26 +593,24 @@ value::type type::symbol {&symbol_ctr, {
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
   { {"to_str"},  &symbol_to_str  }
-}, {"Symbol"}};
+}, builtin::type::object, {"Symbol"}};
 
 namespace {
 builtin_function bool_ctr     {fn_bool_ctr};
-builtin_function bool_equals  {fn_bool_op(std::equal_to<bool>{})};
-builtin_function bool_unequal {fn_bool_op(std::not_equal_to<bool>{})};
 }
 value::type type::boolean {&bool_ctr, {
-  { {"equals"},  &bool_equals  },
-  { {"unequal"}, &bool_unequal }
-}, {"Bool"}};
+}, builtin::type::object, {"Bool"}};
 
 namespace {
-builtin_function custom_type_ctr {fn_custom_type_ctr};
+builtin_function custom_type_ctr    {fn_custom_type_ctr};
+builtin_function custom_type_parent {fn_custom_type_parent};
 }
 value::type type::custom_type {&custom_type_ctr, {
-}, {"Type"}};
+  { {"parent"}, &custom_type_parent }
+}, builtin::type::object, {"Type"}};
 
-value::type type::nil      {nullptr, { }, {"Nil"}};
-value::type type::function {nullptr, { }, {"Function"}};
+value::type type::nil      {nullptr, { }, builtin::type::object, {"Nil"}};
+value::type type::function {nullptr, { }, builtin::type::object, {"Function"}};
 
 // }}}
 
@@ -596,11 +623,12 @@ void builtin::make_base_env(vm::call_stack& base)
     { {"quit"},    &builtin::function::quit },
     { {"type"},    &builtin::function::type },
     { {"Array"},   &builtin::type::array },
+    { {"Bool"},    &builtin::type::boolean },
     { {"Float"},   &builtin::type::floating_point },
     { {"Integer"}, &builtin::type::integer },
-    { {"String"},  &builtin::type::string },
-    { {"Bool"},    &builtin::type::boolean },
     { {"Nil"},     &builtin::type::nil },
+    { {"Object"},  &builtin::type::object },
+    { {"String"},  &builtin::type::string },
     { {"Symbol"},  &builtin::type::symbol },
     { {"Type"},    &builtin::type::custom_type }
   };

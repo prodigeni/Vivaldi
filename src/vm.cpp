@@ -192,12 +192,17 @@ void vm::machine::readm(symbol sym)
   stack->pushed_self = *retval;
   if (retval->members.count(sym)) {
     retval = retval->members[sym];
-  } else if (retval->type && retval->type->methods.count(sym)) {
-    retval = retval->type->methods[sym];
-  } else {
-    push_str("no such member: " + to_string(sym));
-    except();
+    return;
   }
+  auto type = retval->type;
+  while (&type->parent != type && !type->methods.count(sym))
+    type = static_cast<value::type*>(&type->parent);
+  if (type->methods.count(sym)) {
+    retval = type->methods[sym];
+    return;
+  }
+  push_str("no such member: " + to_string(sym));
+  except();
 }
 
 void vm::machine::writem(symbol sym)

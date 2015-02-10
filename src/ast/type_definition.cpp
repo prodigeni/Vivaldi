@@ -22,6 +22,7 @@ std::vector<vm::command> ast::type_definition::generate() const
   // builtin type-definition instruction, I create types by calling the Type
   // constructor with the following function arguments:
   // 1. a type name
+  // 1. a parent class
   // 2. a method name
   // 3. a method body
   // (where 2 and 3 are repeated for each method given)
@@ -29,6 +30,9 @@ std::vector<vm::command> ast::type_definition::generate() const
   std::vector<vm::command> vec;
 
   vec.emplace_back(vm::instruction::push_sym, m_name);
+  vec.emplace_back(vm::instruction::push_arg);
+
+  vec.emplace_back(vm::instruction::read, m_parent);
   vec.emplace_back(vm::instruction::push_arg);
 
   for (const auto& i : m_methods) {
