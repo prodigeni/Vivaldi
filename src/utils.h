@@ -68,6 +68,13 @@ vector_ref<T> ltrim(vector_ref<T> vec, const T& item)
   return vec.remove_prefix(last - begin(vec));
 }
 
+template <typename T, typename F>
+vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
+{
+  auto last = find_if_not(begin(vec), end(vec), pred);
+  return vec.remove_prefix(last - begin(vec));
+}
+
 }
 
 #endif

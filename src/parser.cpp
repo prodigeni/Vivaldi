@@ -10,6 +10,8 @@
 #include "ast/function_call.h"
 #include "ast/function_definition.h"
 #include "ast/literal.h"
+#include "ast/logical_and.h"
+#include "ast/logical_or.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
 #include "ast/try_catch.h"
@@ -24,10 +26,10 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include <boost/utility/string_ref.hpp>
-#include <boost/optional/optional.hpp>
+#include <stack>
 
 using namespace vv;
+using namespace ast;
 
 // Grammar {{{
 
@@ -156,10 +158,46 @@ using namespace vv;
 
 namespace {
 
-template <typename T = std::unique_ptr<ast::expression>>
+template <typename T = std::unique_ptr<expression>>
 using parse_res = boost::optional<std::pair<T, vector_ref<std::string>>>;
 
-using arg_t = std::vector<std::unique_ptr<ast::expression>>;
+using arg_t = std::vector<std::unique_ptr<expression>>;
+
+parse_res<> parse_expression(vector_ref<std::string> tokens);
+
+parse_res<> parse_nonop_expression(vector_ref<std::string> tokens);
+parse_res<> parse_prec0(vector_ref<std::string> tokens); // member, call
+parse_res<> parse_prec1(vector_ref<std::string> tokens); // monops
+parse_res<> parse_prec2(vector_ref<std::string> tokens); // *, /, %
+parse_res<> parse_prec3(vector_ref<std::string> tokens); // +, -
+parse_res<> parse_prec4(vector_ref<std::string> tokens); // <<, >>
+parse_res<> parse_prec5(vector_ref<std::string> tokens); // &
+parse_res<> parse_prec6(vector_ref<std::string> tokens); // ^
+parse_res<> parse_prec7(vector_ref<std::string> tokens); // |
+parse_res<> parse_prec8(vector_ref<std::string> tokens); // <, >, <=, =>
+parse_res<> parse_prec9(vector_ref<std::string> tokens); // ==, !=
+parse_res<> parse_prec10(vector_ref<std::string> tokens); // &&
+parse_res<> parse_prec11(vector_ref<std::string> tokens); // ||
+
+parse_res<> parse_assignment(vector_ref<std::string> tokens);
+parse_res<> parse_block(vector_ref<std::string> tokens);
+parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
+parse_res<> parse_except(vector_ref<std::string> tokens);
+parse_res<> parse_while_loop(vector_ref<std::string> tokens);
+parse_res<> parse_function_definition(vector_ref<std::string> tokens);
+parse_res<> parse_literal(vector_ref<std::string> tokens);
+parse_res<> parse_array_literal(vector_ref<std::string> tokens);
+parse_res<> parse_try_catch(vector_ref<std::string> tokens);
+parse_res<> parse_type_definition(vector_ref<std::string> tokens);
+parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
+parse_res<> parse_variable(vector_ref<std::string> tokens);
+
+parse_res<> parse_symbol(vector_ref<std::string> tokens);
+parse_res<> parse_integer(vector_ref<std::string> tokens);
+parse_res<> parse_float(vector_ref<std::string> tokens);
+parse_res<> parse_bool(vector_ref<std::string> tokens);
+parse_res<> parse_nil(vector_ref<std::string> tokens);
+parse_res<> parse_string(vector_ref<std::string> tokens);
 
 template <typename F>
 auto parse_comma_separated_list(vector_ref<std::string> tokens,
@@ -171,726 +209,658 @@ auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
                              const std::string& opening,
                              const std::string& closing)
     -> decltype(parse_item(tokens));
-
-parse_res<> parse_expression(vector_ref<std::string> tokens);
-parse_res<> parse_assignment(vector_ref<std::string> tokens);
-parse_res<> parse_block(vector_ref<std::string> tokens);
-parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
-parse_res<> parse_except(vector_ref<std::string> tokens);
-parse_res<> parse_for_loop(vector_ref<std::string> tokens);
-parse_res<> parse_while_loop(vector_ref<std::string> tokens);
-parse_res<> parse_monop_call(vector_ref<std::string> tokens);
 parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
-parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
-  parse_binop_call(vector_ref<std::string> tokens);
-parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
-  parse_member_assignment(vector_ref<std::string> tokens);
-parse_res<symbol> parse_member(vector_ref<std::string> tokens);
-parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens);
-parse_res<> parse_function_definition(vector_ref<std::string> tokens);
-parse_res<> parse_literal(vector_ref<std::string> tokens);
-parse_res<> parse_array_literal(vector_ref<std::string> tokens);
-parse_res<> parse_dict_literal(vector_ref<std::string> tokens);
-parse_res<> parse_try_catch(vector_ref<std::string> tokens);
-parse_res<> parse_type_definition(vector_ref<std::string> tokens);
-parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
-parse_res<> parse_name(vector_ref<std::string> tokens);
+parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
+  parse_cond_pair(vector_ref<std::string> tokens);
+parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
+  parse_method_definition(vector_ref<std::string> tokens);
 
 // Individual parsing functions {{{
 
-// comma-separated list {{{
-
-template <typename F>
-auto parse_comma_separated_list(vector_ref<std::string> tokens,
-                                const F& parse_item)
-    -> parse_res<std::vector<decltype(parse_item(tokens)->first)>>
-{
-  using res_t = decltype(parse_item(tokens)->first);
-
-  std::vector<res_t> res;
-
-  parse_res<res_t> expr_res;
-  if (!(expr_res = parse_item(tokens)))
-    return {{ move(res), tokens }};
-
-  do {
-    res.push_back(std::move(expr_res->first));
-    tokens = expr_res->second;
-    if (!tokens.size() || tokens.front() != ",")
-      return {{ move(res), tokens }};
-    tokens = ltrim(tokens.remove_prefix(1), {"\n"});;
-  } while ((expr_res = parse_item(tokens)));
-  return {};
-}
-
-// }}}
-// bracketed subexpr {{{
-
-template <typename F>
-auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
-                             const F& parse_item,
-                             const std::string& opening,
-                             const std::string&) -> decltype(parse_item(tokens))
-{
-  if (tokens.size() && tokens.front() == opening) {
-    tokens = ltrim(tokens.remove_prefix(1), {"\n"});
-    if (auto item_res = parse_item(tokens)) {
-      tokens = ltrim(item_res->second, {"\n"});
-      return {{ move(item_res->first), tokens.remove_prefix(1) }};
-    }
-  }
-  return {};
-}
-
-// }}}
-
-// expression {{{
-
 parse_res<> parse_expression(vector_ref<std::string> tokens)
 {
+  return parse_prec11(tokens);
+}
+
+// Operators {{{
+
+template <typename F1, typename F2, typename Pred, typename Transform>
+parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
+                                const F1& pre,
+                                const F2& post,
+                                const Pred& test,
+                                const Transform& convert)
+{
+  auto left_res = pre(tokens);
+  if (!left_res)
+    return left_res;
+  tokens = left_res->second;
+
+  if (tokens.size() && test(tokens.front())) {
+    auto left = move(left_res->first);
+
+    symbol method{convert(tokens.front())};
+
+    auto right_res = post(tokens.remove_prefix(1));
+    auto right = move(right_res->first);
+    tokens = right_res->second;
+
+    auto member = std::make_unique<ast::member>( move(left), method );
+    arg_t arg{};
+    arg.emplace_back(move(right));
+
+    return {{std::make_unique<function_call>(move(member), move(arg)), tokens}};
+  }
+  return left_res;
+}
+
+parse_res<> parse_prec11(vector_ref<std::string> tokens)
+{
+  auto left_res = parse_prec10(tokens);
+  if (!left_res)
+    return left_res;
+  tokens = left_res->second;
+
+  if (tokens.size() && tokens.front() == "||") {
+    auto left = move(left_res->first);
+
+    auto right_res = parse_prec11(tokens.remove_prefix(1));
+    auto right = move(right_res->first);
+    tokens = right_res->second;
+
+    return {{ std::make_unique<logical_or>(move(left), move(right)), tokens }};
+  }
+  return left_res;
+}
+
+parse_res<> parse_prec10(vector_ref<std::string> tokens)
+{
+  auto left_res = parse_prec9(tokens);
+  if (!left_res)
+    return left_res;
+  tokens = left_res->second;
+
+  if (tokens.size() && tokens.front() == "&&") {
+    auto left = move(left_res->first);
+    auto right_res = parse_prec10(tokens.remove_prefix(1));
+    auto right = move(right_res->first);
+    tokens = right_res->second;
+
+    return {{ std::make_unique<logical_and>(move(left), move(right)), tokens }};
+  }
+  return left_res;
+}
+
+parse_res<> parse_prec9(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec8, parse_prec9,
+                             [](const auto& s)
+                             {
+                               return s == "==" || s == "!=";
+                             },
+                             [](const auto& s)
+                             {
+                               return (s == "==") ? "equals" : "unequal";
+                             });
+}
+
+parse_res<> parse_prec8(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec7, parse_prec8,
+                             [](const auto& s)
+                             {
+                               return s == ">"
+                                   || s == "<"
+                                   || s == ">="
+                                   || s == "<=";
+                             },
+                             [](const auto& s)
+                             {
+                               return (s == ">")  ? "greater" :
+                                      (s == "<")  ? "less"    :
+                                      (s == "<=") ? "greater_equals" :
+                                                    "less_equals";
+                             });
+}
+
+parse_res<> parse_prec7(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec6, parse_prec7,
+                             [](const auto& s) { return s == "|"; },
+                             [](const auto&) { return "bitor"; });
+}
+
+parse_res<> parse_prec6(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec5, parse_prec6,
+                             [](const auto& s) { return s == "^"; },
+                             [](const auto&) { return "xor"; });
+}
+
+parse_res<> parse_prec5(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec4, parse_prec5,
+                             [](const auto& s) { return s == "&"; },
+                             [](const auto&) { return "bitand"; });
+}
+
+parse_res<> parse_prec4(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec3, parse_prec4,
+                             [](const auto& s)
+                             {
+                               return s == ">>" || s == "<<";
+                             },
+                             [](const auto& s)
+                             {
+                               return (s == ">>") ? "rshift" : "lshift";
+                             });
+}
+
+parse_res<> parse_prec3(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec2, parse_prec3,
+                             [](const auto& s) { return s == "+" || s == "-"; },
+                             [](const auto& s)
+                             {
+                               return (s == "+") ? "add" : "subtract";
+                             });
+}
+
+parse_res<> parse_prec2(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec1, parse_prec2,
+                             [](const auto& s)
+                             {
+                               return s == "*" || s == "/" || s == "%";
+                             },
+                             [](const auto& s)
+                             {
+                               return (s == "*") ? "times" :
+                                      (s == "/") ? "divides" :
+                                                   "modulo";
+                             });
+}
+
+parse_res<> parse_prec1(vector_ref<std::string> tokens)
+{
+  if (tokens.size() && (tokens.front() == "!"
+                     || tokens.front() == "~"
+                     || tokens.front() == "-")) {
+
+
+    symbol method{(tokens.front() == "!") ? "not" :
+                  (tokens.front() == "~") ? "negate" :
+                                            "negative"};
+    auto expr_res = parse_prec1(tokens.remove_prefix(1));
+    tokens = expr_res->second;
+    auto expr = move(expr_res->first);
+    auto member = std::make_unique<ast::member>( move(expr), method );
+
+    arg_t empty{};
+    return {{ std::make_unique<function_call>( move(member), move(empty) ),
+              tokens }};
+  }
+  return parse_prec0(tokens);
+}
+
+parse_res<> parse_prec0(vector_ref<std::string> tokens)
+{
+  auto expr_res = parse_nonop_expression(tokens);
+  if (!expr_res)
+    return expr_res;
+  tokens = expr_res->second;
+
   if (tokens.size() && tokens.front() == "(") {
-    auto res = parse_expression(tokens.remove_prefix(1));
-    return {{ move(res->first), res->second.remove_prefix(1) }};
-  }
+    auto expr = move(expr_res->first);
 
-  parse_res<> res{};
+    auto list_res = parse_function_call(tokens);
+    auto list = move(list_res->first);
+    tokens = list_res->second;
 
-  if (!( (res = parse_assignment(tokens))
-      || (res = parse_block(tokens))
-      || (res = parse_cond_statement(tokens))
-      || (res = parse_except(tokens))
-      || (res = parse_for_loop(tokens))
-      || (res = parse_while_loop(tokens))
-      || (res = parse_function_definition(tokens))
-      || (res = parse_monop_call(tokens))
-      || (res = parse_literal(tokens))
-      || (res = parse_dict_literal(tokens))
-      || (res = parse_array_literal(tokens))
-      || (res = parse_try_catch(tokens))
-      || (res = parse_type_definition(tokens))
-      || (res = parse_variable_declaration(tokens))
-      || (res = parse_name(tokens))))
-    return {};
+    return {{std::make_unique<function_call>(move(expr), move(list)), tokens}};
 
-  tokens = res->second;
+  } else if (tokens.size() && tokens.front() == ".") {
+    auto expr = move(expr_res->first);
 
-  for (;;) {
-    if (auto fres = parse_function_call(tokens)) {
-      res->first = std::make_unique<ast::function_call>(move(res->first),
-                                                        move(fres->first));
-      tokens = fres->second;
+    tokens = tokens.remove_prefix(1);
+    symbol name{tokens.front()};
+    tokens = tokens.remove_prefix(1);
 
-    // This HAS to come before parse_member, since of course 'a.b' is a subset
-    // of 'a.b = c'
-    } else if (auto member_asgt_res = parse_member_assignment(tokens)) {
-
-      auto mem_name = member_asgt_res->first.first;
-      auto& mem_value = member_asgt_res->first.second;
-      res->first = std::make_unique<ast::member_assignment>( move(res->first),
-                                                             mem_name,
-                                                             move(mem_value) );
-
-      tokens = member_asgt_res->second;
-
-    } else if (auto member_res = parse_member(tokens)) {
-      res->first = std::make_unique<ast::member>( move(res->first),
-                                                  member_res->first );
-
-      tokens = member_res->second;
-
-    } else if (auto bres = parse_binop_call(tokens)) {
-      arg_t args{};
-      args.push_back(move(bres->first.second));
-      auto mem = std::make_unique<ast::member>(move(res->first),
-                                               bres->first.first);
-      res->first = std::make_unique<ast::function_call>(move(mem), move(args));
-
-      tokens = bres->second;
-
-    } else {
-      return {{ move(res->first), tokens }};
+    if (tokens.size() && tokens.front() == "=") {
+      auto value_res = parse_expression(tokens.remove_prefix(1));
+      auto value = move(value_res->first);
+      tokens = value_res->second;
+      return {{std::make_unique<member_assignment>(move(expr),name,move(value)),
+               tokens}};
     }
+    return {{ std::make_unique<member>( move(expr), name ), tokens }};
   }
+  return expr_res;
+}
+
+parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
+{
+  if (tokens.size() && tokens.front() == "(")
+    return parse_bracketed_subexpr(tokens, parse_expression, "(", ")");
+
+  parse_res<> res;
+  if ((res = parse_assignment(tokens)))           return res;
+  if ((res = parse_block(tokens)))                return res;
+  if ((res = parse_cond_statement(tokens)))       return res;
+  if ((res = parse_except(tokens)))               return res;
+  if ((res = parse_while_loop(tokens)))           return res;
+  if ((res = parse_function_definition(tokens)))  return res;
+  if ((res = parse_literal(tokens)))              return res;
+  if ((res = parse_array_literal(tokens)))        return res;
+  if ((res = parse_try_catch(tokens)))            return res;
+  if ((res = parse_type_definition(tokens)))      return res;
+  if ((res = parse_variable_declaration(tokens))) return res;
+  if ((res = parse_variable(tokens)))             return res;
+  return {};
 }
 
 // }}}
-// assignment {{{
+// Other expressions {{{
 
 parse_res<> parse_assignment(vector_ref<std::string> tokens)
 {
-  if (tokens.size() == 1 || tokens[1] != "=")
+  if (tokens.size() < 2 || tokens[1] != "=")
     return {};
-  symbol name{tokens.front()};
-  auto value_res = parse_expression(tokens.remove_prefix(2));
-  auto value = move(value_res->first);
-  tokens = move(value_res->second);
-
-  return {{ std::make_unique<ast::assignment>(name, move(value)), tokens }};
+  auto name = tokens.front();
+  auto expr_res = parse_expression(tokens.remove_prefix(2)); // name, '='
+  auto expr = move(expr_res->first);
+  tokens = expr_res->second;
+  return {{ std::make_unique<assignment>( name, move(expr) ), tokens }};
 }
-
-// }}}
-// block {{{
 
 parse_res<> parse_block(vector_ref<std::string> tokens)
 {
-  if (tokens.front() != "{")
-    return {};
+  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
 
-  std::vector<std::unique_ptr<ast::expression>> subexprs;
-  do {
-    do {
-      tokens = tokens.remove_prefix(1);
-    } while (tokens.front() == "\n" || tokens.front() == ";");
+  if (!tokens.size() || tokens.front() != "{")
+    return {};
+  tokens = tokens.remove_prefix(1); // '{'
+
+  std::vector<std::unique_ptr<expression>> subexprs;
+  tokens = ltrim_if(tokens, trim_test);
+  while (tokens.front() != "}") {
     auto expr_res = parse_expression(tokens);
-    if (!expr_res)
-      break;
     subexprs.push_back(move(expr_res->first));
     tokens = expr_res->second;
-  } while (tokens.front() == "\n" || tokens.front() == ";");
+    tokens = ltrim_if(tokens, trim_test);
+  }
 
-  return {{ std::make_unique<ast::block>(move(subexprs)),
-            tokens.remove_prefix(1) }}; // '}'
-}
-
-// }}}
-// cond_statement {{{
-
-parse_res<std::pair<std::unique_ptr<ast::expression>,
-                    std::unique_ptr<ast::expression>>>
-parse_cond_pair(vector_ref<std::string> tokens)
-{
-  if (tokens.size() < 3 || tokens[0] == "}")
-    return {};
-
-  auto test_expr_res = parse_expression(tokens);
-  auto test_expr = move(test_expr_res->first);
-  tokens = test_expr_res->second.remove_prefix(1);
-
-  auto then_expr_res = parse_expression(tokens);
-  auto then_expr = move(then_expr_res->first);
-  tokens = then_expr_res->second;
-
-  auto pair = make_pair(move(test_expr), move(then_expr));
-  return {{ move(pair), tokens }};
-  return {};
-}
-
-parse_res<> parse_inner_cond(vector_ref<std::string> tokens)
-{
-  std::vector<std::pair<std::unique_ptr<ast::expression>,
-                        std::unique_ptr<ast::expression>>> pairs{};
-
-  auto list = parse_comma_separated_list(tokens, parse_cond_pair);
-  std::transform(begin(list->first), end(list->first), back_inserter(pairs),
-                 [](auto&& i) { return move(i); });
-  return {{ std::make_unique<ast::cond_statement>(move(pairs)), list->second }};
-}
-
-parse_res<> parse_if_statement(vector_ref<std::string> tokens)
-{
-  auto test_res = parse_expression(tokens.remove_prefix(1)); // 'if'
-  auto test = move(test_res->first);
-  tokens = test_res->second.remove_prefix(1); // ':'
-
-  auto body_res = parse_expression(tokens);
-  auto body = move(body_res->first);
-  tokens = body_res->second;
-
-  auto pair = std::make_pair(move(test), move(body));
-
-  // this is all a bit weird
-  std::vector<decltype(pair)> single_pair{};
-  single_pair.push_back(move(pair));
-  return {{ std::make_unique<ast::cond_statement>(move(single_pair)), tokens }};
+  tokens = tokens.remove_prefix(1); // '}'
+  return {{ std::make_unique<block>( move(subexprs) ), tokens }};
 }
 
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
 {
-  if (tokens.size() && tokens[0] == "if")
-    return parse_if_statement(tokens);
-  if (!tokens.size() || tokens[0] != "cond")
+  if (!tokens.size() || tokens.front() != "cond")
     return {};
-   auto res = parse_bracketed_subexpr(tokens.remove_prefix(1), parse_inner_cond,
-                                      "{", "}");
-   return {{ move(res->first), res->second }};
-}
+  tokens = tokens.remove_prefix(1);
 
-// }}}
-// expr_list {{{
+  auto pairs_res = parse_bracketed_subexpr(tokens, [](auto tokens)
+  {
+    return parse_comma_separated_list(tokens, parse_cond_pair);
+  }, "{", "}");
+  auto pairs = move(pairs_res->first);
+  tokens = pairs_res->second;
+
+  return {{ std::make_unique<cond_statement>(move(pairs)), tokens }};
+}
 
 parse_res<> parse_except(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "except")
     return {};
-  if (auto body_res = parse_expression(tokens.remove_prefix(1))) {
-    auto body = move(body_res->first);
-    tokens = body_res->second;
-    return {{ std::make_unique<ast::except>( move(body) ), tokens }};
-  }
-  return {};
+  tokens = tokens.remove_prefix(1); // 'except'
+  auto expr_res = parse_expression(tokens);
+  auto expr = move(expr_res->first);
+  tokens = expr_res->second;
+  return {{ std::make_unique<except>( move(expr) ), tokens }};
 }
-
-// }}}
-// for_loop {{{
-
-parse_res<> parse_for_loop(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "for")
-    return {};
-  symbol iterator{tokens[1]};
-  auto range_res = parse_expression(tokens.remove_prefix(3)); // 'for' name 'in'
-  auto range = move(range_res->first);
-  tokens = range_res->second.remove_prefix(1); // ':'
-
-  auto body_res = parse_expression(tokens);
-  auto body = move(body_res->first);
-  tokens = body_res->second;
-  return {{ std::make_unique<ast::for_loop>(iterator, move(range), move(body)),
-            tokens }};
-}
-
-// }}}
-// while_loop {{{
 
 parse_res<> parse_while_loop(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "while")
     return {};
+
   auto test_res = parse_expression(tokens.remove_prefix(1)); // 'while'
+  auto test = move(test_res->first);
+  tokens = test_res->second;
+
+  auto body_res = parse_expression(tokens.remove_prefix(1)); // ':'
+  auto body = move(body_res->first);
+  tokens = body_res->second;
+
+  return {{ std::make_unique<while_loop>( move(test), move(body) ), tokens }};
+}
+
+parse_res<> parse_function_definition(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "fn")
+    return {};
+  tokens = tokens.remove_prefix(1);
+
+  symbol name{""};
+  if (tokens.front() != ":") {
+    name = tokens.front();
+    tokens = tokens.remove_prefix(1);
+  }
+
+  auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
+  {
+    return parse_comma_separated_list(tokens, [](auto t)
+    {
+      if (t.front() == ")")
+        return parse_res<symbol>{};
+      return parse_res<symbol>{{ symbol{t.front()}, t.remove_prefix(1) }};
+    });
+  }, "(", ")");
+  auto args = move(arg_res->first);
+  tokens = arg_res->second;
+
+  auto body_res = parse_expression(tokens.remove_prefix(1)); // ':'
+  auto body = move(body_res->first);
+  tokens = body_res->second;
+
+  return {{ std::make_unique<function_definition>( name, move(body), args ),
+            tokens }};
+}
+
+parse_res<> parse_literal(vector_ref<std::string> tokens)
+{
+  parse_res<> res;
+  if ((res = parse_float(tokens)))   return res;
+  if ((res = parse_integer(tokens))) return res;
+  if ((res = parse_bool(tokens)))    return res;
+  if ((res = parse_nil(tokens)))     return res;
+  if ((res = parse_symbol(tokens)))  return res;
+  if ((res = parse_string(tokens)))  return res;
+  return res;
+}
+
+parse_res<> parse_array_literal(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "[")
+    return {};
+
+  auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
+  {
+    return parse_comma_separated_list(t, parse_expression);
+  },"[", "]");
+  auto vals = move(vals_res->first);
+  tokens = vals_res->second;
+
+  // Ugly, but necessary, since function arguments are pushed (and so popped)
+  // backwards
+  reverse(begin(vals), end(vals));
+
+  auto name = std::make_unique<variable>( symbol{"Array"} );
+  return {{ std::make_unique<function_call>(move(name), move(vals)), tokens }};
+}
+
+parse_res<> parse_try_catch(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "try")
+    return {};
+  tokens = tokens.remove_prefix(2); // 'try' ':'
+
+  auto body_res = parse_expression(tokens);
+  auto body = move(body_res->first);
+  tokens = body_res->second;
+
+  tokens = ltrim(tokens, {"\n"});
+  tokens = tokens.remove_prefix(1); // 'catch'
+  auto exception_name = tokens.front();
+  tokens = tokens.remove_prefix(2); // name ':'
+
+  auto catcher_res = parse_expression(tokens);
+  auto catcher = move(catcher_res->first);
+  tokens = catcher_res->second;
+
+  return {{ std::make_unique<try_catch>( move(body), move(catcher) ), tokens }};
+}
+
+parse_res<> parse_type_definition(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "class")
+    return{};
+  symbol name{tokens[1]};
+  tokens = tokens.remove_prefix(2); // 'class' name
+
+  symbol parent{"Object"};
+  if (tokens.front() == ":") {
+    parent = tokens[1];
+    tokens = tokens.remove_prefix(2); // ':' parent
+  }
+
+  auto method_res = parse_bracketed_subexpr(tokens, [](auto t)
+  {
+    return parse_comma_separated_list(t, parse_method_definition);
+  }, "{", "}");
+  auto methods = move(method_res->first);
+  tokens = method_res->second;
+
+  std::unordered_map<symbol, std::unique_ptr<function_definition>> method_map;
+  for (auto&& i : methods)
+    method_map.emplace(i.first, move(i.second));
+
+  return {{ std::make_unique<type_definition>( name, parent, move(method_map) ),
+            tokens }};
+}
+
+parse_res<> parse_variable_declaration(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "let")
+    return {};
+  auto name = tokens[1];
+  auto expr_res = parse_expression(tokens.remove_prefix(3)); // 'let', name, '='
+  auto expr = move(expr_res->first);
+  tokens = expr_res->second;
+  return {{ std::make_unique<variable_declaration>(name, move(expr)), tokens }};
+}
+
+parse_res<> parse_variable(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || !isnamechar(tokens.front().front()))
+    return {};
+  symbol name{tokens.front()};
+  tokens = tokens.remove_prefix(1);
+  return {{ std::make_unique<variable>(name), tokens }};
+}
+
+// }}}
+// Literals {{{
+
+parse_res<> parse_symbol(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "'")
+    return {};
+  symbol name{tokens[1]};
+  tokens = tokens.remove_prefix(2); // ''' name
+  return {{ std::make_unique<literal::symbol>( name ), tokens }};
+}
+
+parse_res<> parse_integer(vector_ref<std::string> tokens)
+{
+  // parse_float should already be called by the time we get here, so assume
+  // we're an integer
+  if (!tokens.size() || !isdigit(tokens.front().front()))
+    return {};
+  auto str = tokens.front();
+  tokens = tokens.remove_prefix(1); // number
+
+  int val{};
+  if (str.front() == '0' && str.size() > 1) {
+    switch (str[1]) {
+    case 'x': val = stoi(str.substr(2), nullptr, 16); break;
+    case 'b': val = stoi(str.substr(2), nullptr, 2);  break;
+    default:  val = stoi(str.substr(1), nullptr, 8);  break;
+    }
+  } else {
+    val = stoi(str);
+  }
+  return {{ std::make_unique<literal::integer>( stoi(str) ), tokens }};
+}
+
+parse_res<> parse_float(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || !isdigit(tokens.front().front()))
+    return {};
+  auto str = tokens.front();
+  tokens = tokens.remove_prefix(1); // number
+
+  // Could this instead call parse_integer? Yes. Would that make more sense?
+  // Probably. Oh well.
+  if (find(begin(str), end(str), '.') == end(str))
+    return {};
+  return {{ std::make_unique<literal::floating_point>( stod(str) ), tokens }};
+}
+
+parse_res<> parse_bool(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || (tokens.front() != "true" && tokens.front() != "false"))
+    return {};
+  bool value{tokens.front() == "true"};
+  tokens = tokens.remove_prefix(1); // value
+  return {{ std::make_unique<literal::boolean>( value ), tokens }};
+}
+
+parse_res<> parse_nil(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "nil")
+    return {};
+  tokens = tokens.remove_prefix(1); // 'nil'
+  return {{ std::make_unique<literal::nil>( ), tokens }};
+}
+
+parse_res<> parse_string(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front().front() != '"')
+    return {};
+  // inc/decrement to remove quotes
+  std::string val{++begin(tokens.front()), --end(tokens.front())};
+  tokens = tokens.remove_prefix(1); // val
+  return {{ std::make_unique<literal::string>( val ), tokens }};
+}
+
+// }}}
+// Helpers {{{
+
+template <typename F>
+auto parse_comma_separated_list(vector_ref<std::string> tokens,
+                               const F& parse_item)
+    -> parse_res<std::vector<decltype(parse_item(tokens)->first)>>
+{
+  tokens = ltrim(tokens, {"\n"});
+  std::vector<decltype(parse_item(tokens)->first)> items;
+  decltype(parse_item(tokens)) item_res = parse_item(tokens);
+  while (item_res) {
+    items.push_back(std::move(item_res->first));
+    tokens = item_res->second;
+    if (!tokens.size() || tokens.front() != ",")
+      return {{ move(items), tokens }};
+    tokens = ltrim(tokens.remove_prefix(1), {"\n"}); // ','
+    item_res = parse_item(tokens);
+  }
+  return {{ move(items), tokens }};
+}
+
+template <typename F>
+auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
+                             const F& parse_item,
+                             const std::string& opening,
+                             const std::string&)
+    -> decltype(parse_item(tokens))
+{
+  if (!tokens.size() || tokens.front() != opening)
+    return {};
+  tokens = tokens.remove_prefix(1); // opening
+  auto res = parse_item(tokens);
+  res->second = res->second.remove_prefix(1); // closing
+  return res;
+}
+
+parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens)
+{
+  return parse_bracketed_subexpr(tokens, [](auto t)
+  {
+    return parse_comma_separated_list(t, parse_expression);
+  },"(", ")");
+}
+
+parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
+  parse_cond_pair(vector_ref<std::string> tokens)
+{
+  auto test_res = parse_expression(tokens);
+  if (!test_res)
+    return {};
   auto test = move(test_res->first);
   tokens = test_res->second.remove_prefix(1); // ':'
 
   auto body_res = parse_expression(tokens);
   auto body = move(body_res->first);
   tokens = body_res->second;
-  return {{ std::make_unique<ast::while_loop>(move(test), move(body)),
-            tokens }};
+
+  return {{ make_pair(move(test), move(body)), tokens }};
 }
 
-// }}}
-// monop_call {{{
-
-parse_res<symbol> parse_monop(vector_ref<std::string> tokens)
+// Syntactically identical to (named) function definitions, but the returned
+// result is different
+parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
+  parse_method_definition(vector_ref<std::string> tokens)
 {
-  if (!tokens.size())
-    return {};
-  const auto& op = tokens.front();
-  tokens = tokens.remove_prefix(1);
-
-  if (op == "!")  return {{ {"not"},      tokens }};
-  if (op == "-")  return {{ {"negative"}, tokens }};
-  if (op == "~")  return {{ {"negate"},   tokens }};
-  if (op == "#")  return {{ {"box"},      tokens }};
-  return {};
-}
-
-parse_res<> parse_monop_call(vector_ref<std::string> tokens)
-{
-  if (auto mon_res = parse_monop(tokens)) {
-    tokens = mon_res->second;
-    auto expr_res = parse_expression(tokens);
-    tokens = expr_res->second;
-    auto object = move(expr_res->first);
-    auto member = std::make_unique<ast::member>( move(object), mon_res->first );
-    return {{ std::make_unique<ast::function_call>( move(member), arg_t{} ),
-              tokens }};
-  }
-  return {};
-}
-
-// }}}
-// function_call {{{
-
-parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens)
-{
-  return parse_bracketed_subexpr(tokens, parse_expr_list, "(", ")");
-}
-
-// }}}
-// binop_call {{{
-
-parse_res<symbol> parse_binop(vector_ref<std::string> tokens)
-{
-  if (!tokens.size())
-    return {};
-  const auto& op = tokens.front();
-  tokens = tokens.remove_prefix(1);
-
-  if (op == "+")  return {{ {"add"},            tokens }};
-  if (op == "-")  return {{ {"subtract"},       tokens }};
-  if (op == "*")  return {{ {"times"},          tokens }};
-  if (op == "/")  return {{ {"divides"},        tokens }};
-  if (op == "%")  return {{ {"modulo"},         tokens }};
-  if (op == "&")  return {{ {"bitand"},         tokens }};
-  if (op == "|")  return {{ {"bitor"},          tokens }};
-  if (op == "^")  return {{ {"xor"},            tokens }};
-  if (op == "==") return {{ {"equals"},         tokens }};
-  if (op == "!=") return {{ {"unequal"},        tokens }};
-  if (op == "<")  return {{ {"less"},           tokens }};
-  if (op == ">")  return {{ {"greater"},        tokens }};
-  if (op == "<=") return {{ {"less_equals"},    tokens }};
-  if (op == ">=") return {{ {"greater_equals"}, tokens }};
-  if (op == "&&") return {{ {"and"},            tokens }};
-  if (op == "||") return {{ {"or"},             tokens }};
-  return {};
-}
-
-parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
-  parse_binop_call(vector_ref<std::string> tokens)
-{
-  if (auto bin_res = parse_binop(tokens)) {
-    tokens = bin_res->second;
-    auto expr_res = parse_expression(tokens);
-    tokens = expr_res->second;
-    auto pair = std::make_pair(bin_res->first, move(expr_res->first));
-    return {{ move(pair), tokens }};
-  }
-  return {};
-}
-
-// }}}
-// member_assignment {{{
-
-parse_res<std::pair<symbol, std::unique_ptr<ast::expression>>>
-  parse_member_assignment(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != ".")
+  if (!tokens.size() || tokens.front() != "fn")
     return {};
   tokens = tokens.remove_prefix(1);
-  symbol member_name{tokens.front()};
 
-  tokens = tokens.remove_prefix(1);
-  if (!tokens.size() || tokens.front() != "=")
-    return {};
-
-  auto expr = parse_expression(tokens.remove_prefix(1));
-  auto pair = std::make_pair(member_name, move(expr->first));
-  return {{ move(pair), expr->second }};
-}
-
-// }}}
-// member {{{
-
-parse_res<symbol> parse_member(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != ".")
-    return {};
-  tokens = tokens.remove_prefix(1);
-  return {{ tokens.front(), tokens.remove_prefix(1) }};
-}
-
-// }}}
-// expr_list {{{
-
-parse_res<arg_t> parse_expr_list(vector_ref<std::string> tokens)
-{
-  return parse_comma_separated_list(tokens, parse_expression);
-}
-
-// }}}
-// function_definition {{{
-
-parse_res<symbol> parse_literal_symbol(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || !isnamechar(tokens.front().front()))
-    return {};
-  return {{ tokens.front(), tokens.remove_prefix(1) }};
-}
-
-parse_res<std::vector<symbol>> parse_arg_list(vector_ref<std::string> tokens)
-{
-  return parse_comma_separated_list(tokens, parse_literal_symbol);
-}
-
-parse_res<> parse_function_definition(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "fn")
-    return {};
   symbol name{""};
-  if (tokens[1] == "(") {
+  if (tokens.front() != ":") {
+    name = tokens.front();
     tokens = tokens.remove_prefix(1);
-  } else {
-    name = tokens[1];
-    tokens = tokens.remove_prefix(2);
   }
-  auto arg_res = parse_bracketed_subexpr(tokens, parse_arg_list, "(", ")");
-  auto args = arg_res->first;
-  tokens = arg_res->second.remove_prefix(1); // ':'
-  auto body_res = parse_expression(tokens);
+
+  auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
+  {
+    return parse_comma_separated_list(tokens, [](auto t)
+    {
+      if (t.front() == ")")
+        return parse_res<symbol>{};
+      return parse_res<symbol>{{ symbol{t.front()}, t.remove_prefix(1) }};
+    });
+  }, "(", ")");
+  auto args = move(arg_res->first);
+  tokens = arg_res->second;
+
+  auto body_res = parse_expression(tokens.remove_prefix(1)); // ':'
   auto body = move(body_res->first);
   tokens = body_res->second;
 
-  return {{ std::make_unique<ast::function_definition>(name, move(body), args),
+  return {{ make_pair(name, std::make_unique<function_definition>( symbol{""},
+                                                                   move(body),
+                                                                   args )),
             tokens }};
 }
 
 // }}}
-// literal {{{
-
-parse_res<> parse_number(vector_ref<std::string> tokens)
-{
-  const auto& num = tokens.front();
-  if (!isdigit(num.front()))
-    return {};
-
-  if (find(begin(num), end(num), '.') != end(num)) {
-
-    auto value = stod(num);
-    auto literal = std::make_unique<ast::literal::floating_point>( value );
-    return {{ move(literal), tokens.remove_prefix(1) }};
-  }
-
-  int value;
-
-  if (num.front() == '0' && num[1] == 'x') {
-    value = std::strtol(num.c_str() + 2, nullptr, 2);
-  } else {
-    value = std::stoi(num);
-  }
-
-  auto literal = std::make_unique<ast::literal::integer>( value );
-  return {{ move(literal), tokens.remove_prefix(1) }};
-}
-
-parse_res<> parse_string(vector_ref<std::string> tokens)
-{
-  if (tokens.front().front() != '"')
-    return {};
-  std::string value{begin(tokens.front()) + 1, end(tokens.front()) - 1};
-
-  auto literal = std::make_unique<ast::literal::string>( value );
-  return {{ move(literal), tokens.remove_prefix(1) }};
-}
-
-parse_res<> parse_bool(vector_ref<std::string> tokens)
-{
-  bool value;
-  if (tokens.front() == "true")
-    value = true;
-  else if (tokens.front() == "false")
-    value = false;
-  else
-    return {};
-
-  auto literal = std::make_unique<ast::literal::boolean>( value );
-  return {{ move(literal), tokens.remove_prefix(1) }};
-}
-
-parse_res<> parse_nil(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "nil")
-    return {};
-
-  auto literal = std::make_unique<ast::literal::nil>( );
-  return {{ move(literal), tokens.remove_prefix(1) }};
-}
-
-parse_res<> parse_symbol(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "'")
-    return {};
-  auto value = symbol{tokens[1]};
-
-  auto literal = std::make_unique<ast::literal::symbol>( value );
-  return {{ move(literal), tokens.remove_prefix(2) }};
-}
-
-parse_res<> parse_literal(vector_ref<std::string> tokens)
-{
-  parse_res<> res{};
-  if ((res = parse_number(tokens)))
-    return res;
-  if ((res = parse_string(tokens)))
-    return res;
-  if ((res = parse_bool(tokens)))
-    return res;
-  if ((res = parse_nil(tokens)))
-    return res;
-  if ((res = parse_symbol(tokens)))
-    return res;
-  return {};
-}
-
-// }}}
-// array_literal {{{
-
-parse_res<> parse_array_literal(vector_ref<std::string> tokens)
-{
-  if (auto args = parse_bracketed_subexpr(tokens, parse_expr_list, "[", "]")) {
-    auto fn_name = std::make_unique<ast::variable>(symbol{"Array"});
-    return {{ std::make_unique<ast::function_call>(move(fn_name),
-                                                   move(args->first)),
-              args->second }};
-  }
-  return {};
-}
-
-// }}}
-// dict_literal {{{
-
-parse_res<std::pair<std::unique_ptr<ast::expression>,
-                    std::unique_ptr<ast::expression>>>
-  parse_dict_pair(vector_ref<std::string> tokens)
-{
-  auto test = parse_expression(tokens);
-  auto body = parse_expression(test->second.remove_prefix(1));
-  return {{ std::make_pair(move(test->first), move(test->first)),
-            body->second }};
-  return {};
-}
-
-auto parse_dict_internals(vector_ref<std::string> tokens)
-{
-  return parse_comma_separated_list(tokens, parse_dict_pair);
-}
-
-parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
-{
-  if (auto args=parse_bracketed_subexpr(tokens, parse_dict_internals, "{", "}"))
-    return {{ std::make_unique<ast::cond_statement>(move(args->first)),
-              args->second }};
-  return {};
-}
-
-// }}}
-// try_catch {{{
-
-parse_res<> parse_try_catch(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != "try")
-    return {};
-
-  if (auto body_res = parse_expression(tokens.remove_prefix(2))) { // 'try' ':'
-    auto body = move(body_res->first);
-    tokens = body_res->second;
-    tokens = ltrim(tokens, {"\n"});
-
-    auto name_res = parse_literal_symbol(tokens.remove_prefix(1)); // 'catch'
-    auto name = name_res->first;
-    tokens = name_res->second;
-
-    auto catch_res = parse_expression(tokens.remove_prefix(1)); // ':'
-    auto catch_body = move(catch_res->first);
-    tokens = catch_res->second;
-
-    auto catch_fn = std::make_unique<ast::function_definition>(
-        symbol{""},
-        move(catch_body),
-        std::vector<symbol>{name} );
-
-    return {{ std::make_unique<ast::try_catch>( move(body), move(catch_fn) ),
-              tokens }};
-  }
-  return {};
-}
-
-// }}}
-// type_definition {{{
-
-parse_res<std::pair<vv::symbol, std::shared_ptr<ast::function_definition>>>
-  parse_method(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "fn")
-    return {};
-  symbol name{tokens[1]};
-  tokens = tokens.remove_prefix(2);
-  auto arg_res = parse_bracketed_subexpr(tokens, parse_arg_list, "(", ")");
-  auto args = arg_res->first;
-  tokens = arg_res->second.remove_prefix(1); // ':'
-  auto body_res = parse_expression(tokens);
-  auto body = move(body_res->first);
-  tokens = body_res->second;
-
-  auto fn = std::make_shared<ast::function_definition>(symbol{""},
-                                                       move(body),
-                                                       args);
-
-  return {{ {name, fn}, tokens }};
-}
-
-parse_res<> parse_type_definition(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != "class")
-    return {};
-  tokens = tokens.remove_prefix(1);
-  auto name = parse_literal_symbol(tokens);
-  tokens = name->second;
-
-  symbol parent{"Object"};
-  if (tokens.size() && tokens.front() == ":") {
-    auto parent_res = parse_literal_symbol(tokens.remove_prefix(1));
-    parent = parent_res->first;
-    tokens = parent_res->second;
-  }
-
-  auto methods_res = parse_bracketed_subexpr(tokens,
-                         [](auto t)
-                           { return parse_comma_separated_list(t,
-                                       parse_method); },
-                           "{", "}");
-  if (methods_res) {
-    std::unordered_map<symbol,
-                       std::shared_ptr<ast::function_definition>> methods;
-    for (const auto& i : methods_res->first)
-      methods[i.first] = i.second;
-
-    return {{ std::make_unique<ast::type_definition>( name->first,
-                                                      parent,
-                                                      methods ),
-              methods_res->second }};
-  }
-
-  return {};
-}
-
-// }}}
-// variable_declaration {{{
-
-parse_res<> parse_variable_declaration(vector_ref<std::string> tokens)
-{
-  if (tokens.front() != "let")
-    return {};
-  symbol name{tokens[1]};
-  tokens = tokens.remove_prefix(3);
-  auto value_res = parse_expression(tokens);
-  auto value = move(value_res->first);
-  tokens = value_res->second;
-  return {{ std::make_unique<ast::variable_declaration>(name, move(value)),
-            tokens }};
-}
-
-// }}}
-// name {{{
-
-parse_res<> parse_name(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || !isnamechar(tokens.front().front()))
-    return {};
-  symbol sym{tokens[0]};
-  return {{ std::make_unique<ast::variable>( sym ), tokens.remove_prefix(1) }};
-}
-
-// }}}
 
 // }}}
 
 }
 
-std::vector<std::unique_ptr<ast::expression>>
-  parser::parse(token_string tokens)
+std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
 {
-  std::vector<std::unique_ptr<ast::expression>> expressions;
-  auto first_nonline = std::find_if(begin(tokens), end(tokens),
-                                    [](const auto& s) { return s != "\n"; });
-  tokens = tokens.remove_prefix(first_nonline - begin(tokens));
+  std::vector<std::unique_ptr<expression>> expressions;
+  tokens = ltrim(tokens, {"\n"});
 
   while (tokens.size()) {
     auto res = parse_expression(tokens);
     expressions.push_back(move(res->first));
     tokens = res->second;
-    auto first_nonline = std::find_if(begin(tokens), end(tokens),
-                                      [](const auto& s) { return s != "\n"; });
-    tokens = tokens.remove_prefix(first_nonline - begin(tokens));
+    tokens = ltrim(res->second, {"\n"});
   }
   return expressions;
 }

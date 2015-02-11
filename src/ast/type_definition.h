@@ -16,10 +16,10 @@ class type_definition : public expression {
 public:
   type_definition(symbol name,
                   symbol parent,
-                  const std::unordered_map<
-                            vv::symbol,
-                            std::shared_ptr<ast::function_definition>>&
-                          m_methods);
+                  std::unordered_map<
+                      vv::symbol,
+                      std::unique_ptr<ast::function_definition>>&&
+                    m_methods);
 
 
   std::vector<vm::command> generate() const override;
@@ -29,7 +29,7 @@ private:
   symbol m_parent;
 
   std::unordered_map<vv::symbol,
-                     std::shared_ptr<ast::function_definition>> m_methods;
+                     std::unique_ptr<ast::function_definition>> m_methods;
 };
 
 }

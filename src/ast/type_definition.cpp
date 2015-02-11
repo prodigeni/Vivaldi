@@ -7,13 +7,12 @@ using namespace vv;
 ast::type_definition::type_definition(
     symbol name,
     symbol parent,
-    const std::unordered_map<
-              vv::symbol,
-              std::shared_ptr<ast::function_definition>>& m_methods)
+    std::unordered_map<vv::symbol,
+                       std::unique_ptr<ast::function_definition>>&& methods)
 
   : m_name    {name},
     m_parent  {parent},
-    m_methods {m_methods}
+    m_methods {move(methods)}
 { }
 
 std::vector<vm::command> ast::type_definition::generate() const
