@@ -28,6 +28,8 @@ class except;
 class for_loop;
 class function_call;
 class function_definition;
+class logical_and;
+class logical_or;
 class member;
 class member_assignment;
 class try_catch;

@@ -29,6 +29,8 @@ add_executable(vivaldi
   src/ast/function_call.cpp
   src/ast/function_definition.cpp
   src/ast/literal.cpp
+  src/ast/logical_and.cpp
+  src/ast/logical_or.cpp
   src/ast/member.cpp
   src/ast/member_assignment.cpp
   src/ast/try_catch.cpp
