@@ -142,7 +142,7 @@ tok_res or_tokens(boost::string_ref line)
 
 tok_res lt_tokens(boost::string_ref line)
 {
-  if (line.size() == 1 || line[1] != '<')
+  if (line.size() == 1 || line[1] != '=')
     return {"<", ltrim(remove_prefix(line, 1))};
   return {"<=", ltrim(remove_prefix(line, 2))};
 }
@@ -152,7 +152,7 @@ tok_res lt_tokens(boost::string_ref line)
 
 tok_res gt_tokens(boost::string_ref line)
 {
-  if (line.size() == 1 || line[1] != '>')
+  if (line.size() == 1 || line[1] != '=')
     return {">", ltrim(remove_prefix(line, 1))};
   return {">=", ltrim(remove_prefix(line, 2))};
 }

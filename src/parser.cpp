@@ -490,10 +490,9 @@ parse_res<> parse_monop_call(vector_ref<std::string> tokens)
     tokens = mon_res->second;
     auto expr_res = parse_expression(tokens);
     tokens = expr_res->second;
-    arg_t arg{};
-    arg.push_back(move(expr_res->first));
-    auto name = std::make_unique<ast::variable>(mon_res->first);
-    return {{ std::make_unique<ast::function_call>(move(name), move(arg)),
+    auto object = move(expr_res->first);
+    auto member = std::make_unique<ast::member>( move(object), mon_res->first );
+    return {{ std::make_unique<ast::function_call>( move(member), arg_t{} ),
               tokens }};
   }
   return {};

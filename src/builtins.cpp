@@ -272,6 +272,17 @@ auto fn_integer_op(const F& op)
 }
 
 template <typename F>
+auto fn_integer_monop(const F& op)
+{
+  return [=](vm::machine& vm)
+  {
+    if (!check_size(0, vm.stack->args, vm))
+      return vm.retval;
+    return gc::alloc<value::integer, int&&>( op(*to_int(*vm.stack->self)) );
+  };
+}
+
+template <typename F>
 auto fn_int_bool_op(const F& op)
 {
   return [=](vm::machine& vm)
@@ -366,6 +377,13 @@ value::base* fn_object_unequal(vm::machine& vm)
   if (!check_size(1, vm.stack->args, vm))
     return vm.retval;
   return gc::alloc<value::boolean>( &*vm.stack->self != pop_arg(vm) );
+}
+
+value::base* fn_object_not(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  return gc::alloc<value::boolean>( !truthy(&*vm.stack->self) );
 }
 
 value::base* fn_object_type(vm::machine& vm)
@@ -495,11 +513,13 @@ using value::builtin_function;
 namespace {
 builtin_function obj_equals  {fn_object_equals};
 builtin_function obj_unequal {fn_object_unequal};
+builtin_function obj_not     {fn_object_not};
 builtin_function obj_type    {fn_object_type};
 }
 value::type type::object {fn_object_ctr, {
   { {"equals"},  &obj_equals },
   { {"unequal"}, &obj_unequal },
+  { {"not"},     &obj_not },
   { {"type"},    &obj_type }
 }, builtin::type::object, {"Object"}};
 
@@ -529,6 +549,8 @@ builtin_function int_less           {fn_int_bool_op(std::less<int>{})         };
 builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})      };
 builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})   };
 builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})};
+builtin_function int_negative       {fn_integer_monop(std::negate<int>{})     };
+builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})    };
 }
 value::type type::integer{fn_integer_ctr, {
   { {"add"},            &int_add            },
@@ -544,7 +566,9 @@ value::type type::integer{fn_integer_ctr, {
   { {"less"},           &int_less           },
   { {"greater"},        &int_greater        },
   { {"less_equals"},    &int_less_equals    },
-  { {"greater_equals"}, &int_greater_equals }
+  { {"greater_equals"}, &int_greater_equals },
+  { {"negative"},       &int_negative       },
+  { {"negate"},         &int_negate         }
 }, builtin::type::object, {"Integer"}};
 
 namespace {
