@@ -7,9 +7,12 @@
 namespace vv {
 
 bool truthy(const value::base* value);
+
 value::base* throw_exception(const std::string& value, vm::machine& vm);
 bool check_size(size_t expected, size_t receieved, vm::machine& vm);
 value::base* pop_arg(vm::machine& vm);
+
+value::base* find_method(value::type* type, symbol name);
 
 }
 

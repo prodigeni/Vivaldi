@@ -79,7 +79,7 @@ void vm::machine::run()
     case instruction::jmp:       jmp(get<int>(arg));       break;
 
     case instruction::push_catch: push_catch();            break;
-    case instruction::pop_catch: pop_catch();              break;
+    case instruction::pop_catch:  pop_catch();              break;
     case instruction::except:     except();                break;
     }
   }
@@ -194,11 +194,10 @@ void vm::machine::readm(symbol sym)
     retval = retval->members[sym];
     return;
   }
-  auto type = retval->type;
-  while (&type->parent != type && !type->methods.count(sym))
-    type = static_cast<value::type*>(&type->parent);
-  if (type->methods.count(sym)) {
-    retval = type->methods[sym];
+
+  auto member = find_method(retval->type, sym);
+  if (member) {
+    retval = member;
     return;
   }
   push_str("no such member: " + to_string(sym));
@@ -221,14 +220,34 @@ void vm::machine::call(int argc)
 
   auto function = retval;
   if (auto type = dynamic_cast<value::type*>(function)) {
-    stack = std::make_shared<call_stack>(stack, m_base, argc, stack->instr_ptr);
+    auto init = find_method(type, {"init"});
+    stack = std::make_shared<call_stack>( stack,
+                                          m_base,
+                                          init ? 0 : argc, // save args for init
+                                          stack->instr_ptr );
     stack->caller = *function;
 
     auto except_flag = stack.get();
     gc::set_current_frame(stack);
     retval = type->constructor(*this);
-    if (except_flag == stack.get())
+
+    if (except_flag == stack.get()) {
       ret();
+      if (init) {
+        // HACK--- since we need to return self, not whatever init returns,
+        // during construction, evaluate it in a separate VM
+        stack->pushed_self = *retval;
+        auto real_instr_ptr = stack->instr_ptr;
+
+        std::vector<command> instruction{ {instruction::call, argc} };
+        vm::machine initializer{stack, m_exception_handler};
+        initializer.retval = init;
+        initializer.stack->instr_ptr = instruction;
+        initializer.run();
+
+        stack->instr_ptr = real_instr_ptr;
+      }
+    }
 
   } else if (auto fn = dynamic_cast<value::function*>(function)) {
     stack = std::make_shared<call_stack>(stack, fn->enclosure, argc, fn->body);

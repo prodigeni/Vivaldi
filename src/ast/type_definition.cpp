@@ -45,8 +45,8 @@ std::vector<vm::command> ast::type_definition::generate() const
   }
 
   // Twice m_methods.size() (once through for names, once for function bodies),
-  // plus one more for name
-  auto argc = static_cast<int>(1 + (m_methods.size() * 2));
+  // plus one more for name and one for parent
+  auto argc = static_cast<int>(2 + (m_methods.size() * 2));
   vec.emplace_back(vm::instruction::read, symbol{"Type"});
   vec.emplace_back(vm::instruction::call, argc);
   vec.emplace_back(vm::instruction::let, m_name);

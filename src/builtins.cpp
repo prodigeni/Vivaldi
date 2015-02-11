@@ -191,7 +191,7 @@ auto fn_custom_type_ctr_maker(value::type* type)
 value::base* fn_custom_type_ctr(vm::machine& vm)
 {
   std::unordered_map<symbol, value::base*> methods;
-  for (auto i = vm.stack->args; i-- > 2; --i) {
+  for (auto i = vm.stack->args; i-- > 3; --i) {
     auto name = to_symbol(*pop_arg(vm));
     if (!name)
       return throw_exception("Method names must be symbols", vm);

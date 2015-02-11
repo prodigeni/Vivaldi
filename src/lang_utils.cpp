@@ -38,3 +38,13 @@ vv::value::base* vv::pop_arg(vm::machine& vm)
   vm.stack->parent->pushed_args.pop_back();
   return arg;
 }
+
+vv::value::base* vv::find_method(value::type* type, symbol name)
+{
+  while (&type->parent != type && !type->methods.count(name))
+    type = static_cast<value::type*>(&type->parent);
+  if (type->methods.count(name))
+    return type->methods[name];
+
+  return nullptr;
+}
