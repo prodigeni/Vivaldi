@@ -136,9 +136,11 @@ tok_res or_tokens(boost::string_ref line)
 
 tok_res lt_tokens(boost::string_ref line)
 {
-  if (line.size() == 1 || line[1] != '=')
-    return {"<", ltrim(line.substr(1))};
-  return {"<=", ltrim(line.substr(2))};
+  if (line.size() > 1 && line[1] == '=')
+    return {"<=", ltrim(line.substr(2))};
+  if (line.size() > 1 && line[1] == '<')
+    return {"<<", ltrim(line.substr(2))};
+  return {"<", ltrim(line.substr(1))};
 }
 
 // }}}
@@ -146,9 +148,11 @@ tok_res lt_tokens(boost::string_ref line)
 
 tok_res gt_tokens(boost::string_ref line)
 {
-  if (line.size() == 1 || line[1] != '=')
-    return {">", ltrim(line.substr(1))};
-  return {">=", ltrim(line.substr(2))};
+  if (line.size() > 1 && line[1] == '=')
+    return {">=", ltrim(line.substr(2))};
+  if (line.size() > 1 && line[1] == '>')
+    return {">>", ltrim(line.substr(2))};
+  return {">", ltrim(line.substr(1))};
 }
 
 // }}}

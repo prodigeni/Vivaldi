@@ -535,22 +535,25 @@ value::type type::array {fn_array_ctr, {
 }, builtin::type::object, {"Array"}};
 
 namespace {
-builtin_function int_add            {fn_integer_op(std::plus<int>{})          };
-builtin_function int_subtract       {fn_integer_op(std::minus<int>{})         };
-builtin_function int_times          {fn_integer_op(std::multiplies<int>{})    };
-builtin_function int_divides        {fn_integer_op(std::divides<int>{})       };
-builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})       };
-builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})       };
-builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})        };
-builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})       };
-builtin_function int_equals         {fn_int_bool_op(std::equal_to<int>{})     };
-builtin_function int_unequal        {fn_int_bool_op(std::not_equal_to<int>{}) };
-builtin_function int_less           {fn_int_bool_op(std::less<int>{})         };
-builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})      };
-builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})   };
-builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})};
-builtin_function int_negative       {fn_integer_monop(std::negate<int>{})     };
-builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})    };
+builtin_function int_add            {fn_integer_op(std::plus<int>{})                   };
+builtin_function int_subtract       {fn_integer_op(std::minus<int>{})                  };
+builtin_function int_times          {fn_integer_op(std::multiplies<int>{})             };
+builtin_function int_divides        {fn_integer_op(std::divides<int>{})                };
+builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})                };
+// Anyone want to guess why these aren't in the standard?
+builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; })};
+builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; })};
+builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})                };
+builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})                 };
+builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})                };
+builtin_function int_equals         {fn_int_bool_op(std::equal_to<int>{})              };
+builtin_function int_unequal        {fn_int_bool_op(std::not_equal_to<int>{})          };
+builtin_function int_less           {fn_int_bool_op(std::less<int>{})                  };
+builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})               };
+builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})            };
+builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})         };
+builtin_function int_negative       {fn_integer_monop(std::negate<int>{})              };
+builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})             };
 }
 value::type type::integer{fn_integer_ctr, {
   { {"add"},            &int_add            },
@@ -561,6 +564,8 @@ value::type type::integer{fn_integer_ctr, {
   { {"bitand"},         &int_bitand         },
   { {"bitor"},          &int_bitor          },
   { {"xor"},            &int_xor            },
+  { {"lshift"},         &int_lshift         },
+  { {"rshift"},         &int_rshift         },
   { {"equals"},         &int_equals         },
   { {"unequal"},        &int_unequal        },
   { {"less"},           &int_less           },
