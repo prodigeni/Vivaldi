@@ -17,6 +17,7 @@
 #include "vm/instruction.h"
 
 #include <boost/variant/get.hpp>
+#include <iostream>
 
 using namespace vv;
 
@@ -75,8 +76,9 @@ void vm::machine::run()
     case instruction::lblk: lblk(); break;
     case instruction::ret:  ret(); break;
 
-    case instruction::jmp_false: jmp_false(get<int>(arg)); break;
     case instruction::jmp:       jmp(get<int>(arg));       break;
+    case instruction::jmp_false: jmp_false(get<int>(arg)); break;
+    case instruction::jmp_true:  jmp_true(get<int>(arg));  break;
 
     case instruction::push_catch: push_catch();            break;
     case instruction::pop_catch:  pop_catch();              break;
@@ -134,7 +136,7 @@ void vm::machine::read(symbol sym)
     }
     cur_stack = cur_stack->enclosing;
   }
-  push_str("no such variable");
+  push_str("no such variable: " + to_string(sym));
   except();
 }
 
@@ -288,15 +290,21 @@ void vm::machine::ret()
   gc::set_current_frame(stack);
 }
 
-void vm::machine::jmp_false(int offset)
-{
-  if (!truthy(retval))
-    stack->instr_ptr = stack->instr_ptr.remove_prefix(offset - 1);
-}
-
 void vm::machine::jmp(int offset)
 {
   stack->instr_ptr = stack->instr_ptr.remove_prefix(offset - 1);
+}
+
+void vm::machine::jmp_false(int offset)
+{
+  if (!truthy(retval))
+    jmp(offset);
+}
+
+void vm::machine::jmp_true(int offset)
+{
+  if (truthy(retval))
+    jmp(offset);
 }
 
 void vm::machine::push_catch()

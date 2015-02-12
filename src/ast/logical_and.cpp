@@ -14,7 +14,7 @@ std::vector<vm::command> ast::logical_and::generate() const
 {
   // Given conditions 'a' and 'b', generate the following VM instructions:
   //   a
-  //   jmp_false <last index - this index>
+  //   jmp_false <false index - this index>
   //   b
   //   jmp_false 3
   //   push_bool true
