@@ -173,6 +173,10 @@ value::base* fn_array_end(vm::machine& vm)
 
 value::base* fn_array_iterator_ctr(vm::machine& vm)
 {
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
   auto arg = pop_arg(vm);
   if (arg->type != &type::array)
     return throw_exception("ArrayIterators can only iterate over Arrays", vm);
@@ -272,6 +276,10 @@ value::base* fn_array_iterator_unequal(vm::machine& vm)
 
 value::base* fn_bool_ctr(vm::machine& vm)
 {
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
   auto arg = pop_arg(vm);
 
   if (arg->type == &type::boolean)
@@ -340,6 +348,10 @@ value::base* fn_integer_ctr(vm::machine& vm)
 {
   if (vm.stack->args == 0)
     return gc::alloc<value::integer>( 0 );
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
 
   auto arg = pop_arg(vm);
   auto type = arg->type;
@@ -429,6 +441,10 @@ value::base* fn_floating_point_ctr(vm::machine& vm)
 {
   if (vm.stack->args == 0)
     return gc::alloc<value::floating_point>( 0.0 );
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
 
   auto arg = pop_arg(vm);
   auto type = arg->type;
@@ -474,8 +490,12 @@ auto fn_float_bool_op(const F& op)
 // object {{{
 
 
-value::base* fn_object_ctr(vm::machine&)
+value::base* fn_object_ctr(vm::machine& vm)
 {
+  if (vm.stack->args != 0) {
+    vm.argc(1);
+    return vm.retval;
+  }
   return gc::alloc<value::base>( &type::object );
 }
 
@@ -506,6 +526,10 @@ value::base* fn_string_ctr(vm::machine& vm)
 {
   if (vm.stack->args == 0)
     return gc::alloc<value::string>( "" );
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
 
   auto arg = pop_arg(vm);
   if (arg->type == &type::string)
@@ -574,6 +598,10 @@ value::base* fn_string_times(vm::machine& vm)
 
 value::base* fn_string_iterator_ctr(vm::machine& vm)
 {
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
   auto arg = pop_arg(vm);
   if (arg->type != &type::string)
     return throw_exception("StringIterators can only iterate over strings", vm);
@@ -673,6 +701,10 @@ value::base* fn_string_iterator_unequal(vm::machine& vm)
 
 value::base* fn_symbol_ctr(vm::machine& vm)
 {
+  if (vm.stack->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
   auto arg = pop_arg(vm);
 
   if (arg->type == &type::symbol)
