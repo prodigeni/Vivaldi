@@ -4,37 +4,30 @@ using namespace vv;
 
 /**
  * Available tokens:
- * {
- * }
- * [
- * ]
- * (
- * )
- * .
- * ..
- * ...
- * ,
- * :
- * =
- * ==
- * +
- * -
- * *
- * !
- * ~
- * ^
- * &
- * &&
- * |
- * ||
- * /
- * <
- * >
- * <=
- * >=
- * %
- * '
- * #
+ * '{', '}'
+ * '[', ']'
+ * '(', ')'
+ * '.'
+ * '..'
+ * '...'
+ * ','
+ * ':'
+ * '='
+ * '=='
+ * '+'
+ * '-'
+ * '*'
+ * '!'
+ * '~'
+ * '^'
+ * '&'
+ * '&&'
+ * '|'
+ * '||'
+ * '/'
+ * '<', '>', '<=', '>='
+ * '%'
+ * '''
  * (strings)
  * (names)
  * (numbers)
@@ -56,14 +49,19 @@ tok_res zero_token(boost::string_ref line)
 {
   auto last = begin(line) + 1;
   if (line.size() > 1) {
-    if (line[1] == 'x') {
+    if (line[1] == '.') {
+      auto post_dot = std::find_if_not(begin(line) + 2, end(line), isdigit);
+      if (post_dot != begin(line) + 2)
+        last = post_dot;
+
+    } else if (line[1] == 'x') {
       last = std::find_if_not(begin(line) + 2, end(line), ishexnumber);
-    }
-    if (line[1] == 'b') {
+
+    } else if (line[1] == 'b') {
       last = std::find_if(begin(line) + 2, end(line),
                           [](auto c) { return c != '0' && c != '1'; });
-    }
-    if (isdigit(line[1])) {
+
+    } else if (isdigit(line[1])) {
       last = std::find_if(begin(line) + 2, end(line),
                           [](auto c)
                             { return !isdigit(c) || c == '8' || c == '9'; });
@@ -78,11 +76,14 @@ tok_res zero_token(boost::string_ref line)
 
 tok_res digit_token(boost::string_ref line)
 {
-  auto last = std::find_if_not(begin(line), end(line), isdigit);
-  if (last != end(line) && *last == '.')
-    last = std::find_if_not(last + 1, end(line), isdigit);
-  std::string num{begin(line), last};
-  return { num, ltrim(remove_prefix(line, last - begin(line))) };
+  auto nondigit = std::find_if_not(begin(line), end(line), isdigit);
+  if (nondigit != end(line) && *nondigit == '.') {
+    auto nonfloat = std::find_if_not(nondigit + 1, end(line), isdigit);
+    if (nonfloat != nondigit + 1)
+      nondigit = nonfloat;
+  }
+
+  return { {begin(line), nondigit}, line.substr(nondigit - begin(line))};
 }
 
 // }}}
