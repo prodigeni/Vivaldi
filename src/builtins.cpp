@@ -453,6 +453,31 @@ value::base* fn_string_append(vm::machine& vm)
   return &*vm.stack->self;
 }
 
+value::base* fn_string_add(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto str = to_string(*pop_arg(vm));
+  if (!str)
+    return throw_exception("Only Strings can be appended to other Strings", vm);
+  auto new_str = static_cast<value::string&>(*vm.stack->self).val + *str;
+  return gc::alloc<value::string>( new_str );
+}
+
+value::base* fn_string_times(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto times = to_int(*pop_arg(vm));
+  if (!times)
+    return throw_exception("Strings can only be multiplied by numbers", vm);
+  auto val = static_cast<value::string&>(*vm.stack->self).val;
+  std::string new_str{};
+  for (auto i = *times; i--;)
+    new_str += val;
+  return gc::alloc<value::string>( new_str );
+}
+
 // }}}
 // symbol {{{
 
@@ -607,12 +632,16 @@ builtin_function string_size    {fn_string_size};
 builtin_function string_append  {fn_string_append};
 builtin_function string_equals  {fn_string_equals};
 builtin_function string_unequal {fn_string_unequal};
+builtin_function string_add     {fn_string_add};
+builtin_function string_times   {fn_string_times};
 }
 value::type type::string {fn_string_ctr, {
   { {"size"},    &string_size    },
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
-  { {"unequal"}, &string_unequal }
+  { {"unequal"}, &string_unequal },
+  { {"add"},     &string_add     },
+  { {"times"},   &string_times   }
 }, builtin::type::object, {"String"}};
 
 
