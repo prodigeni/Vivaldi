@@ -1,0 +1,20 @@
+fn assert(test, err): if !test: {
+   puts("failed: ".append(err))
+   quit()
+}
+
+assert(true && true,      "true && true")
+assert(!(true && false),  "!(true && false)")
+assert(!(false && false), "!(false && false)")
+assert(!(false && true),  "!(false && true)")
+
+assert(1 && 0,         "1 && 0")
+assert(!(nil && true), "!(nil && true)")
+
+assert(true || true,      "true || true")
+assert(true || false,     "true || false")
+assert(!(false || false), "!(false || false)")
+assert(false || true,     "false || true")
+
+assert(1 || 0,        "1 || 0")
+assert(!(nil || nil), "!(nil || nil)")

@@ -1,0 +1,20 @@
+fn assert(test, err): if !test: {
+   puts("failed: ".append(err))
+   quit()
+}
+
+let i = false
+try: i = true
+catch _: assert(false, "exceptionless try body")
+assert(i, "assigning from try body")
+
+let i = false
+try: {
+  except 55
+  assert(false, "except")
+} catch e: i = e
+assert(i == 55, "assigning from catch body")
+
+try: 1 + "foo"
+catch _: i = 12
+assert(i = 12, "triggering builtin exception")
