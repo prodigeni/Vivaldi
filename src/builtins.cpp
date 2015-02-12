@@ -486,6 +486,11 @@ auto fn_float_bool_op(const F& op)
   };
 }
 
+value::base* fn_floating_point_negative(vm::machine& vm)
+{
+  return gc::alloc<value::floating_point>( -*to_float(*vm.stack->self) );
+}
+
 // }}}
 // object {{{
 
@@ -853,6 +858,7 @@ builtin_function flt_less           {fn_float_bool_op(std::less<double>{}),     
 builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{}),        1};
 builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{}),     1};
 builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{}),  1};
+builtin_function flt_negative       {fn_floating_point_negative,                      0};
 }
 value::type type::floating_point{fn_floating_point_ctr, {
   { {"equals"},         &flt_equals         },
@@ -864,7 +870,8 @@ value::type type::floating_point{fn_floating_point_ctr, {
   { {"less"},           &flt_less           },
   { {"greater"},        &flt_greater        },
   { {"less_equals"},    &flt_less_equals    },
-  { {"greater_equals"}, &flt_greater_equals }
+  { {"greater_equals"}, &flt_greater_equals },
+  { {"negative"},       &flt_negative       }
 }, builtin::type::object, {"Float"}};
 
 namespace {
