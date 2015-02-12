@@ -143,15 +143,17 @@ void vm::machine::read(symbol sym)
 void vm::machine::write(symbol sym)
 {
   auto cur_stack = stack;
-  for (;;) {
+  while (cur_stack) {
     auto holder = find_if(rbegin(cur_stack->local), rend(cur_stack->local),
                           [&](const auto& vars) { return vars.count(sym); });
     if (holder != rend(cur_stack->local)) {
       holder->at(sym) = retval;
       return;
     }
-    stack = stack->enclosing;
+    cur_stack = cur_stack->enclosing;
   }
+  push_str("no such variable: " + to_string(sym));
+  except();
 }
 
 void vm::machine::let(symbol sym)
