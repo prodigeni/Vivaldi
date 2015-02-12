@@ -501,6 +501,22 @@ parse_res<> parse_block(vector_ref<std::string> tokens)
   return {{ std::make_unique<block>( move(subexprs) ), tokens }};
 }
 
+parse_res<> parse_array_literal(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "[")
+    return {};
+
+  auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
+  {
+    return parse_comma_separated_list(t, parse_expression);
+  },"[", "]");
+  auto vals = move(vals_res->first);
+  tokens = vals_res->second;
+
+  auto name = std::make_unique<variable>( symbol{"Array"} );
+  return {{ std::make_unique<function_call>(move(name), move(vals)), tokens }};
+}
+
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "cond")
@@ -617,26 +633,6 @@ parse_res<> parse_return(vector_ref<std::string> tokens)
   auto expr = move(expr_res->first);
   tokens = expr_res->second;
   return {{ std::make_unique<return_statement>( move(expr) ), tokens }};
-}
-
-parse_res<> parse_array_literal(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != "[")
-    return {};
-
-  auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
-  {
-    return parse_comma_separated_list(t, parse_expression);
-  },"[", "]");
-  auto vals = move(vals_res->first);
-  tokens = vals_res->second;
-
-  // Ugly, but necessary, since function arguments are pushed (and so popped)
-  // backwards
-  reverse(begin(vals), end(vals));
-
-  auto name = std::make_unique<variable>( symbol{"Array"} );
-  return {{ std::make_unique<function_call>(move(name), move(vals)), tokens }};
 }
 
 parse_res<> parse_try_catch(vector_ref<std::string> tokens)

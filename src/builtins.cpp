@@ -116,6 +116,7 @@ value::base* fn_array_ctr(vm::machine& vm)
   std::vector<value::base*> args;
   for (auto i = vm.stack->args; i--;)
     args.push_back(pop_arg(vm));
+  reverse(begin(args), end(args)); // necessary since args are popped backwards
   return gc::alloc<value::array>( args );
 }
 
