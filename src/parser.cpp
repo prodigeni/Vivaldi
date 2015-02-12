@@ -26,8 +26,6 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include <stack>
-
 using namespace vv;
 using namespace ast;
 
@@ -546,9 +544,9 @@ parse_res<> parse_function_definition(vector_ref<std::string> tokens)
   tokens = tokens.remove_prefix(1);
 
   symbol name{""};
-  if (tokens.front() != ":") {
+  if (tokens.front() != "(") {
     name = tokens.front();
-    tokens = tokens.remove_prefix(1);
+    tokens = tokens.remove_prefix(1); // name
   }
 
   auto arg_res = parse_bracketed_subexpr(tokens, [](auto tokens)
