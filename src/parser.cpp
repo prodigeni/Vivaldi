@@ -637,14 +637,16 @@ parse_res<> parse_try_catch(vector_ref<std::string> tokens)
 
   tokens = ltrim(tokens, {"\n"});
   tokens = tokens.subvec(1); // 'catch'
-  auto exception_name = tokens.front();
-  tokens = tokens.subvec(2); // name ':'
+  symbol exception_name{tokens.front()};
+  std::vector<symbol> exception_arg{exception_name};
+  tokens = tokens.subvec(2); // name ':
 
   auto catcher_res = parse_expression(tokens);
   auto catcher = move(catcher_res->first);
   tokens = catcher_res->second;
 
-  return {{ std::make_unique<try_catch>( move(body), move(catcher) ), tokens }};
+  return {{std::make_unique<try_catch>(move(body),exception_name,move(catcher)),
+           tokens}};
 }
 
 parse_res<> parse_type_definition(vector_ref<std::string> tokens)

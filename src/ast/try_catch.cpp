@@ -5,14 +5,23 @@
 using namespace vv;
 
 ast::try_catch::try_catch(std::unique_ptr<expression>&& body,
+                          symbol exception_name,
                           std::unique_ptr<expression>&& catcher)
-  : m_body    {move(body)},
-    m_catcher {move(catcher)}
+  : m_body           {move(body)},
+    m_exception_name {exception_name},
+    m_catcher        {move(catcher)}
 { }
 
 std::vector<vm::command> ast::try_catch::generate() const
 {
-  auto vec = m_catcher->generate();
+  std::vector<vm::command> catcher;
+  catcher.emplace_back(vm::instruction::pop_arg, m_exception_name);
+  auto catcher_body = m_catcher->generate();
+  copy(begin(catcher_body), end(catcher_body), back_inserter(catcher));
+  catcher.emplace_back(vm::instruction::ret);
+
+  std::vector<vm::command> vec;
+  vec.emplace_back(vm::instruction::push_fn, move(catcher));
   vec.emplace_back(vm::instruction::push_catch);
 
   auto body = m_body->generate();
