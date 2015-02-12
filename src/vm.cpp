@@ -267,6 +267,11 @@ void vm::machine::call(int argc)
     gc::set_current_frame(stack);
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
+    if (argc != fn->argc) {
+      this->argc(fn->argc);
+      return;
+    };
+
     stack = std::make_shared<call_stack>(stack, m_base, argc, stack->instr_ptr);
     stack->caller = *function;
 

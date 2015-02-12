@@ -20,18 +20,6 @@ vv::value::base* vv::throw_exception(const std::string& value, vm::machine& vm)
   return vm.retval;
 }
 
-bool vv::check_size(size_t expected, size_t receieved, vm::machine& vm)
-{
-  if (expected != receieved) {
-    throw_exception("wrong number of arguments (expected "    +
-                    std::to_string(expected)  += ", got " +
-                    std::to_string(receieved) += ")",
-                    vm);
-    return false;
-  }
-  return true;
-}
-
 vv::value::base* vv::pop_arg(vm::machine& vm)
 {
   auto arg = vm.stack->parent->pushed.back();

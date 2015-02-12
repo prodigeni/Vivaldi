@@ -31,8 +31,6 @@ namespace {
 
 value::base* fn_print(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
 
   if (arg->type == &type::string)
@@ -49,30 +47,26 @@ value::base* fn_puts(vm::machine& vm)
   return ret;
 }
 
-value::base* fn_gets(vm::machine& vm)
+value::base* fn_gets(vm::machine&)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   std::string str;
   getline(std::cin, str);
 
   return gc::alloc<value::string>( str );
 }
 
-value::base* fn_quit(vm::machine& vm)
+value::base* fn_quit(vm::machine&)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   gc::empty();
   exit(0);
 }
 
 }
 
-value::builtin_function function::print{fn_print};
-value::builtin_function function::puts{ fn_puts};
-value::builtin_function function::gets{ fn_gets};
-value::builtin_function function::quit{ fn_quit};
+value::builtin_function function::print{fn_print, 1};
+value::builtin_function function::puts{ fn_puts,  1};
+value::builtin_function function::gets{ fn_gets,  0};
+value::builtin_function function::quit{ fn_quit,  0};
 
 // }}}
 // Methods and constructors {{{
@@ -128,17 +122,12 @@ value::base* fn_array_ctr(vm::machine& vm)
 
 value::base* fn_array_size(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto sz = static_cast<value::array&>(*vm.stack->self).mems.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_array_append(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
-
   auto arg = pop_arg(vm);
   if (arg->type == &type::array) {
     auto& arr = static_cast<value::array&>(*vm.stack->self).mems;
@@ -152,9 +141,6 @@ value::base* fn_array_append(vm::machine& vm)
 
 value::base* fn_array_at(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
-
   auto arg = pop_arg(vm);
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer", vm);
@@ -170,16 +156,12 @@ value::base* fn_array_at(vm::machine& vm)
 
 value::base* fn_array_start(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto& self = static_cast<value::array&>(*vm.stack->self);
   return gc::alloc<value::array_iterator>( self );
 }
 
 value::base* fn_array_end(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto& self = static_cast<value::array&>(*vm.stack->self);
   auto iter = gc::alloc<value::array_iterator>( self );
   static_cast<value::array_iterator*>(iter)->idx = self.mems.size();
@@ -191,8 +173,6 @@ value::base* fn_array_end(vm::machine& vm)
 
 value::base* fn_array_iterator_ctr(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   if (arg->type != &type::array)
     return throw_exception("ArrayIterators can only iterate over Arrays", vm);
@@ -201,24 +181,18 @@ value::base* fn_array_iterator_ctr(vm::machine& vm)
 
 value::base* fn_array_iterator_at_start(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
 value::base* fn_array_iterator_at_end(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   return gc::alloc<value::boolean>( iter->idx == iter->arr.mems.size() );
 }
 
 value::base* fn_array_iterator_get(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   if (iter->idx == iter->arr.mems.size())
     return throw_exception("ArrayIterator is at end of array", vm);
@@ -227,8 +201,6 @@ value::base* fn_array_iterator_get(vm::machine& vm)
 
 value::base* fn_array_iterator_increment(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   if (iter->idx == iter->arr.mems.size())
     return throw_exception("ArrayIterators cannot be incremented past end", vm);
@@ -238,8 +210,6 @@ value::base* fn_array_iterator_increment(vm::machine& vm)
 
 value::base* fn_array_iterator_decrement(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   if (iter->idx == 0)
     return throw_exception("ArrayIterators cannot be decremented past start", vm);
@@ -249,8 +219,6 @@ value::base* fn_array_iterator_decrement(vm::machine& vm)
 
 value::base* fn_array_iterator_add(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   auto offset = to_int(*pop_arg(vm));
 
@@ -268,8 +236,6 @@ value::base* fn_array_iterator_add(vm::machine& vm)
 
 value::base* fn_array_iterator_subtract(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   auto offset = to_int(*pop_arg(vm));
 
@@ -287,8 +253,6 @@ value::base* fn_array_iterator_subtract(vm::machine& vm)
 
 value::base* fn_array_iterator_equals(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   auto other = static_cast<value::array_iterator*>(pop_arg(vm));
   return gc::alloc<value::boolean>( &iter->arr == &other->arr
@@ -297,8 +261,6 @@ value::base* fn_array_iterator_equals(vm::machine& vm)
 
 value::base* fn_array_iterator_unequal(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
   auto other = static_cast<value::array_iterator*>(pop_arg(vm));
   return gc::alloc<value::boolean>( &iter->arr != &other->arr
@@ -310,8 +272,6 @@ value::base* fn_array_iterator_unequal(vm::machine& vm)
 
 value::base* fn_bool_ctr(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
 
   if (arg->type == &type::boolean)
@@ -370,8 +330,6 @@ value::base* fn_custom_type_ctr(vm::machine& vm)
 
 value::base* fn_custom_type_parent(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   return &static_cast<value::type&>(*vm.stack->self).parent;
 }
 
@@ -383,8 +341,6 @@ value::base* fn_integer_ctr(vm::machine& vm)
   if (vm.stack->args == 0)
     return gc::alloc<value::integer>( 0 );
 
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   auto type = arg->type;
 
@@ -402,8 +358,6 @@ auto fn_int_or_flt_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
 
     auto arg = pop_arg(vm);
     if (arg->type == &type::floating_point) {
@@ -427,8 +381,6 @@ auto fn_integer_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
 
     auto left = to_int(*vm.stack->self);
     auto right = to_int(*pop_arg(vm));
@@ -445,8 +397,6 @@ auto fn_integer_monop(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(0, vm.stack->args, vm))
-      return vm.retval;
     return gc::alloc<value::integer, int&&>( op(*to_int(*vm.stack->self)) );
   };
 }
@@ -456,8 +406,6 @@ auto fn_int_bool_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
 
     auto arg = pop_arg(vm);
     if (arg->type == &type::floating_point) {
@@ -482,8 +430,6 @@ value::base* fn_floating_point_ctr(vm::machine& vm)
   if (vm.stack->args == 0)
     return gc::alloc<value::floating_point>( 0.0 );
 
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   auto type = arg->type;
 
@@ -503,9 +449,6 @@ auto fn_floating_point_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
-
     auto left = to_float(*vm.stack->self);
     auto right = to_float(*pop_arg(vm));
     if (!right)
@@ -519,9 +462,6 @@ auto fn_float_bool_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
-    if (!check_size(1, vm.stack->args, vm))
-      return vm.retval;
-
     auto left = to_float(*vm.stack->self);
     auto right = to_float(*pop_arg(vm));
     if (!right)
@@ -534,38 +474,28 @@ auto fn_float_bool_op(const F& op)
 // object {{{
 
 
-value::base* fn_object_ctr(vm::machine& vm)
+value::base* fn_object_ctr(vm::machine&)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   return gc::alloc<value::base>( &type::object );
 }
 
 value::base* fn_object_equals(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   return gc::alloc<value::boolean>( &*vm.stack->self == pop_arg(vm) );
 }
 
 value::base* fn_object_unequal(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   return gc::alloc<value::boolean>( &*vm.stack->self != pop_arg(vm) );
 }
 
 value::base* fn_object_not(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   return gc::alloc<value::boolean>( !truthy(&*vm.stack->self) );
 }
 
 value::base* fn_object_type(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   return vm.stack->self->type;
 }
 
@@ -577,8 +507,6 @@ value::base* fn_string_ctr(vm::machine& vm)
   if (vm.stack->args == 0)
     return gc::alloc<value::string>( "" );
 
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   if (arg->type == &type::string)
     return gc::alloc<value::string>( *to_string(*arg) );
@@ -589,16 +517,12 @@ value::base* fn_string_ctr(vm::machine& vm)
 
 value::base* fn_string_size(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto sz = static_cast<value::string&>(*vm.stack->self).val.size();
   return gc::alloc<value::integer>( static_cast<int>(sz) );
 }
 
 value::base* fn_string_equals(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
@@ -608,8 +532,6 @@ value::base* fn_string_equals(vm::machine& vm)
 
 value::base* fn_string_unequal(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
@@ -619,8 +541,6 @@ value::base* fn_string_unequal(vm::machine& vm)
 
 value::base* fn_string_append(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto str = to_string(*pop_arg(vm));
   if (!str)
     return throw_exception("Only strings can be appended to other strings", vm);
@@ -630,8 +550,6 @@ value::base* fn_string_append(vm::machine& vm)
 
 value::base* fn_string_add(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto str = to_string(*pop_arg(vm));
   if (!str)
     return throw_exception("Only Strings can be appended to other Strings", vm);
@@ -641,8 +559,6 @@ value::base* fn_string_add(vm::machine& vm)
 
 value::base* fn_string_times(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto times = to_int(*pop_arg(vm));
   if (!times)
     return throw_exception("Strings can only be multiplied by numbers", vm);
@@ -658,8 +574,6 @@ value::base* fn_string_times(vm::machine& vm)
 
 value::base* fn_string_iterator_ctr(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
   if (arg->type != &type::string)
     return throw_exception("StringIterators can only iterate over strings", vm);
@@ -668,24 +582,18 @@ value::base* fn_string_iterator_ctr(vm::machine& vm)
 
 value::base* fn_string_iterator_at_start(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   return gc::alloc<value::boolean>( iter->idx == 0 );
 }
 
 value::base* fn_string_iterator_at_end(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   return gc::alloc<value::boolean>( iter->idx == iter->str.val.size() );
 }
 
 value::base* fn_string_iterator_get(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterator is at end of string", vm);
@@ -694,8 +602,6 @@ value::base* fn_string_iterator_get(vm::machine& vm)
 
 value::base* fn_string_iterator_increment(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   if (iter->idx == iter->str.val.size())
     return throw_exception("StringIterators cannot be incremented past end", vm);
@@ -705,8 +611,6 @@ value::base* fn_string_iterator_increment(vm::machine& vm)
 
 value::base* fn_string_iterator_decrement(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   if (iter->idx == 0)
     return throw_exception("StringIterators cannot be decremented past start", vm);
@@ -716,8 +620,6 @@ value::base* fn_string_iterator_decrement(vm::machine& vm)
 
 value::base* fn_string_iterator_add(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   auto offset = to_int(*pop_arg(vm));
 
@@ -735,8 +637,6 @@ value::base* fn_string_iterator_add(vm::machine& vm)
 
 value::base* fn_string_iterator_subtract(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   auto offset = to_int(*pop_arg(vm));
 
@@ -754,8 +654,6 @@ value::base* fn_string_iterator_subtract(vm::machine& vm)
 
 value::base* fn_string_iterator_equals(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   auto other = static_cast<value::string_iterator*>(pop_arg(vm));
   return gc::alloc<value::boolean>( &iter->str == &other->str
@@ -764,8 +662,6 @@ value::base* fn_string_iterator_equals(vm::machine& vm)
 
 value::base* fn_string_iterator_unequal(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
   auto other = static_cast<value::string_iterator*>(pop_arg(vm));
   return gc::alloc<value::boolean>( &iter->str != &other->str
@@ -777,8 +673,6 @@ value::base* fn_string_iterator_unequal(vm::machine& vm)
 
 value::base* fn_symbol_ctr(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
 
   if (arg->type == &type::symbol)
@@ -792,8 +686,6 @@ value::base* fn_symbol_ctr(vm::machine& vm)
 
 value::base* fn_symbol_equals(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
 
   if (arg->type != &type::symbol)
@@ -804,8 +696,6 @@ value::base* fn_symbol_equals(vm::machine& vm)
 
 value::base* fn_symbol_unequal(vm::machine& vm)
 {
-  if (!check_size(1, vm.stack->args, vm))
-    return vm.retval;
   auto arg = pop_arg(vm);
 
   if (arg->type != &type::symbol)
@@ -816,8 +706,6 @@ value::base* fn_symbol_unequal(vm::machine& vm)
 
 value::base* fn_symbol_to_str(vm::machine& vm)
 {
-  if (!check_size(0, vm.stack->args, vm))
-    return vm.retval;
   return gc::alloc<value::string>( to_string(*to_symbol(*vm.stack->self)) );
 }
 
@@ -831,10 +719,10 @@ value::base* fn_symbol_to_str(vm::machine& vm)
 using value::builtin_function;
 
 namespace {
-builtin_function obj_equals  {fn_object_equals};
-builtin_function obj_unequal {fn_object_unequal};
-builtin_function obj_not     {fn_object_not};
-builtin_function obj_type    {fn_object_type};
+builtin_function obj_equals  {fn_object_equals,  1};
+builtin_function obj_unequal {fn_object_unequal, 1};
+builtin_function obj_not     {fn_object_not,     0};
+builtin_function obj_type    {fn_object_type,    0};
 }
 value::type type::object {fn_object_ctr, {
   { {"equals"},  &obj_equals },
@@ -844,11 +732,11 @@ value::type type::object {fn_object_ctr, {
 }, builtin::type::object, {"Object"}};
 
 namespace {
-builtin_function array_size   {fn_array_size};
-builtin_function array_append {fn_array_append};
-builtin_function array_at     {fn_array_at};
-builtin_function array_start  {fn_array_start};
-builtin_function array_end    {fn_array_end};
+builtin_function array_size   {fn_array_size,   0};
+builtin_function array_append {fn_array_append, 1};
+builtin_function array_at     {fn_array_at,     1};
+builtin_function array_start  {fn_array_start,  0};
+builtin_function array_end    {fn_array_end,    0};
 }
 value::type type::array {fn_array_ctr, {
   { {"size"},   &array_size },
@@ -859,15 +747,15 @@ value::type type::array {fn_array_ctr, {
 }, builtin::type::object, {"Array"}};
 
 namespace {
-builtin_function array_iterator_at_start  {fn_array_iterator_at_start};
-builtin_function array_iterator_at_end    {fn_array_iterator_at_end};
-builtin_function array_iterator_get       {fn_array_iterator_get};
-builtin_function array_iterator_equals    {fn_array_iterator_equals};
-builtin_function array_iterator_unequal   {fn_array_iterator_unequal};
-builtin_function array_iterator_increment {fn_array_iterator_increment};
-builtin_function array_iterator_decrement {fn_array_iterator_decrement};
-builtin_function array_iterator_add       {fn_array_iterator_add};
-builtin_function array_iterator_subtract  {fn_array_iterator_subtract};
+builtin_function array_iterator_at_start  {fn_array_iterator_at_start,  0};
+builtin_function array_iterator_at_end    {fn_array_iterator_at_end,    0};
+builtin_function array_iterator_get       {fn_array_iterator_get,       0};
+builtin_function array_iterator_equals    {fn_array_iterator_equals,    1};
+builtin_function array_iterator_unequal   {fn_array_iterator_unequal,   1};
+builtin_function array_iterator_increment {fn_array_iterator_increment, 0};
+builtin_function array_iterator_decrement {fn_array_iterator_decrement, 0};
+builtin_function array_iterator_add       {fn_array_iterator_add,       1};
+builtin_function array_iterator_subtract  {fn_array_iterator_subtract,  1};
 }
 value::type type::array_iterator {fn_array_iterator_ctr, {
   { {"at_start"},  &array_iterator_at_start },
@@ -882,24 +770,24 @@ value::type type::array_iterator {fn_array_iterator_ctr, {
 }, builtin::type::object, {"ArrayIterator"}};
 
 namespace {
-builtin_function int_add            {fn_int_or_flt_op([](auto a, auto b){ return a + b; })};
-builtin_function int_subtract       {fn_int_or_flt_op([](auto a, auto b){ return a - b; })};
-builtin_function int_times          {fn_int_or_flt_op([](auto a, auto b){ return a * b; })};
-builtin_function int_divides        {fn_int_or_flt_op([](auto a, auto b){ return a / b; })};
-builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})                   };
-builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; })   };
-builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; })   };
-builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})                   };
-builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})                    };
-builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})                   };
-builtin_function int_equals         {fn_int_bool_op([](auto a, auto b){ return a == b; }) };
-builtin_function int_unequal        {fn_int_bool_op([](auto a, auto b){ return a != b; }) };
-builtin_function int_less           {fn_int_bool_op([](auto a, auto b){ return a < b;  }) };
-builtin_function int_greater        {fn_int_bool_op([](auto a, auto b){ return a > b;  }) };
-builtin_function int_less_equals    {fn_int_bool_op([](auto a, auto b){ return a <= b; }) };
-builtin_function int_greater_equals {fn_int_bool_op([](auto a, auto b){ return a >= b; }) };
-builtin_function int_negative       {fn_integer_monop(std::negate<int>{})                 };
-builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})                };
+builtin_function int_add            {fn_int_or_flt_op([](auto a, auto b){ return a + b; }), 1};
+builtin_function int_subtract       {fn_int_or_flt_op([](auto a, auto b){ return a - b; }), 1};
+builtin_function int_times          {fn_int_or_flt_op([](auto a, auto b){ return a * b; }), 1};
+builtin_function int_divides        {fn_int_or_flt_op([](auto a, auto b){ return a / b; }), 1};
+builtin_function int_modulo         {fn_integer_op(std::modulus<int>{}),                    1};
+builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; }),    1};
+builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; }),    1};
+builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{}),                    1};
+builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{}),                     1};
+builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{}),                    1};
+builtin_function int_equals         {fn_int_bool_op([](auto a, auto b){ return a == b; }),  1};
+builtin_function int_unequal        {fn_int_bool_op([](auto a, auto b){ return a != b; }),  1};
+builtin_function int_less           {fn_int_bool_op([](auto a, auto b){ return a < b;  }),  1};
+builtin_function int_greater        {fn_int_bool_op([](auto a, auto b){ return a > b;  }),  1};
+builtin_function int_less_equals    {fn_int_bool_op([](auto a, auto b){ return a <= b; }),  1};
+builtin_function int_greater_equals {fn_int_bool_op([](auto a, auto b){ return a >= b; }),  1};
+builtin_function int_negative       {fn_integer_monop(std::negate<int>{}),                  0};
+builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{}),                 0};
 }
 value::type type::integer{fn_integer_ctr, {
   { {"add"},            &int_add            },
@@ -923,16 +811,16 @@ value::type type::integer{fn_integer_ctr, {
 }, builtin::type::object, {"Integer"}};
 
 namespace {
-builtin_function flt_add            {fn_floating_point_op(std::plus<double>{})       };
-builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{})      };
-builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}) };
-builtin_function flt_divides        {fn_floating_point_op(std::divides<double>{})    };
-builtin_function flt_equals         {fn_float_bool_op(std::equal_to<double>{})       };
-builtin_function flt_unequal        {fn_float_bool_op(std::not_equal_to<double>{})   };
-builtin_function flt_less           {fn_float_bool_op(std::less<double>{})           };
-builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{})        };
-builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{})     };
-builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{})  };
+builtin_function flt_add            {fn_floating_point_op(std::plus<double>{}),       1};
+builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{}),      1};
+builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}), 1};
+builtin_function flt_divides        {fn_floating_point_op(std::divides<double>{}),    1};
+builtin_function flt_equals         {fn_float_bool_op(std::equal_to<double>{}),       1};
+builtin_function flt_unequal        {fn_float_bool_op(std::not_equal_to<double>{}),   1};
+builtin_function flt_less           {fn_float_bool_op(std::less<double>{}),           1};
+builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{}),        1};
+builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{}),     1};
+builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{}),  1};
 }
 value::type type::floating_point{fn_floating_point_ctr, {
   { {"equals"},         &flt_equals         },
@@ -948,12 +836,12 @@ value::type type::floating_point{fn_floating_point_ctr, {
 }, builtin::type::object, {"Float"}};
 
 namespace {
-builtin_function string_size    {fn_string_size};
-builtin_function string_append  {fn_string_append};
-builtin_function string_equals  {fn_string_equals};
-builtin_function string_unequal {fn_string_unequal};
-builtin_function string_add     {fn_string_add};
-builtin_function string_times   {fn_string_times};
+builtin_function string_size    {fn_string_size,    0};
+builtin_function string_append  {fn_string_append,  1};
+builtin_function string_equals  {fn_string_equals,  1};
+builtin_function string_unequal {fn_string_unequal, 1};
+builtin_function string_add     {fn_string_add,     1};
+builtin_function string_times   {fn_string_times,   1};
 }
 value::type type::string {fn_string_ctr, {
   { {"size"},    &string_size    },
@@ -965,15 +853,15 @@ value::type type::string {fn_string_ctr, {
 }, builtin::type::object, {"String"}};
 
 namespace {
-builtin_function string_iterator_at_start  {fn_string_iterator_at_start};
-builtin_function string_iterator_at_end    {fn_string_iterator_at_end};
-builtin_function string_iterator_get       {fn_string_iterator_get};
-builtin_function string_iterator_equals    {fn_string_iterator_equals};
-builtin_function string_iterator_unequal   {fn_string_iterator_unequal};
-builtin_function string_iterator_increment {fn_string_iterator_increment};
-builtin_function string_iterator_decrement {fn_string_iterator_decrement};
-builtin_function string_iterator_add       {fn_string_iterator_add};
-builtin_function string_iterator_subtract  {fn_string_iterator_subtract};
+builtin_function string_iterator_at_start  {fn_string_iterator_at_start,  0};
+builtin_function string_iterator_at_end    {fn_string_iterator_at_end,    0};
+builtin_function string_iterator_get       {fn_string_iterator_get,       0};
+builtin_function string_iterator_equals    {fn_string_iterator_equals,    1};
+builtin_function string_iterator_unequal   {fn_string_iterator_unequal,   1};
+builtin_function string_iterator_increment {fn_string_iterator_increment, 0};
+builtin_function string_iterator_decrement {fn_string_iterator_decrement, 0};
+builtin_function string_iterator_add       {fn_string_iterator_add,       1};
+builtin_function string_iterator_subtract  {fn_string_iterator_subtract,  1};
 }
 value::type type::string_iterator {fn_string_iterator_ctr, {
   { {"at_start"},  &string_iterator_at_start },
@@ -988,9 +876,9 @@ value::type type::string_iterator {fn_string_iterator_ctr, {
 }, builtin::type::object, {"StringIterator"}};
 
 namespace {
-builtin_function symbol_equals  {fn_symbol_equals};
-builtin_function symbol_unequal {fn_symbol_unequal};
-builtin_function symbol_to_str  {fn_symbol_to_str};
+builtin_function symbol_equals  {fn_symbol_equals,  1};
+builtin_function symbol_unequal {fn_symbol_unequal, 1};
+builtin_function symbol_to_str  {fn_symbol_to_str,  0};
 }
 value::type type::symbol {fn_symbol_ctr, {
   { {"equals"},  &symbol_equals  },
@@ -1002,7 +890,7 @@ value::type type::boolean {fn_bool_ctr, {
 }, builtin::type::object, {"Bool"}};
 
 namespace {
-builtin_function custom_type_parent {fn_custom_type_parent};
+builtin_function custom_type_parent {fn_custom_type_parent, 0};
 }
 value::type type::custom_type {fn_custom_type_ctr, {
   { {"parent"}, &custom_type_parent }

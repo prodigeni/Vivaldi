@@ -10,12 +10,12 @@ namespace value {
 
 struct builtin_function : public base {
 public:
-  builtin_function(
-      const std::function<base*(vm::machine&)>& body);
+  builtin_function(const std::function<base*(vm::machine&)>& body, int argc);
 
   std::string value() const override;
 
   std::function<base*(vm::machine&)> body;
+  int argc;
 };
 
 }
