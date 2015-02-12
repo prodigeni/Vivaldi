@@ -41,7 +41,7 @@ void vm::machine::run()
     // instruction pointer
     auto instr = stack->instr_ptr.front().instr;
     const auto& arg = stack->instr_ptr.front().arg;
-    stack->instr_ptr = stack->instr_ptr.remove_prefix(1);
+    stack->instr_ptr = stack->instr_ptr.subvec(1);
 
     // HACK--- avoid weirdness like the following:
     //   let i = 1
@@ -292,7 +292,7 @@ void vm::machine::ret()
 
 void vm::machine::jmp(int offset)
 {
-  stack->instr_ptr = stack->instr_ptr.remove_prefix(offset - 1);
+  stack->instr_ptr = stack->instr_ptr.shifted_by(offset - 1);
 }
 
 void vm::machine::jmp_false(int offset)

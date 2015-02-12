@@ -19,8 +19,8 @@ void repl_catcher(vv::vm::machine& vm)
   write_error("caught exception: " + vm.retval->value());
 
   // Clear out remaining instructions once the current line's borked
-  auto remaining = static_cast<long>(vm.stack->instr_ptr.size());
-  vm.stack->instr_ptr = vm.stack->instr_ptr.remove_prefix(remaining);
+  auto remaining = vm.stack->instr_ptr.size();
+  vm.stack->instr_ptr = vm.stack->instr_ptr.subvec(remaining);
   vm.retval = vv::gc::alloc<vv::value::nil>( );
 }
 

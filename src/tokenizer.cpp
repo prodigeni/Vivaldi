@@ -14,19 +14,12 @@ using namespace vv;
  * ':'
  * '='
  * '=='
- * '+'
- * '-'
- * '*'
- * '!'
- * '~'
- * '^'
- * '&'
- * '&&'
- * '|'
- * '||'
- * '/'
+ * '+', '-'
+ * '*', '/', '%'
+ * '!', '~'
+ * '^', '&', '|'
+ * '&&', '||'
  * '<', '>', '<=', '>='
- * '%'
  * '''
  * (strings)
  * (names)
@@ -68,7 +61,7 @@ tok_res zero_token(boost::string_ref line)
     }
   }
   std::string num{begin(line), last};
-  return { num, ltrim(remove_prefix(line, last - begin(line))) };
+  return { num, ltrim(line.substr(last - begin(line))) };
 }
 
 // }}}
@@ -83,7 +76,7 @@ tok_res digit_token(boost::string_ref line)
       nondigit = nonfloat;
   }
 
-  return { {begin(line), nondigit}, line.substr(nondigit - begin(line))};
+  return { {begin(line), nondigit}, ltrim(line.substr(nondigit - begin(line)))};
 }
 
 // }}}
@@ -92,10 +85,10 @@ tok_res digit_token(boost::string_ref line)
 tok_res dot_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '.')
-    return {".", ltrim(remove_prefix(line, 1))};
+    return {".", ltrim(line.substr(1))};
   if (line.size() == 2 || line[2] != '.')
-    return {"..", ltrim(remove_prefix(line, 2))};
-  return {"...", ltrim(remove_prefix(line, 3))};
+    return {"..", ltrim(line.substr(2))};
+  return {"...", ltrim(line.substr(3))};
 }
 
 // }}}
@@ -104,8 +97,8 @@ tok_res dot_tokens(boost::string_ref line)
 tok_res eq_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '=')
-    return {"=", ltrim(remove_prefix(line, 1))};
-  return {"==", ltrim(remove_prefix(line, 2))};
+    return {"=", ltrim(line.substr(1))};
+  return {"==", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -114,8 +107,8 @@ tok_res eq_tokens(boost::string_ref line)
 tok_res bang_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '=')
-    return {"!", ltrim(remove_prefix(line, 1))};
-  return {"!=", ltrim(remove_prefix(line, 2))};
+    return {"!", ltrim(line.substr(1))};
+  return {"!=", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -124,8 +117,8 @@ tok_res bang_tokens(boost::string_ref line)
 tok_res and_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '&')
-    return {"&", ltrim(remove_prefix(line, 1))};
-  return {"&&", ltrim(remove_prefix(line, 2))};
+    return {"&", ltrim(line.substr(1))};
+  return {"&&", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -134,8 +127,8 @@ tok_res and_tokens(boost::string_ref line)
 tok_res or_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '|')
-    return {"|", ltrim(remove_prefix(line, 1))};
-  return {"||", ltrim(remove_prefix(line, 2))};
+    return {"|", ltrim(line.substr(1))};
+  return {"||", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -144,8 +137,8 @@ tok_res or_tokens(boost::string_ref line)
 tok_res lt_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '=')
-    return {"<", ltrim(remove_prefix(line, 1))};
-  return {"<=", ltrim(remove_prefix(line, 2))};
+    return {"<", ltrim(line.substr(1))};
+  return {"<=", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -154,8 +147,8 @@ tok_res lt_tokens(boost::string_ref line)
 tok_res gt_tokens(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '=')
-    return {">", ltrim(remove_prefix(line, 1))};
-  return {">=", ltrim(remove_prefix(line, 2))};
+    return {">", ltrim(line.substr(1))};
+  return {">=", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -190,7 +183,7 @@ tok_res string_token(boost::string_ref line)
     }
     line.remove_prefix(1);
   }
-  return {token += '"', ltrim(remove_prefix(line, 1))};
+  return {token += '"', ltrim(line.substr(1))};
 }
 
 // }}}
@@ -199,7 +192,7 @@ tok_res string_token(boost::string_ref line)
 tok_res slash_token(boost::string_ref line)
 {
   if (line.size() == 1 || line[1] != '/')
-    return {"/", ltrim(remove_prefix(line, 1))};
+    return {"/", ltrim(line.substr(1))};
   line.remove_prefix(1 + std::find(begin(line), end(line), '\n') - begin(line));
   return {"\n", line};
 }
@@ -212,7 +205,7 @@ tok_res name_token(boost::string_ref line)
   auto last = std::find_if(begin(line), end(line),
                            [](auto c) { return isspace(c) || !isnamechar(c); });
   std::string name{begin(line), last};
-  return {name, ltrim(remove_prefix(line, last - begin(line)))};
+  return {name, ltrim(line.substr(last - begin(line)))};
 }
 
 // }}}
@@ -237,7 +230,7 @@ tok_res first_token(boost::string_ref line)
   case '^':
   case '%':
   case '#':
-  case '\'': return {{line.front()}, ltrim(remove_prefix(line, 1))};
+  case '\'': return {{line.front()}, ltrim(line.substr(1))};
   case '1':
   case '2':
   case '3':
@@ -264,6 +257,7 @@ tok_res first_token(boost::string_ref line)
 // }}}
 
 }
+#include <iostream>
 
 std::vector<std::string> parser::tokenize(std::istream& input)
 {
