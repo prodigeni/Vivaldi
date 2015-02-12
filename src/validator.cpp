@@ -407,7 +407,7 @@ val_res val_number(vector_ref<std::string> tokens)
   if (last == begin(num))
     return {};
   if (last != end(num)) {
-    if (*last != '.' || find_if_not(last, end(num), isdigit) != end(num))
+    if (*last != '.' || find_if_not(last + 1, end(num), isdigit) != end(num))
       return {};
   }
   return tokens.subvec(1);
