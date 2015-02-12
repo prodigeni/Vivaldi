@@ -21,6 +21,10 @@ Vivaldi can be run either from a file or from the REPL:
     $
 </code></pre>
 
+Vivaldi expressions are separated by newlines or semicolons.
+Comments in Vivaldi are C-style `// till end of line` comments--- multiline
+comments aren't supported yet.
+
 ### Builtins ###
 
 Vivaldi has a fairly limited set of builtin types:
@@ -130,6 +134,46 @@ Defining custom types is simple:
     let no = my_obj.x_is_equal_to(47)
 </code></pre>
 
+#### Iterators and Ranges ####
+
+Iterators are the basic way to, well, iterate over something. A basic iterator
+type supports three methods:
+
+* `get()` --- returns the item currently pointed to
+* `increment` --- moves the iterator to the next item in its range, and returns
+  itself.
+* `at_end()` --- returns whether or not the iterator is at the end of its range.
+  If it is, the iterator doesn't point to anything valid--- conceptually, it
+  works like this:
+
+<pre><code>
+    { item 0, item 2 ... item n - 1, item n }
+      ^                                     ^
+      start                                 end
+</code></pre>
+
+A range is even simpler; it only needs to support one method, `start()`, that
+returns an iterator pointing to its first element. In the standard library, both
+`Array` and `String` are ranges, and `ArrayIterator` and `String` are their
+corresponding iterators.
+
+Iterators are used to implement for loops:
+
+<pre><code>
+    for i in range: puts(i)
+</code></pre>
+
+is equivalent to something like:
+
+<pre><code>
+    let <implicit_var> = range.start()
+    while !<implicit_var>.at_end(): {
+      let i = <implicit_var>.get()
+      puts(i)
+      <implicit_var>.increment()
+    }
+</code></pre>
+
 ### Structures ###
 
 Vivaldi expressions comprise:
@@ -149,7 +193,8 @@ All variables must be declared before use:
 
 #### Control Flow ####
 
-Vivaldi's basic control flow structures are cond statements and while loops.
+Vivaldi's basic control flow structures are cond statements, while loops, and
+for loops:
 
 <pre><code>
     let i = cond { false: "not me!", true: "me!" }
@@ -179,8 +224,15 @@ while loops are very straightforward:
     while <condition>: <expression>
 </code></pre>
 
-Note that while loops always evaluate to `nil` or `false`--- whatever the
-condition evaluated to when the loop broke.
+For loops are familiar to anyone who's ever used Python or Ruby:
+
+<pre><code>
+    for <i> in <range>: <expression>
+</code></pre>
+
+For more on for loops, see iterators.
+
+Note that while and loops always evaluate to `nil`.
 
 #### Blocks ####
 
