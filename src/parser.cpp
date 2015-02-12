@@ -801,9 +801,9 @@ auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
 {
   if (!tokens.size() || tokens.front() != opening)
     return {};
-  tokens = tokens.subvec(1); // opening
+  tokens = ltrim(tokens.subvec(1), {"\n"}); // opening
   auto res = parse_item(tokens);
-  res->second = res->second.subvec(1); // closing
+  res->second = ltrim(res->second, {"\n"}).subvec(1); // closing
   return res;
 }
 

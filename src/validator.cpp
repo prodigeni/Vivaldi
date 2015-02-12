@@ -49,7 +49,7 @@ val_res val_comma_separated_list(vector_ref<std::string> tokens,
     tokens = *expr_res;
     if (!tokens.size() || tokens.front() != ",")
       return tokens;
-    tokens = tokens.subvec(1);
+    tokens = ltrim(tokens.subvec(1), {"\n"});
   } while ((expr_res = val_item(tokens)));
 
   return expr_res;
@@ -65,10 +65,10 @@ val_res val_bracketed_subexpr(vector_ref<std::string> tokens,
                               const std::string& closing)
 {
   if (tokens.size() && tokens.front() == opening) {
-    auto item_res = val_item(tokens.subvec(1));
+    auto item_res = val_item(ltrim(tokens.subvec(1), {"\n"}));
     if (!item_res)
       return item_res;
-    tokens = *item_res;
+    tokens = ltrim(*item_res, {"\n"});
     if (tokens.size() && tokens.front() == closing)
       return tokens.subvec(1);
     return {tokens, "expected '" + closing + '\''};
