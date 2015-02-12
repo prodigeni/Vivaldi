@@ -286,10 +286,13 @@ void vm::machine::lblk()
 
 void vm::machine::ret()
 {
-  stack = stack->parent;
-  if (!stack)
-    exit(0);
-  gc::set_current_frame(stack);
+  if (stack->parent) {
+    stack = stack->parent;
+    gc::set_current_frame(stack);
+  } else {
+    push_str("The top-level environment can't be returned from");
+    except();
+  }
 }
 
 void vm::machine::jmp(int offset)

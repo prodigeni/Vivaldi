@@ -25,6 +25,7 @@ val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
 val_res val_member(              vector_ref<std::string> tokens);
 val_res val_except(              vector_ref<std::string> tokens);
+val_res val_return(              vector_ref<std::string> tokens);
 val_res val_expr_list(           vector_ref<std::string> tokens);
 val_res val_function_definition( vector_ref<std::string> tokens);
 val_res val_literal(             vector_ref<std::string> tokens);
@@ -93,6 +94,7 @@ val_res val_expression(vector_ref<std::string> tokens)
       || ((res = val_block(tokens))                || res.invalid())
       || ((res = val_cond_statement(tokens))       || res.invalid())
       || ((res = val_except(tokens))               || res.invalid())
+      || ((res = val_return(tokens))               || res.invalid())
       || ((res = val_for_loop(tokens))             || res.invalid())
       || ((res = val_while_loop(tokens))           || res.invalid())
       || ((res = val_function_definition(tokens))  || res.invalid())
@@ -334,6 +336,18 @@ val_res val_member(vector_ref<std::string> tokens)
 val_res val_except(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "except")
+    return {};
+  if (auto expr = val_expression(tokens.subvec(1)))
+    return expr;
+  return {tokens, "expected expression"};
+}
+
+// }}}
+// return {{{
+
+val_res val_return(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "return")
     return {};
   if (auto expr = val_expression(tokens.subvec(1)))
     return expr;

@@ -14,6 +14,7 @@
 #include "ast/logical_or.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
+#include "ast/return_statement.h"
 #include "ast/try_catch.h"
 #include "ast/type_definition.h"
 #include "ast/variable.h"
@@ -179,6 +180,7 @@ parse_res<> parse_prec9(vector_ref<std::string> tokens); // ==, !=
 parse_res<> parse_prec10(vector_ref<std::string> tokens); // &&
 parse_res<> parse_prec11(vector_ref<std::string> tokens); // ||
 
+parse_res<> parse_array_literal(vector_ref<std::string> tokens);
 parse_res<> parse_assignment(vector_ref<std::string> tokens);
 parse_res<> parse_block(vector_ref<std::string> tokens);
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
@@ -187,7 +189,7 @@ parse_res<> parse_if_statement(vector_ref<std::string> tokens);
 parse_res<> parse_while_loop(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
-parse_res<> parse_array_literal(vector_ref<std::string> tokens);
+parse_res<> parse_return(vector_ref<std::string> tokens);
 parse_res<> parse_try_catch(vector_ref<std::string> tokens);
 parse_res<> parse_type_definition(vector_ref<std::string> tokens);
 parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
@@ -447,6 +449,7 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
     return parse_bracketed_subexpr(tokens, parse_expression, "(", ")");
 
   parse_res<> res;
+  if ((res = parse_array_literal(tokens)))        return res;
   if ((res = parse_assignment(tokens)))           return res;
   if ((res = parse_block(tokens)))                return res;
   if ((res = parse_cond_statement(tokens)))       return res;
@@ -455,7 +458,7 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_while_loop(tokens)))           return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
-  if ((res = parse_array_literal(tokens)))        return res;
+  if ((res = parse_return(tokens)))               return res;
   if ((res = parse_try_catch(tokens)))            return res;
   if ((res = parse_type_definition(tokens)))      return res;
   if ((res = parse_variable_declaration(tokens))) return res;
@@ -603,6 +606,17 @@ parse_res<> parse_literal(vector_ref<std::string> tokens)
   if ((res = parse_symbol(tokens)))  return res;
   if ((res = parse_string(tokens)))  return res;
   return res;
+}
+
+parse_res<> parse_return(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "return")
+    return {};
+  tokens = tokens.subvec(1); // 'except'
+  auto expr_res = parse_expression(tokens);
+  auto expr = move(expr_res->first);
+  tokens = expr_res->second;
+  return {{ std::make_unique<return_statement>( move(expr) ), tokens }};
 }
 
 parse_res<> parse_array_literal(vector_ref<std::string> tokens)
