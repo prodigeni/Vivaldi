@@ -318,7 +318,7 @@ parse_res<> parse_prec8(vector_ref<std::string> tokens)
                              {
                                return (s == ">")  ? "greater" :
                                       (s == "<")  ? "less"    :
-                                      (s == "<=") ? "greater_equals" :
+                                      (s == ">=") ? "greater_equals" :
                                                     "less_equals";
                              });
 }
@@ -411,32 +411,33 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
     return expr_res;
   tokens = expr_res->second;
 
-  if (tokens.size() && tokens.front() == "(") {
-    auto expr = move(expr_res->first);
+  auto expr = move(expr_res->first);
+  while (tokens.size() && (tokens.front() == "(" || tokens.front() == ".")) {
+    if (tokens.front() == "(") {
+      auto list_res = parse_function_call(tokens);
+      auto list = move(list_res->first);
+      tokens = list_res->second;
 
-    auto list_res = parse_function_call(tokens);
-    auto list = move(list_res->first);
-    tokens = list_res->second;
+      expr = std::make_unique<function_call>(move(expr), move(list));
 
-    return {{std::make_unique<function_call>(move(expr), move(list)), tokens}};
+    } else {
+      tokens = tokens.remove_prefix(1);
+      symbol name{tokens.front()};
+      tokens = tokens.remove_prefix(1);
 
-  } else if (tokens.size() && tokens.front() == ".") {
-    auto expr = move(expr_res->first);
-
-    tokens = tokens.remove_prefix(1);
-    symbol name{tokens.front()};
-    tokens = tokens.remove_prefix(1);
-
-    if (tokens.size() && tokens.front() == "=") {
-      auto value_res = parse_expression(tokens.remove_prefix(1));
-      auto value = move(value_res->first);
-      tokens = value_res->second;
-      return {{std::make_unique<member_assignment>(move(expr),name,move(value)),
-               tokens}};
+      if (tokens.size() && tokens.front() == "=") {
+        auto value_res = parse_expression(tokens.remove_prefix(1));
+        auto value = move(value_res->first);
+        tokens = value_res->second;
+        return {{ std::make_unique<member_assignment>( move(expr),
+                                                       name,
+                                                       move(value) ),
+                  tokens }};
+      }
+      expr = std::make_unique<member>( move(expr), name );
     }
-    return {{ std::make_unique<member>( move(expr), name ), tokens }};
   }
-  return expr_res;
+  return {{ move(expr), tokens }};
 }
 
 parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
