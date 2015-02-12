@@ -29,6 +29,7 @@ public:
   void self();
   void push_arg();
   void pop_arg(symbol sym);
+  void argc(int count);
   void readm(symbol sym);
   void writem(symbol sym);
   void call(int args);

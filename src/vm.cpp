@@ -67,6 +67,7 @@ void vm::machine::run()
     case instruction::self:     self();                    break;
     case instruction::push_arg: push_arg();                break;
     case instruction::pop_arg:  pop_arg(get<symbol>(arg)); break;
+    case instruction::argc:     argc(get<int>(arg));       break;
     case instruction::readm:    readm(get<symbol>(arg));   break;
     case instruction::writem:   writem(get<symbol>(arg));  break;
     case instruction::call:     call(get<int>(arg));       break;
@@ -178,17 +179,21 @@ void vm::machine::self()
 
 void vm::machine::push_arg()
 {
-  stack->pushed_args.push_back(retval);
+  stack->pushed.push_back(retval);
 }
 
 void vm::machine::pop_arg(symbol sym)
 {
-  if (stack->args != 0) {
-    stack->local.back()[sym] = stack->parent->pushed_args.back();
-    stack->parent->pushed_args.pop_back();
-    --stack->args;
-  } else {
-    push_str("wrong number of arguments");
+  stack->local.back()[sym] = stack->parent->pushed.back();
+  stack->parent->pushed.pop_back();
+}
+
+void vm::machine::argc(int count)
+{
+  if (stack->args != static_cast<size_t>(count)) {
+    push_str("Wrong number of arguments--- expected "
+            + std::to_string(stack->args) + ", got "
+            + std::to_string(count));
     except();
   }
 }
@@ -212,8 +217,8 @@ void vm::machine::readm(symbol sym)
 
 void vm::machine::writem(symbol sym)
 {
-  auto value = stack->pushed_args.back();
-  stack->pushed_args.pop_back();
+  auto value = stack->pushed.back();
+  stack->pushed.pop_back();
 
   retval->members[sym] = value;
   retval = value;
@@ -299,13 +304,13 @@ void vm::machine::ret()
 
 void vm::machine::push()
 {
-  stack->pushed_args.push_back(retval);
+  stack->pushed.push_back(retval);
 }
 
 void vm::machine::pop()
 {
-  retval = stack->pushed_args.back();
-  stack->pushed_args.pop_back();
+  retval = stack->pushed.back();
+  stack->pushed.pop_back();
 }
 
 void vm::machine::jmp(int offset)

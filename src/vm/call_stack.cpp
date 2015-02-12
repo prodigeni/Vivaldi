@@ -33,7 +33,7 @@ void vm::mark(call_stack& stack)
   if (stack.self && !stack.self->marked())
     stack.self->mark();
 
-  for (auto* i : stack.pushed_args)
+  for (auto* i : stack.pushed)
     if (!i->marked())
       i->mark();
   if (stack.catcher && !stack.catcher->marked())

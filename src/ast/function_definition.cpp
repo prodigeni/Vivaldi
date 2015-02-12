@@ -16,6 +16,7 @@ ast::function_definition::function_definition(symbol name,
 std::vector<vm::command> ast::function_definition::generate() const
 {
   std::vector<vm::command> definition;
+  definition.emplace_back(vm::instruction::argc, static_cast<int>(m_args.size()));
   transform(rbegin(m_args), rend(m_args), back_inserter(definition),
             [](auto i) { return vm::command{vm::instruction::pop_arg, i}; });
 

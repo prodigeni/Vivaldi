@@ -34,8 +34,8 @@ bool vv::check_size(size_t expected, size_t receieved, vm::machine& vm)
 
 vv::value::base* vv::pop_arg(vm::machine& vm)
 {
-  auto arg = vm.stack->parent->pushed_args.back();
-  vm.stack->parent->pushed_args.pop_back();
+  auto arg = vm.stack->parent->pushed.back();
+  vm.stack->parent->pushed.pop_back();
   return arg;
 }
 
