@@ -28,10 +28,12 @@ namespace type {
 
 extern value::type object;
 extern value::type string;
+extern value::type string_iterator;
 extern value::type integer;
 extern value::type floating_point;
 extern value::type boolean;
 extern value::type array;
+extern value::type array_iterator;
 extern value::type dictionary;
 extern value::type symbol;
 extern value::type iterator;

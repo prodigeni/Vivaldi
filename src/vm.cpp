@@ -17,7 +17,6 @@
 #include "vm/instruction.h"
 
 #include <boost/variant/get.hpp>
-#include <iostream>
 
 using namespace vv;
 
@@ -74,7 +73,10 @@ void vm::machine::run()
 
     case instruction::eblk: eblk(); break;
     case instruction::lblk: lblk(); break;
-    case instruction::ret:  ret(); break;
+    case instruction::ret:  ret();  break;
+
+    case instruction::push: push(); break;
+    case instruction::pop:  pop();  break;
 
     case instruction::jmp:       jmp(get<int>(arg));       break;
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
@@ -293,6 +295,17 @@ void vm::machine::ret()
     push_str("The top-level environment can't be returned from");
     except();
   }
+}
+
+void vm::machine::push()
+{
+  stack->pushed_args.push_back(retval);
+}
+
+void vm::machine::pop()
+{
+  retval = stack->pushed_args.back();
+  stack->pushed_args.pop_back();
 }
 
 void vm::machine::jmp(int offset)

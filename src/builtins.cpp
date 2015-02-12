@@ -3,6 +3,7 @@
 #include "gc.h"
 #include "lang_utils.h"
 #include "value/array.h"
+#include "value/array_iterator.h"
 #include "value/boolean.h"
 #include "value/builtin_function.h"
 #include "value/floating_point.h"
@@ -10,6 +11,7 @@
 #include "value/integer.h"
 #include "value/nil.h"
 #include "value/string.h"
+#include "value/string_iterator.h"
 #include "value/symbol.h"
 
 #include <iostream>
@@ -164,6 +166,143 @@ value::base* fn_array_at(vm::machine& vm)
                            + std::to_string(val) + ")",
                            vm);
   return arr[static_cast<unsigned>(val)];
+}
+
+value::base* fn_array_start(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto& self = static_cast<value::array&>(*vm.stack->self);
+  return gc::alloc<value::array_iterator>( self );
+}
+
+value::base* fn_array_end(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto& self = static_cast<value::array&>(*vm.stack->self);
+  auto iter = gc::alloc<value::array_iterator>( self );
+  static_cast<value::array_iterator*>(iter)->idx = self.mems.size();
+  return iter;
+}
+
+// }}}
+// array_iterator {{{
+
+value::base* fn_array_iterator_ctr(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto arg = pop_arg(vm);
+  if (arg->type != &type::array)
+    return throw_exception("ArrayIterators can only iterate over Arrays", vm);
+  return gc::alloc<value::array_iterator>( *static_cast<value::array*>(arg) );
+}
+
+value::base* fn_array_iterator_at_start(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  return gc::alloc<value::boolean>( iter->idx == 0 );
+}
+
+value::base* fn_array_iterator_at_end(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  return gc::alloc<value::boolean>( iter->idx == iter->arr.mems.size() );
+}
+
+value::base* fn_array_iterator_get(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  if (iter->idx == iter->arr.mems.size())
+    return throw_exception("ArrayIterator is at end of array", vm);
+  return iter->arr.mems[iter->idx];
+}
+
+value::base* fn_array_iterator_increment(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  if (iter->idx == iter->arr.mems.size())
+    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+  iter->idx += 1;
+  return iter;
+}
+
+value::base* fn_array_iterator_decrement(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  if (iter->idx == 0)
+    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+  iter->idx -= 1;
+  return iter;
+}
+
+value::base* fn_array_iterator_add(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  auto offset = to_int(*pop_arg(vm));
+
+  if (!offset)
+    return throw_exception("Only numeric types can be added to ArrayIterators", vm);
+  if (static_cast<int>(iter->idx) + *offset < 0)
+    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+  if (iter->idx + *offset > iter->arr.mems.size())
+    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+
+  auto other = gc::alloc<value::array_iterator>( *iter );
+  static_cast<value::array_iterator*>(other)->idx = iter->idx + *offset;
+  return other;
+}
+
+value::base* fn_array_iterator_subtract(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  auto offset = to_int(*pop_arg(vm));
+
+  if (!offset)
+    return throw_exception("Only numeric types can be added to ArrayIterators", vm);
+  if (static_cast<int>(iter->idx) - *offset < 0)
+    return throw_exception("ArrayIterators cannot be decremented past start", vm);
+  if (iter->idx - *offset > iter->arr.mems.size())
+    return throw_exception("ArrayIterators cannot be incremented past end", vm);
+
+  auto other = gc::alloc<value::array_iterator>( *iter );
+  static_cast<value::array_iterator*>(other)->idx = iter->idx - *offset;
+  return other;
+}
+
+value::base* fn_array_iterator_equals(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  auto other = static_cast<value::array_iterator*>(pop_arg(vm));
+  return gc::alloc<value::boolean>( &iter->arr == &other->arr
+                                  && iter->idx == other->idx );
+}
+
+value::base* fn_array_iterator_unequal(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::array_iterator*>(&*vm.stack->self);
+  auto other = static_cast<value::array_iterator*>(pop_arg(vm));
+  return gc::alloc<value::boolean>( &iter->arr != &other->arr
+                                  || iter->idx != other->idx );
 }
 
 // }}}
@@ -515,6 +654,125 @@ value::base* fn_string_times(vm::machine& vm)
 }
 
 // }}}
+// string_iterator {{{
+
+value::base* fn_string_iterator_ctr(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto arg = pop_arg(vm);
+  if (arg->type != &type::string)
+    return throw_exception("StringIterators can only iterate over strings", vm);
+  return gc::alloc<value::string_iterator>( *static_cast<value::string*>(arg) );
+}
+
+value::base* fn_string_iterator_at_start(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  return gc::alloc<value::boolean>( iter->idx == 0 );
+}
+
+value::base* fn_string_iterator_at_end(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  return gc::alloc<value::boolean>( iter->idx == iter->str.val.size() );
+}
+
+value::base* fn_string_iterator_get(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  if (iter->idx == iter->str.val.size())
+    return throw_exception("StringIterator is at end of string", vm);
+  return gc::alloc<value::string>( std::string{iter->str.val[iter->idx]} );
+}
+
+value::base* fn_string_iterator_increment(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  if (iter->idx == iter->str.val.size())
+    return throw_exception("StringIterators cannot be incremented past end", vm);
+  iter->idx += 1;
+  return iter;
+}
+
+value::base* fn_string_iterator_decrement(vm::machine& vm)
+{
+  if (!check_size(0, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  if (iter->idx == 0)
+    return throw_exception("StringIterators cannot be decremented past start", vm);
+  iter->idx -= 1;
+  return iter;
+}
+
+value::base* fn_string_iterator_add(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  auto offset = to_int(*pop_arg(vm));
+
+  if (!offset)
+    return throw_exception("Only numeric types can be added to StringIterators", vm);
+  if (static_cast<int>(iter->idx) + *offset < 0)
+    return throw_exception("StringIterators cannot be decremented past start", vm);
+  if (iter->idx + *offset > iter->str.val.size())
+    return throw_exception("StringIterators cannot be incremented past end", vm);
+
+  auto other = gc::alloc<value::string_iterator>( *iter );
+  static_cast<value::string_iterator*>(other)->idx = iter->idx + *offset;
+  return other;
+}
+
+value::base* fn_string_iterator_subtract(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  auto offset = to_int(*pop_arg(vm));
+
+  if (!offset)
+    return throw_exception("Only numeric types can be added to StringIterators", vm);
+  if (static_cast<int>(iter->idx) - *offset < 0)
+    return throw_exception("StringIterators cannot be decremented past start", vm);
+  if (static_cast<int>(iter->idx) - *offset > static_cast<int>(iter->str.val.size()))
+    return throw_exception("StringIterators cannot be incremented past end", vm);
+
+  auto other = gc::alloc<value::string_iterator>( *iter );
+  static_cast<value::string_iterator*>(other)->idx = iter->idx - *offset;
+  return other;
+}
+
+value::base* fn_string_iterator_equals(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  auto other = static_cast<value::string_iterator*>(pop_arg(vm));
+  return gc::alloc<value::boolean>( &iter->str == &other->str
+                                  && iter->idx == other->idx );
+}
+
+value::base* fn_string_iterator_unequal(vm::machine& vm)
+{
+  if (!check_size(1, vm.stack->args, vm))
+    return vm.retval;
+  auto iter = static_cast<value::string_iterator*>(&*vm.stack->self);
+  auto other = static_cast<value::string_iterator*>(pop_arg(vm));
+  return gc::alloc<value::boolean>( &iter->str != &other->str
+                                  || iter->idx != other->idx );
+}
+
+// }}}
 // symbol {{{
 
 value::base* fn_symbol_ctr(vm::machine& vm)
@@ -589,12 +847,39 @@ namespace {
 builtin_function array_size   {fn_array_size};
 builtin_function array_append {fn_array_append};
 builtin_function array_at     {fn_array_at};
+builtin_function array_start  {fn_array_start};
+builtin_function array_end    {fn_array_end};
 }
 value::type type::array {fn_array_ctr, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
-  { {"at"},     &array_at }
+  { {"at"},     &array_at },
+  { {"start"},  &array_start },
+  { {"end"},    &array_end },
 }, builtin::type::object, {"Array"}};
+
+namespace {
+builtin_function array_iterator_at_start  {fn_array_iterator_at_start};
+builtin_function array_iterator_at_end    {fn_array_iterator_at_end};
+builtin_function array_iterator_get       {fn_array_iterator_get};
+builtin_function array_iterator_equals    {fn_array_iterator_equals};
+builtin_function array_iterator_unequal   {fn_array_iterator_unequal};
+builtin_function array_iterator_increment {fn_array_iterator_increment};
+builtin_function array_iterator_decrement {fn_array_iterator_decrement};
+builtin_function array_iterator_add       {fn_array_iterator_add};
+builtin_function array_iterator_subtract  {fn_array_iterator_subtract};
+}
+value::type type::array_iterator {fn_array_iterator_ctr, {
+  { {"at_start"},  &array_iterator_at_start },
+  { {"at_end"},    &array_iterator_at_end },
+  { {"get"},       &array_iterator_get },
+  { {"equals"},    &array_iterator_equals },
+  { {"unequal"},   &array_iterator_unequal },
+  { {"increment"}, &array_iterator_increment },
+  { {"decrement"}, &array_iterator_decrement },
+  { {"add"},       &array_iterator_add },
+  { {"subtract"},  &array_iterator_subtract },
+}, builtin::type::object, {"ArrayIterator"}};
 
 namespace {
 builtin_function int_add            {fn_int_or_flt_op([](auto a, auto b){ return a + b; })};
@@ -679,6 +964,28 @@ value::type type::string {fn_string_ctr, {
   { {"times"},   &string_times   }
 }, builtin::type::object, {"String"}};
 
+namespace {
+builtin_function string_iterator_at_start  {fn_string_iterator_at_start};
+builtin_function string_iterator_at_end    {fn_string_iterator_at_end};
+builtin_function string_iterator_get       {fn_string_iterator_get};
+builtin_function string_iterator_equals    {fn_string_iterator_equals};
+builtin_function string_iterator_unequal   {fn_string_iterator_unequal};
+builtin_function string_iterator_increment {fn_string_iterator_increment};
+builtin_function string_iterator_decrement {fn_string_iterator_decrement};
+builtin_function string_iterator_add       {fn_string_iterator_add};
+builtin_function string_iterator_subtract  {fn_string_iterator_subtract};
+}
+value::type type::string_iterator {fn_string_iterator_ctr, {
+  { {"at_start"},  &string_iterator_at_start },
+  { {"at_end"},    &string_iterator_at_end },
+  { {"get"},       &string_iterator_get },
+  { {"equals"},    &string_iterator_equals },
+  { {"unequal"},   &string_iterator_unequal },
+  { {"increment"}, &string_iterator_increment },
+  { {"decrement"}, &string_iterator_decrement },
+  { {"add"},       &string_iterator_add },
+  { {"subtract"},  &string_iterator_subtract },
+}, builtin::type::object, {"StringIterator"}};
 
 namespace {
 builtin_function symbol_equals  {fn_symbol_equals};
@@ -709,18 +1016,20 @@ value::type type::function {nullptr, { }, builtin::type::object, {"Function"}};
 void builtin::make_base_env(vm::call_stack& base)
 {
   base.local.back() = {
-    { {"print"},   &builtin::function::print },
-    { {"puts"},    &builtin::function::puts },
-    { {"gets"},    &builtin::function::gets },
-    { {"quit"},    &builtin::function::quit },
-    { {"Array"},   &builtin::type::array },
-    { {"Bool"},    &builtin::type::boolean },
-    { {"Float"},   &builtin::type::floating_point },
-    { {"Integer"}, &builtin::type::integer },
-    { {"Nil"},     &builtin::type::nil },
-    { {"Object"},  &builtin::type::object },
-    { {"String"},  &builtin::type::string },
-    { {"Symbol"},  &builtin::type::symbol },
-    { {"Type"},    &builtin::type::custom_type }
+    { {"print"},          &builtin::function::print },
+    { {"puts"},           &builtin::function::puts },
+    { {"gets"},           &builtin::function::gets },
+    { {"quit"},           &builtin::function::quit },
+    { {"Array"},          &builtin::type::array },
+    { {"ArrayIterator"},  &builtin::type::array_iterator },
+    { {"Bool"},           &builtin::type::boolean },
+    { {"Float"},          &builtin::type::floating_point },
+    { {"Integer"},        &builtin::type::integer },
+    { {"Nil"},            &builtin::type::nil },
+    { {"Object"},         &builtin::type::object },
+    { {"String"},         &builtin::type::string },
+    { {"StringIterator"}, &builtin::type::string_iterator },
+    { {"Symbol"},         &builtin::type::symbol },
+    { {"Type"},           &builtin::type::custom_type }
   };
 }

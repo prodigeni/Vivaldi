@@ -19,6 +19,7 @@ class machine;
 namespace value {
 
 struct array;
+struct array_iterator;
 struct type;
 struct boolean;
 struct builtin_function;
@@ -30,6 +31,7 @@ struct iterator;
 struct nil;
 struct range;
 struct string;
+struct string_iterator;
 struct symbol;
 
 struct base {

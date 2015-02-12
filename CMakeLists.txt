@@ -41,6 +41,7 @@ add_executable(vivaldi
   src/ast/while_loop.cpp
 
   src/value/array.cpp
+  src/value/array_iterator.cpp
   src/value/boolean.cpp
   src/value/builtin_function.cpp
   src/value/floating_point.cpp
@@ -48,6 +49,7 @@ add_executable(vivaldi
   src/value/integer.cpp
   src/value/nil.cpp
   src/value/string.cpp
+  src/value/string_iterator.cpp
   src/value/symbol.cpp
 
   src/vm/call_stack.cpp

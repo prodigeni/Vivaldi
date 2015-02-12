@@ -37,6 +37,9 @@ public:
   void lblk();
   void ret();
 
+  void push();
+  void pop();
+
   void jmp(int offset);
   void jmp_false(int offset);
   void jmp_true(int offset);

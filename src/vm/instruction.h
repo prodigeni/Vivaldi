@@ -37,6 +37,9 @@ enum class instruction {
   lblk,
   ret,
 
+  push,
+  pop,
+
   jmp,
   jmp_false,
   jmp_true,

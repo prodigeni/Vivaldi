@@ -186,7 +186,7 @@ parse_res<> parse_block(vector_ref<std::string> tokens);
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
 parse_res<> parse_except(vector_ref<std::string> tokens);
 parse_res<> parse_if_statement(vector_ref<std::string> tokens);
-parse_res<> parse_while_loop(vector_ref<std::string> tokens);
+parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
 parse_res<> parse_return(vector_ref<std::string> tokens);
@@ -194,6 +194,7 @@ parse_res<> parse_try_catch(vector_ref<std::string> tokens);
 parse_res<> parse_type_definition(vector_ref<std::string> tokens);
 parse_res<> parse_variable_declaration(vector_ref<std::string> tokens);
 parse_res<> parse_variable(vector_ref<std::string> tokens);
+parse_res<> parse_while_loop(vector_ref<std::string> tokens);
 
 parse_res<> parse_symbol(vector_ref<std::string> tokens);
 parse_res<> parse_integer(vector_ref<std::string> tokens);
@@ -455,13 +456,14 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_cond_statement(tokens)))       return res;
   if ((res = parse_except(tokens)))               return res;
   if ((res = parse_if_statement(tokens)))         return res;
-  if ((res = parse_while_loop(tokens)))           return res;
+  if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
   if ((res = parse_try_catch(tokens)))            return res;
   if ((res = parse_type_definition(tokens)))      return res;
   if ((res = parse_variable_declaration(tokens))) return res;
+  if ((res = parse_while_loop(tokens)))           return res;
   if ((res = parse_variable(tokens)))             return res;
   return {};
 }
@@ -564,20 +566,25 @@ parse_res<> parse_if_statement(vector_ref<std::string> tokens)
   return {{ std::make_unique<cond_statement>( move(arg) ), tokens }};
 }
 
-parse_res<> parse_while_loop(vector_ref<std::string> tokens)
+parse_res<> parse_for_loop(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "while")
+  if (!tokens.size() || tokens.front() != "for")
     return {};
+  tokens = tokens.subvec(1); // 'for'
 
-  auto test_res = parse_expression(tokens.subvec(1)); // 'while'
-  auto test = move(test_res->first);
-  tokens = test_res->second;
+  auto iterator = tokens.front();
+  tokens = tokens.subvec(2); // iterator 'in'
 
-  auto body_res = parse_expression(tokens.subvec(1)); // ':'
+  auto range_res = parse_expression(tokens);
+  auto range = move(range_res->first);
+  tokens = range_res->second.subvec(1); // ':'
+
+  auto body_res = parse_expression(tokens); // ':'
   auto body = move(body_res->first);
   tokens = body_res->second;
 
-  return {{ std::make_unique<while_loop>( move(test), move(body) ), tokens }};
+  return {{ std::make_unique<for_loop>( iterator, move(range), move(body) ),
+            tokens }};
 }
 
 parse_res<> parse_function_definition(vector_ref<std::string> tokens)
@@ -705,6 +712,22 @@ parse_res<> parse_variable(vector_ref<std::string> tokens)
   symbol name{tokens.front()};
   tokens = tokens.subvec(1); // name
   return {{ std::make_unique<variable>(name), tokens }};
+}
+
+parse_res<> parse_while_loop(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "while")
+    return {};
+
+  auto test_res = parse_expression(tokens.subvec(1)); // 'while'
+  auto test = move(test_res->first);
+  tokens = test_res->second;
+
+  auto body_res = parse_expression(tokens.subvec(1)); // ':'
+  auto body = move(body_res->first);
+  tokens = body_res->second;
+
+  return {{ std::make_unique<while_loop>( move(test), move(body) ), tokens }};
 }
 
 // }}}
