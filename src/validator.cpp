@@ -205,15 +205,18 @@ val_res val_for_loop(vector_ref<std::string> tokens)
   if (auto it_res = val_name(tokens.subvec(1))) {
     tokens = *it_res;
     if (!tokens.size() || tokens.front() != "in")
-      return {};
+      return {tokens, "expected 'in'"};
     if (auto range_res = val_expression(tokens.subvec(1))) {
-      tokens = *it_res;
+      tokens = *range_res;
       if (!tokens.size() || tokens.front() != ":")
-        return {};
-      return val_expression(tokens.subvec(1));
+        return {tokens, "expected ':'"};
+      auto expr = val_expression(tokens.subvec(1));
+      if (expr || expr.invalid())
+        return expr;
+      return {tokens, "expected expression"};
     }
   }
-  return {};
+  return {tokens, "expected name"};
 }
 
 // }}}
