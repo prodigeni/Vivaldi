@@ -141,13 +141,11 @@ val_res val_assignment(vector_ref<std::string> tokens)
 
 val_res val_block(vector_ref<std::string> tokens)
 {
+  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
+
   if (tokens.size() < 2 || tokens.front() != "{")
     return {};
-  tokens = tokens.subvec(1);
-  auto first_nonsep = std::find_if(begin(tokens), end(tokens),
-                                   [](const auto& t)
-                                     { return t != "\n" && t != ";"; });
-  tokens = tokens.subvec(first_nonsep - begin(tokens));
+  tokens = ltrim_if(tokens.subvec(1), trim_test);
   while (tokens.size() && tokens.front() != "}") {
     val_res expr_res;
     if (!(expr_res = val_expression(tokens))) {
@@ -156,12 +154,7 @@ val_res val_block(vector_ref<std::string> tokens)
       return {tokens, "expected expression"};
     }
     tokens = *expr_res;
-    if (tokens.size() && (tokens.front() == "\n" || tokens.front() == ";")) {
-      auto first_nonsep = std::find_if(begin(tokens), end(tokens),
-                                       [](const auto& t)
-                                         { return t != "\n" && t != ";"; });
-      tokens = tokens.subvec(first_nonsep - begin(tokens));
-    }
+    tokens = ltrim_if(tokens, trim_test);
   }
   if (tokens.size() && tokens.front() == "}")
     return tokens.subvec(1);
@@ -619,18 +612,14 @@ val_res val_name(vector_ref<std::string> tokens)
 
 val_res parser::is_valid(parser::token_string tokens)
 {
-  auto first_nonline = std::find_if(begin(tokens), end(tokens),
-                                    [](const auto& s) { return s != "\n"; });
-  tokens = tokens.subvec(first_nonline - begin(tokens));
+  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
+  tokens = ltrim_if(tokens, trim_test);
 
   while (tokens.size()) {
     auto res = val_expression(tokens);
     if (!res)
       return res;
-    tokens = *res;
-    auto first_nonline = std::find_if(begin(tokens), end(tokens),
-                                      [](const auto& s) { return s != "\n"; });
-    tokens = tokens.subvec(first_nonline - begin(tokens));
+    tokens = ltrim_if(*res, trim_test);
   }
   return tokens;
 }

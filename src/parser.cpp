@@ -908,14 +908,16 @@ parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
 
 std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
 {
+  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
+
   std::vector<std::unique_ptr<expression>> expressions;
-  tokens = ltrim(tokens, {"\n"});
+  tokens = ltrim_if(tokens, trim_test);
 
   while (tokens.size()) {
     auto res = parse_expression(tokens);
     expressions.push_back(move(res->first));
     tokens = res->second;
-    tokens = ltrim(res->second, {"\n"});
+    tokens = ltrim_if(res->second, trim_test);
   }
   return expressions;
 }
