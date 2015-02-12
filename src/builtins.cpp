@@ -81,16 +81,20 @@ namespace {
 
 boost::optional<int> to_int(const value::base& boxed) noexcept
 {
-  if (boxed.type != &type::integer)
-    return {};
-  return static_cast<const value::integer&>(boxed).val;
+  if (boxed.type == &type::integer)
+    return static_cast<const value::integer&>(boxed).val;
+  if (boxed.type == &type::floating_point)
+      return static_cast<const value::floating_point&>(boxed).val;
+  return {};
 }
 
 boost::optional<double> to_float(const value::base& boxed) noexcept
 {
-  if (boxed.type != &type::floating_point)
-    return {};
-  return static_cast<const value::floating_point&>(boxed).val;
+  if (boxed.type == &type::floating_point)
+    return static_cast<const value::floating_point&>(boxed).val;
+  if (boxed.type == &type::integer)
+    return static_cast<const value::integer&>(boxed).val;
+  return {};
 }
 
 boost::optional<const std::string&> to_string(const value::base& boxed)
@@ -255,6 +259,31 @@ value::base* fn_integer_ctr(vm::machine& vm)
 }
 
 template <typename F>
+auto fn_int_or_flt_op(const F& op)
+{
+  return [=](vm::machine& vm)
+  {
+    if (!check_size(1, vm.stack->args, vm))
+      return vm.retval;
+
+    auto arg = pop_arg(vm);
+    if (arg->type == &type::floating_point) {
+      auto left = *to_float(*vm.stack->self);
+      auto right = *to_float(*arg);
+      return gc::alloc<value::floating_point>( op(left, right) );
+    }
+
+    auto left = to_int(*vm.stack->self);
+    auto right = to_int(*arg);
+    if (!right)
+      return throw_exception("Right-hand argument is not an Integer", vm);
+    // Apparently moving from integers is a bad idea; without the explicit int&&
+    // template parameter, 0 is always passed to value::integer::integer
+    return gc::alloc<value::integer, int&&>( op(*left, *right) );
+  };
+}
+
+template <typename F>
 auto fn_integer_op(const F& op)
 {
   return [=](vm::machine& vm)
@@ -291,8 +320,15 @@ auto fn_int_bool_op(const F& op)
     if (!check_size(1, vm.stack->args, vm))
       return vm.retval;
 
+    auto arg = pop_arg(vm);
+    if (arg->type == &type::floating_point) {
+      auto left = *to_float(*vm.stack->self);
+      auto right = *to_float(*arg);
+      return gc::alloc<value::boolean>( op(left, right) );
+    }
+
     auto left = to_int(*vm.stack->self);
-    auto right = to_int(*pop_arg(vm));
+    auto right = to_int(*arg);
     if (!right)
       return throw_exception("Right-hand argument is not an Integer", vm);
     return gc::alloc<value::boolean>( op(*left, *right) );
@@ -561,25 +597,24 @@ value::type type::array {fn_array_ctr, {
 }, builtin::type::object, {"Array"}};
 
 namespace {
-builtin_function int_add            {fn_integer_op(std::plus<int>{})                   };
-builtin_function int_subtract       {fn_integer_op(std::minus<int>{})                  };
-builtin_function int_times          {fn_integer_op(std::multiplies<int>{})             };
-builtin_function int_divides        {fn_integer_op(std::divides<int>{})                };
-builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})                };
-// Anyone want to guess why these aren't in the standard?
-builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; })};
-builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; })};
-builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})                };
-builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})                 };
-builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})                };
-builtin_function int_equals         {fn_int_bool_op(std::equal_to<int>{})              };
-builtin_function int_unequal        {fn_int_bool_op(std::not_equal_to<int>{})          };
-builtin_function int_less           {fn_int_bool_op(std::less<int>{})                  };
-builtin_function int_greater        {fn_int_bool_op(std::greater<int>{})               };
-builtin_function int_less_equals    {fn_int_bool_op(std::less_equal<int>{})            };
-builtin_function int_greater_equals {fn_int_bool_op(std::greater_equal<int>{})         };
-builtin_function int_negative       {fn_integer_monop(std::negate<int>{})              };
-builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})             };
+builtin_function int_add            {fn_int_or_flt_op([](auto a, auto b){ return a + b; })};
+builtin_function int_subtract       {fn_int_or_flt_op([](auto a, auto b){ return a - b; })};
+builtin_function int_times          {fn_int_or_flt_op([](auto a, auto b){ return a * b; })};
+builtin_function int_divides        {fn_int_or_flt_op([](auto a, auto b){ return a / b; })};
+builtin_function int_modulo         {fn_integer_op(std::modulus<int>{})                   };
+builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; })   };
+builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; })   };
+builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{})                   };
+builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{})                    };
+builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{})                   };
+builtin_function int_equals         {fn_int_bool_op([](auto a, auto b){ return a == b; }) };
+builtin_function int_unequal        {fn_int_bool_op([](auto a, auto b){ return a != b; }) };
+builtin_function int_less           {fn_int_bool_op([](auto a, auto b){ return a < b;  }) };
+builtin_function int_greater        {fn_int_bool_op([](auto a, auto b){ return a > b;  }) };
+builtin_function int_less_equals    {fn_int_bool_op([](auto a, auto b){ return a <= b; }) };
+builtin_function int_greater_equals {fn_int_bool_op([](auto a, auto b){ return a >= b; }) };
+builtin_function int_negative       {fn_integer_monop(std::negate<int>{})                 };
+builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{})                };
 }
 value::type type::integer{fn_integer_ctr, {
   { {"add"},            &int_add            },
