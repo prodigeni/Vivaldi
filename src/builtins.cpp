@@ -10,6 +10,7 @@
 #include "value/function.h"
 #include "value/integer.h"
 #include "value/nil.h"
+#include "value/range.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
 #include "value/symbol.h"
@@ -525,6 +526,54 @@ value::base* fn_object_type(vm::machine& vm)
 }
 
 // }}}
+// range {{{
+
+
+value::base* fn_range_ctr(vm::machine& vm)
+{
+  if (vm.stack->args != 2) {
+    vm.argc(2);
+    return vm.retval;
+  }
+  auto end = pop_arg(vm);
+  auto start = pop_arg(vm);
+  return gc::alloc<value::range>( *start, *end );
+}
+
+value::base* fn_range_start(vm::machine& vm)
+{
+  return &*vm.stack->self;
+}
+
+value::base* fn_range_at_end(vm::machine& vm)
+{
+  auto& rng = static_cast<value::range&>(*vm.stack->self);
+  vm.retval = &rng.end;
+  vm.push_arg();
+  vm.retval = rng.start;
+  vm.readm({"equals"});
+  vm.call(1);
+  return vm.retval;
+}
+
+value::base* fn_range_get(vm::machine& vm)
+{
+  return static_cast<value::range&>(*vm.stack->self).start;
+}
+
+value::base* fn_range_increment(vm::machine& vm)
+{
+  auto& rng = static_cast<value::range&>(*vm.stack->self);
+  vm.push_int(1);
+  vm.push_arg();
+  vm.retval = rng.start;
+  vm.readm({"add"});
+  vm.call(1);
+  rng.start = vm.retval;
+  return &rng;
+}
+
+// }}}
 // string {{{
 
 value::base* fn_string_ctr(vm::machine& vm)
@@ -875,6 +924,19 @@ value::type type::floating_point{fn_floating_point_ctr, {
 }, builtin::type::object, {"Float"}};
 
 namespace {
+builtin_function range_start     {fn_range_start,     0};
+builtin_function range_at_end    {fn_range_at_end,    0};
+builtin_function range_get       {fn_range_get,       0};
+builtin_function range_increment {fn_range_increment, 0};
+}
+value::type type::range {fn_range_ctr, {
+  { {"start"},     &range_start },
+  { {"at_end"},    &range_at_end },
+  { {"get"},       &range_get },
+  { {"increment"}, &range_increment }
+}, builtin::type::object, {"Range"}};
+
+namespace {
 builtin_function string_size    {fn_string_size,    0};
 builtin_function string_append  {fn_string_append,  1};
 builtin_function string_equals  {fn_string_equals,  1};
@@ -954,6 +1016,7 @@ void builtin::make_base_env(vm::call_stack& base)
     { {"Integer"},        &builtin::type::integer },
     { {"Nil"},            &builtin::type::nil },
     { {"Object"},         &builtin::type::object },
+    { {"Range"},          &builtin::type::range },
     { {"String"},         &builtin::type::string },
     { {"StringIterator"}, &builtin::type::string_iterator },
     { {"Symbol"},         &builtin::type::symbol },
