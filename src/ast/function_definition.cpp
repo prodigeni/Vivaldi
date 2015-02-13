@@ -27,8 +27,7 @@ std::vector<vm::command> ast::function_definition::generate() const
   std::vector<vm::command> vec;
   vec.emplace_back(vm::instruction::push_fn, move(definition));
 
-  const static symbol nonname{""};
-  if (m_name != nonname)
+  if (m_name != symbol{})
     vec.emplace_back(vm::instruction::let, m_name);
 
   return vec;

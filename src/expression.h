@@ -22,6 +22,7 @@ public:
 };
 
 class assignment;
+class array;
 class block;
 class cond_statement;
 class except;

@@ -18,7 +18,7 @@ public:
                   symbol parent,
                   std::unordered_map<
                       vv::symbol,
-                      std::unique_ptr<ast::function_definition>>&&
+                      ast::function_definition>&&
                     m_methods);
 
 
@@ -28,8 +28,7 @@ private:
   symbol m_name;
   symbol m_parent;
 
-  std::unordered_map<vv::symbol,
-                     std::unique_ptr<ast::function_definition>> m_methods;
+  std::unordered_map<vv::symbol, ast::function_definition> m_methods;
 };
 
 }

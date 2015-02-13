@@ -114,11 +114,14 @@ boost::optional<vv::symbol> to_symbol(const value::base& boxed)
 
 value::base* fn_array_ctr(vm::machine& vm)
 {
-  std::vector<value::base*> args;
-  for (auto i = vm.frame->args; i--;)
-    args.push_back(pop_arg(vm));
-  reverse(begin(args), end(args)); // necessary since args are popped backwards
-  return gc::alloc<value::array>( args );
+  if (vm.frame->args != 1) {
+    vm.argc(1);
+    return vm.retval;
+  }
+  auto arg = pop_arg(vm);
+  if (arg->type != &type::array)
+    return throw_exception("Arrays can only be constructed from other Arrays", vm);
+  return gc::alloc<value::array>( *static_cast<value::array*>(arg) );
 }
 
 value::base* fn_array_size(vm::machine& vm)
@@ -499,7 +502,7 @@ value::base* fn_floating_point_negative(vm::machine& vm)
 value::base* fn_object_ctr(vm::machine& vm)
 {
   if (vm.frame->args != 0) {
-    vm.argc(1);
+    vm.argc(0);
     return vm.retval;
   }
   return gc::alloc<value::base>( &type::object );

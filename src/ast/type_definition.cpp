@@ -1,14 +1,16 @@
 #include "type_definition.h"
 
 #include "gc.h"
+#include "vm/instruction.h"
+
+#include <boost/variant/get.hpp>
 
 using namespace vv;
 
 ast::type_definition::type_definition(
     symbol name,
     symbol parent,
-    std::unordered_map<vv::symbol,
-                       std::unique_ptr<ast::function_definition>>&& methods)
+    std::unordered_map<vv::symbol, ast::function_definition>&& methods)
 
   : m_name    {name},
     m_parent  {parent},
@@ -26,29 +28,14 @@ std::vector<vm::command> ast::type_definition::generate() const
   // 3. a method body
   // (where 2 and 3 are repeated for each method given)
   // At some point I should probably do not that, but it does *work*
-  std::vector<vm::command> vec;
-
-  vec.emplace_back(vm::instruction::push_sym, m_name);
-  vec.emplace_back(vm::instruction::push_arg);
-
-  vec.emplace_back(vm::instruction::read, m_parent);
-  vec.emplace_back(vm::instruction::push_arg);
-
+  std::unordered_map<symbol, std::vector<vm::command>> methods;
   for (const auto& i : m_methods) {
-    auto definition = i.second->generate();
-    copy(begin(definition), end(definition), back_inserter(vec));
-    vec.emplace_back(vm::instruction::push_arg);
-
-    vec.emplace_back(vm::instruction::push_sym, i.first);
-    vec.emplace_back(vm::instruction::push_arg);
+    auto arg = i.second.generate().front().arg;
+    methods[i.first] = boost::get<std::vector<vm::command>>(arg);
   }
 
-  // Twice m_methods.size() (once through for names, once for function bodies),
-  // plus one more for name and one for parent
-  auto argc = static_cast<int>(2 + (m_methods.size() * 2));
-  vec.emplace_back(vm::instruction::read, symbol{"Type"});
-  vec.emplace_back(vm::instruction::call, argc);
-  vec.emplace_back(vm::instruction::let, m_name);
-
+  std::vector<vm::command> vec;
+  vec.emplace_back(vm::instruction::push_type,
+                   vm::type_t{m_name, m_parent, methods});
   return vec;
 }

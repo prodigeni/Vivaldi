@@ -8,6 +8,7 @@
 
 namespace vv {
 
+// Pre-declarations for headers dependent on this one
 namespace ast {
 class function_definition;
 }

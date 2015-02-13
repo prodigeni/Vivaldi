@@ -21,6 +21,9 @@ public:
   void push_nil();
   void push_str(const std::string& val);
   void push_sym(symbol val);
+  void push_type(const type_t& type);
+
+  void make_arr(int size);
 
   void read(symbol sym);
   void write(symbol sym);

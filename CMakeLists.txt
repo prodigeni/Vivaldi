@@ -27,6 +27,7 @@ add_executable(vivaldi
   src/run_file.cpp
 
   src/ast/assignment.cpp
+  src/ast/array.cpp
   src/ast/block.cpp
   src/ast/cond_statement.cpp
   src/ast/except.cpp

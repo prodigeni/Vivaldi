@@ -3,6 +3,7 @@
 #include "builtins.h"
 #include "utils.h"
 #include "ast/assignment.h"
+#include "ast/array.h"
 #include "ast/block.h"
 #include "ast/cond_statement.h"
 #include "ast/except.h"
@@ -236,7 +237,7 @@ auto parse_bracketed_subexpr(vector_ref<std::string> tokens,
 parse_res<arg_t> parse_function_call(vector_ref<std::string> tokens);
 parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
   parse_cond_pair(vector_ref<std::string> tokens);
-parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
+parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(vector_ref<std::string> tokens);
 // }}}
 // Individual parsing functions {{{
@@ -560,8 +561,7 @@ parse_res<> parse_array_literal(vector_ref<std::string> tokens)
   auto vals = move(vals_res->first);
   tokens = vals_res->second;
 
-  auto name = std::make_unique<variable>( symbol{"Array"} );
-  return {{ std::make_unique<function_call>(move(name), move(vals)), tokens }};
+  return {{ std::make_unique<array>( move(vals) ), tokens }};
 }
 
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
@@ -638,7 +638,7 @@ parse_res<> parse_function_definition(vector_ref<std::string> tokens)
     return {};
   tokens = tokens.subvec(1);
 
-  symbol name{""};
+  symbol name;
   if (tokens.front() != "(") {
     name = tokens.front();
     tokens = tokens.subvec(1); // name
@@ -741,9 +741,9 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
   auto methods = move(method_res->first);
   tokens = method_res->second;
 
-  std::unordered_map<symbol, std::unique_ptr<function_definition>> method_map;
+  std::unordered_map<symbol, function_definition> method_map;
   for (auto&& i : methods)
-    method_map.emplace(i.first, move(i.second));
+    method_map.emplace(i.first, i.second);
 
   return {{ std::make_unique<type_definition>( name, parent, move(method_map) ),
             tokens }};
@@ -923,7 +923,7 @@ parse_res<std::pair<std::unique_ptr<expression>, std::unique_ptr<expression>>>
 
 // Syntactically identical to (named) function definitions, but the returned
 // result is different
-parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
+parse_res<std::pair<symbol, function_definition>>
   parse_method_definition(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "fn")
@@ -949,10 +949,8 @@ parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
   auto body = move(body_res->first);
   tokens = body_res->second;
 
-  return {{ make_pair(name, std::make_unique<function_definition>( symbol{""},
-                                                                   move(body),
-                                                                   args )),
-            tokens }};
+  return {{ std::make_pair( name,function_definition{ {}, move(body), args} ),
+            tokens}};
 }
 
 // }}}

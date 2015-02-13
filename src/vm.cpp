@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "run_file.h"
 #include "value.h"
+#include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/boolean.h"
 #include "value/integer.h"
@@ -32,6 +33,7 @@ vm::machine::machine(std::shared_ptr<call_frame> frame,
   gc::set_current_retval(retval);
 }
 
+#include <iostream>
 void vm::machine::run()
 {
   using boost::get;
@@ -60,6 +62,9 @@ void vm::machine::run()
     case instruction::push_nil:  push_nil();                              break;
     case instruction::push_str:  push_str(get<std::string>(arg));         break;
     case instruction::push_sym:  push_sym(get<symbol>(arg));              break;
+    case instruction::push_type: push_type(get<type_t>(arg));             break;
+
+    case instruction::make_arr:  make_arr(get<int>(arg));  break;
 
     case instruction::read:  read(get<symbol>(arg));  break;
     case instruction::write: write(get<symbol>(arg)); break;
@@ -87,7 +92,7 @@ void vm::machine::run()
     case instruction::jmp_true:  jmp_true(get<int>(arg));  break;
 
     case instruction::push_catch: push_catch();            break;
-    case instruction::pop_catch:  pop_catch();              break;
+    case instruction::pop_catch:  pop_catch();             break;
     case instruction::except:     except();                break;
     }
   }
@@ -128,6 +133,33 @@ void vm::machine::push_str(const std::string& val)
 void vm::machine::push_sym(symbol val)
 {
   retval = gc::alloc<value::symbol>( val );
+}
+
+void vm::machine::push_type(const type_t& type)
+{
+  read(type.parent);
+  auto parent = retval;
+  push();
+  std::unordered_map<symbol, value::base*> methods;
+  for (const auto& i : type.methods) {
+    push_fn(i.second);
+    auto method = retval;
+    push();
+    methods[i.first] = method;
+  }
+  retval = gc::alloc<value::type>( nullptr, methods, *parent, type.name );
+
+  // Clear pushed arguments without touching retval
+  frame->pushed.erase(end(frame->pushed) - methods.size() - 1,
+                      end(frame->pushed));
+  let(type.name);
+}
+
+void vm::machine::make_arr(int size)
+{
+  std::vector<value::base*> args{end(frame->pushed) - size, end(frame->pushed)};
+  retval = gc::alloc<value::array>( args );
+  frame->pushed.erase(end(frame->pushed) - size, end(frame->pushed));
 }
 
 void vm::machine::read(symbol sym)
@@ -195,8 +227,8 @@ void vm::machine::argc(int count)
 {
   if (frame->args != static_cast<size_t>(count)) {
     push_str("Wrong number of arguments--- expected "
-            + std::to_string(frame->args) + ", got "
-            + std::to_string(count));
+            + std::to_string(count) + ", got "
+            + std::to_string(frame->args));
     except();
   }
 }
@@ -243,23 +275,26 @@ void vm::machine::call(int argc)
 
     auto except_flag = frame.get();
     gc::set_current_frame(frame);
-    retval = type->constructor(*this);
+
+    // Since everything inherits from Object, we're guaranteed to find a
+    // constructor
+    auto ctr_type = type;
+    while (!ctr_type->constructor)
+      ctr_type = &static_cast<value::type&>(ctr_type->parent);
+    retval = ctr_type->constructor(*this);
+    retval->type = type;
 
     if (except_flag == frame.get()) {
       ret();
       if (init) {
-        // HACK--- since we need to return self, not whatever init returns,
-        // during construction, evaluate it in a separate VM
         frame->pushed_self = *retval;
         auto real_instr_ptr = frame->instr_ptr;
-
-        std::vector<command> instruction{ {instruction::call, argc} };
-        vm::machine initializer{frame, m_exception_handler};
-        initializer.retval = init;
-        initializer.frame->instr_ptr = instruction;
-        initializer.run();
-
+        retval = init;
+        std::vector<command> instr{ {instruction::call, argc} };
+        frame->instr_ptr = instr;
+        run();
         frame->instr_ptr = real_instr_ptr;
+        retval = &*frame->pushed_self;
       }
     }
 
