@@ -294,50 +294,22 @@ value::base* fn_bool_ctr(vm::machine& vm)
 // }}}
 // custom_type {{{
 
-auto fn_custom_type_ctr_maker(value::type* type)
-{
-  return [=] (vm::machine& vm)
-  {
-    auto obj = static_cast<value::type&>(type->parent).constructor(vm);
-    obj->type = type;
-    return obj;
-  };
-}
-
 value::base* fn_custom_type_ctr(vm::machine& vm)
 {
-  std::unordered_map<symbol, value::base*> methods;
-  for (auto i = vm.frame->args; i-- > 3; --i) {
-    auto name = to_symbol(*pop_arg(vm));
-    if (!name)
-      return throw_exception("Method names must be symbols", vm);
-    auto definition = pop_arg(vm);
-    if (definition->type != &type::function)
-      return throw_exception("Method must be a function, not a "
-                             + definition->type->value(),
-                             vm);
-    methods[*name] = definition;
+  if (vm.frame->args != 1) {
+    vm.argc(1);
+    return vm.retval;
   }
 
-  auto parent = pop_arg(vm);
-  if (parent->type != &type::custom_type)
-    return throw_exception("Types can only inherit from other Types", vm);
+  auto arg = pop_arg(vm);
+  if (arg->type != &type::custom_type)
+    return throw_exception("Types can only be constructed from other Types", vm);
 
-  auto type_name = to_symbol(*pop_arg(vm));
-  if (!type_name)
-    return throw_exception("Type names must be symbols", vm);
-
-  auto type = gc::alloc<value::type>(
-      nullptr,
-      move(methods),
-      *parent,
-      *type_name );
-
-  auto* cast_type = static_cast<value::type*>(type);
-  cast_type->constructor = fn_custom_type_ctr_maker(cast_type);
-  gc::set_current_retval(type);
-
-  return type;
+  // This whole lack-of-type-deduction thing is a real pain
+  return gc::alloc<value::type>( nullptr,
+                                 std::unordered_map<symbol, value::base*>{},
+                                 *arg,
+                                 symbol{"<anonymous type>"} );
 }
 
 value::base* fn_custom_type_parent(vm::machine& vm)
