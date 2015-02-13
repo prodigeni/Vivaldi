@@ -12,7 +12,7 @@ std::array<value::integer, 1024> gc::internal::g_ints;
 
 namespace {
 
-std::shared_ptr<vm::call_stack> g_frame{nullptr};
+std::shared_ptr<vm::call_frame> g_frame{nullptr};
 std::vector<value::base*> g_vals;
 value::base* g_retval;
 
@@ -53,7 +53,7 @@ value::base* gc::internal::emplace(value::base* val)
   return val;
 }
 
-void gc::set_current_frame(std::shared_ptr<vm::call_stack> frame)
+void gc::set_current_frame(std::shared_ptr<vm::call_frame> frame)
 {
   g_frame = frame;
 }

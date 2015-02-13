@@ -59,7 +59,7 @@ add_executable(vivaldi
   src/value/string_iterator.cpp
   src/value/symbol.cpp
 
-  src/vm/call_stack.cpp
+  src/vm/call_frame.cpp
   src/vm/instruction.cpp)
 
 target_link_libraries(vivaldi boost_system boost_filesystem)

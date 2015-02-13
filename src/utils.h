@@ -51,6 +51,8 @@ public:
   iterator begin() const { return m_data; }
   iterator end() const { return m_data + m_sz; }
 
+  const T* data() const { return m_data; }
+
 private:
   const T* m_data;
   size_t m_sz;

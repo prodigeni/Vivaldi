@@ -21,9 +21,9 @@
 
 using namespace vv;
 
-vm::machine::machine(std::shared_ptr<call_stack> frame,
+vm::machine::machine(std::shared_ptr<call_frame> frame,
                      const std::function<void(vm::machine&)>& exception_handler)
-  : stack               {frame},
+  : frame               {frame},
     retval              {nullptr},
     m_base              {frame},
     m_exception_handler {exception_handler}
@@ -36,12 +36,12 @@ void vm::machine::run()
 {
   using boost::get;
 
-  while (stack->instr_ptr.size()) {
+  while (frame->instr_ptr.size()) {
     // Get next instruction (and argument, if it exists), and increment the
     // instruction pointer
-    auto instr = stack->instr_ptr.front().instr;
-    const auto& arg = stack->instr_ptr.front().arg;
-    stack->instr_ptr = stack->instr_ptr.subvec(1);
+    auto instr = frame->instr_ptr.front().instr;
+    const auto& arg = frame->instr_ptr.front().arg;
+    frame->instr_ptr = frame->instr_ptr.subvec(1);
 
     // HACK--- avoid weirdness like the following:
     //   let i = 1
@@ -50,7 +50,7 @@ void vm::machine::run()
     //   5 + 1           // pushed self is now 5
     //   add(2)          // => 7
     if (instr != instruction::call)
-      stack->pushed_self = {};
+      frame->pushed_self = {};
 
     switch (instr) {
     case instruction::push_bool: push_bool(get<bool>(arg));               break;
@@ -107,7 +107,7 @@ void vm::machine::push_flt(double val)
 
 void vm::machine::push_fn(const std::vector<command>& val)
 {
-  retval = gc::alloc<value::function>( val, stack );
+  retval = gc::alloc<value::function>( val, frame );
 }
 
 void vm::machine::push_int(int val)
@@ -132,15 +132,15 @@ void vm::machine::push_sym(symbol val)
 
 void vm::machine::read(symbol sym)
 {
-  auto cur_stack = stack;
-  while (cur_stack) {
-    auto holder = find_if(rbegin(cur_stack->local), rend(cur_stack->local),
+  auto cur_frame = frame;
+  while (cur_frame) {
+    auto holder = find_if(rbegin(cur_frame->local), rend(cur_frame->local),
                           [&](const auto& vars) { return vars.count(sym); });
-    if (holder != rend(cur_stack->local)) {
+    if (holder != rend(cur_frame->local)) {
       retval = holder->at(sym);
       return;
     }
-    cur_stack = cur_stack->enclosing;
+    cur_frame = cur_frame->enclosing;
   }
   push_str("no such variable: " + to_string(sym));
   except();
@@ -148,15 +148,15 @@ void vm::machine::read(symbol sym)
 
 void vm::machine::write(symbol sym)
 {
-  auto cur_stack = stack;
-  while (cur_stack) {
-    auto holder = find_if(rbegin(cur_stack->local), rend(cur_stack->local),
+  auto cur_frame = frame;
+  while (cur_frame) {
+    auto holder = find_if(rbegin(cur_frame->local), rend(cur_frame->local),
                           [&](const auto& vars) { return vars.count(sym); });
-    if (holder != rend(cur_stack->local)) {
+    if (holder != rend(cur_frame->local)) {
       holder->at(sym) = retval;
       return;
     }
-    cur_stack = cur_stack->enclosing;
+    cur_frame = cur_frame->enclosing;
   }
   push_str("no such variable: " + to_string(sym));
   except();
@@ -164,16 +164,16 @@ void vm::machine::write(symbol sym)
 
 void vm::machine::let(symbol sym)
 {
-  stack->local.back()[sym] = retval;
+  frame->local.back()[sym] = retval;
 }
 
 void vm::machine::self()
 {
-  auto cur_stack = stack;
-  while (cur_stack && !cur_stack->self)
-    cur_stack = cur_stack->enclosing;
-  if (cur_stack) {
-    retval = &*cur_stack->self;
+  auto cur_frame = frame;
+  while (cur_frame && !cur_frame->self)
+    cur_frame = cur_frame->enclosing;
+  if (cur_frame) {
+    retval = &*cur_frame->self;
   } else {
     push_str("self does not exist outside of objects");
     except();
@@ -182,20 +182,20 @@ void vm::machine::self()
 
 void vm::machine::push_arg()
 {
-  stack->pushed.push_back(retval);
+  frame->pushed.push_back(retval);
 }
 
 void vm::machine::pop_arg(symbol sym)
 {
-  stack->local.back()[sym] = stack->parent->pushed.back();
-  stack->parent->pushed.pop_back();
+  frame->local.back()[sym] = frame->parent->pushed.back();
+  frame->parent->pushed.pop_back();
 }
 
 void vm::machine::argc(int count)
 {
-  if (stack->args != static_cast<size_t>(count)) {
+  if (frame->args != static_cast<size_t>(count)) {
     push_str("Wrong number of arguments--- expected "
-            + std::to_string(stack->args) + ", got "
+            + std::to_string(frame->args) + ", got "
             + std::to_string(count));
     except();
   }
@@ -203,7 +203,7 @@ void vm::machine::argc(int count)
 
 void vm::machine::readm(symbol sym)
 {
-  stack->pushed_self = *retval;
+  frame->pushed_self = *retval;
   if (retval->members.count(sym)) {
     retval = retval->members[sym];
     return;
@@ -220,8 +220,8 @@ void vm::machine::readm(symbol sym)
 
 void vm::machine::writem(symbol sym)
 {
-  auto value = stack->pushed.back();
-  stack->pushed.pop_back();
+  auto value = frame->pushed.back();
+  frame->pushed.pop_back();
 
   retval->members[sym] = value;
   retval = value;
@@ -235,39 +235,39 @@ void vm::machine::call(int argc)
   auto function = retval;
   if (auto type = dynamic_cast<value::type*>(function)) {
     auto init = find_method(type, {"init"});
-    stack = std::make_shared<call_stack>( stack,
+    frame = std::make_shared<call_frame>( frame,
                                           m_base,
                                           init ? 0 : argc, // save args for init
-                                          stack->instr_ptr );
-    stack->caller = *function;
+                                          frame->instr_ptr );
+    frame->caller = *function;
 
-    auto except_flag = stack.get();
-    gc::set_current_frame(stack);
+    auto except_flag = frame.get();
+    gc::set_current_frame(frame);
     retval = type->constructor(*this);
 
-    if (except_flag == stack.get()) {
+    if (except_flag == frame.get()) {
       ret();
       if (init) {
         // HACK--- since we need to return self, not whatever init returns,
         // during construction, evaluate it in a separate VM
-        stack->pushed_self = *retval;
-        auto real_instr_ptr = stack->instr_ptr;
+        frame->pushed_self = *retval;
+        auto real_instr_ptr = frame->instr_ptr;
 
         std::vector<command> instruction{ {instruction::call, argc} };
-        vm::machine initializer{stack, m_exception_handler};
+        vm::machine initializer{frame, m_exception_handler};
         initializer.retval = init;
-        initializer.stack->instr_ptr = instruction;
+        initializer.frame->instr_ptr = instruction;
         initializer.run();
 
-        stack->instr_ptr = real_instr_ptr;
+        frame->instr_ptr = real_instr_ptr;
       }
     }
 
   } else if (auto fn = dynamic_cast<value::function*>(function)) {
-    stack = std::make_shared<call_stack>(stack, fn->enclosure, argc, fn->body);
-    stack->caller = *function;
+    frame = std::make_shared<call_frame>(frame, fn->enclosure, argc, fn->body);
+    frame->caller = *function;
 
-    gc::set_current_frame(stack);
+    gc::set_current_frame(frame);
 
   } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
     if (argc != fn->argc) {
@@ -275,13 +275,13 @@ void vm::machine::call(int argc)
       return;
     };
 
-    stack = std::make_shared<call_stack>(stack, m_base, argc, stack->instr_ptr);
-    stack->caller = *function;
+    frame = std::make_shared<call_frame>(frame, m_base, argc, frame->instr_ptr);
+    frame->caller = *function;
 
-    auto except_flag = stack.get();
-    gc::set_current_frame(stack);
+    auto except_flag = frame.get();
+    gc::set_current_frame(frame);
     retval = fn->body(*this);
-    if (except_flag == stack.get())
+    if (except_flag == frame.get())
       ret();
   } else {
     push_str("Only functions and types can be called");
@@ -291,19 +291,19 @@ void vm::machine::call(int argc)
 
 void vm::machine::eblk()
 {
-  stack->local.emplace_back();
+  frame->local.emplace_back();
 }
 
 void vm::machine::lblk()
 {
-  stack->local.pop_back();
+  frame->local.pop_back();
 }
 
 void vm::machine::ret()
 {
-  if (stack->parent) {
-    stack = stack->parent;
-    gc::set_current_frame(stack);
+  if (frame->parent) {
+    frame = frame->parent;
+    gc::set_current_frame(frame);
   } else {
     push_str("The top-level environment can't be returned from");
     except();
@@ -312,13 +312,13 @@ void vm::machine::ret()
 
 void vm::machine::push()
 {
-  stack->pushed.push_back(retval);
+  frame->pushed.push_back(retval);
 }
 
 void vm::machine::pop()
 {
-  retval = stack->pushed.back();
-  stack->pushed.pop_back();
+  retval = frame->pushed.back();
+  frame->pushed.pop_back();
 }
 
 void vm::machine::req(const std::string& filename)
@@ -335,7 +335,7 @@ void vm::machine::req(const std::string& filename)
 
 void vm::machine::jmp(int offset)
 {
-  stack->instr_ptr = stack->instr_ptr.shifted_by(offset - 1);
+  frame->instr_ptr = frame->instr_ptr.shifted_by(offset - 1);
 }
 
 void vm::machine::jmp_false(int offset)
@@ -352,27 +352,27 @@ void vm::machine::jmp_true(int offset)
 
 void vm::machine::push_catch()
 {
-  stack->catcher = *retval;
+  frame->catcher = *retval;
 }
 
 void vm::machine::pop_catch()
 {
-  stack->catcher = {};
+  frame->catcher = {};
 }
 
 void vm::machine::except()
 {
-  while (stack->parent && !stack->catcher)
-    stack = stack->parent;
+  while (frame->parent && !frame->catcher)
+    frame = frame->parent;
 
-  if (!stack->catcher) {
+  if (!frame->catcher) {
     m_exception_handler(*this);
     // If we're still here, stop executing code since obviously some invariant's
     // broken
-    stack->instr_ptr = stack->instr_ptr.subvec(stack->instr_ptr.size());
+    frame->instr_ptr = frame->instr_ptr.subvec(frame->instr_ptr.size());
   } else {
     push_arg();
-    retval = &*stack->catcher;
+    retval = &*frame->catcher;
     call(1);
     pop_catch();
   }

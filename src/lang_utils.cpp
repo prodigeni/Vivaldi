@@ -22,8 +22,8 @@ vv::value::base* vv::throw_exception(const std::string& value, vm::machine& vm)
 
 vv::value::base* vv::pop_arg(vm::machine& vm)
 {
-  auto arg = vm.stack->parent->pushed.back();
-  vm.stack->parent->pushed.pop_back();
+  auto arg = vm.frame->parent->pushed.back();
+  vm.frame->parent->pushed.pop_back();
   return arg;
 }
 

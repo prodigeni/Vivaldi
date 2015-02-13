@@ -2,7 +2,7 @@
 #define VV_BUILTINS_H
 
 #include "value.h"
-#include "vm/call_stack.h"
+#include "vm/call_frame.h"
 
 namespace vv {
 
@@ -45,7 +45,7 @@ extern value::type custom_object;
 
 }
 
-void make_base_env(vm::call_stack& base);
+void make_base_env(vm::call_frame& base);
 
 }
 

@@ -1,7 +1,7 @@
 #ifndef VV_VM_H
 #define VV_VM_H
 
-#include "vm/call_stack.h"
+#include "vm/call_frame.h"
 
 namespace vv {
 
@@ -9,7 +9,7 @@ namespace vm {
 
 class machine {
 public:
-  machine(std::shared_ptr<call_stack> base,
+  machine(std::shared_ptr<call_frame> base,
           const std::function<void(vm::machine&)>& exception_handler);
 
   void run();
@@ -51,11 +51,11 @@ public:
   void pop_catch();
   void except();
 
-  std::shared_ptr<call_stack> stack;
+  std::shared_ptr<call_frame> frame;
   value::base* retval;
 
 private:
-  std::shared_ptr<call_stack> m_base;
+  std::shared_ptr<call_frame> m_base;
   std::function<void(machine&)> m_exception_handler;
 };
 

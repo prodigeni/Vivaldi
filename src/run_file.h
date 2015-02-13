@@ -1,7 +1,7 @@
 #ifndef VV_RUN_FILE_H
 #define VV_RUN_FILE_H
 
-#include "vm/call_stack.h"
+#include "vm/call_frame.h"
 
 #include <string>
 

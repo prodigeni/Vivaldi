@@ -1,5 +1,5 @@
-#ifndef VV_VM_CALL_STACK_H
-#define VV_VM_CALL_STACK_H
+#ifndef VV_VM_CALL_FRAME_H
+#define VV_VM_CALL_FRAME_H
 
 #include "instruction.h"
 
@@ -17,17 +17,17 @@ namespace vm {
 
 // TODO: simplify radically; a lot of stuff in here is either redundant,
 // inefficient, or just exists as a hack to prevent GC'ing the wrong things
-class call_stack {
+class call_frame {
 public:
-  call_stack(std::shared_ptr<call_stack> parent,
-             std::shared_ptr<call_stack> enclosing,
+  call_frame(std::shared_ptr<call_frame> parent,
+             std::shared_ptr<call_frame> enclosing,
              size_t                      args,
              vector_ref<command>         instr_ptr);
 
   /// Frame from which current function was called
-  const std::shared_ptr<call_stack> parent;
+  const std::shared_ptr<call_frame> parent;
   /// Frame in which current function (ie closure) was defined
-  const std::shared_ptr<call_stack> enclosing;
+  const std::shared_ptr<call_frame> enclosing;
   /// Local variables
   std::vector<std::unordered_map<symbol, value::base*>> local;
   /// self, if this is a method call
@@ -51,7 +51,7 @@ public:
 
 };
 
-void mark(call_stack& stack);
+void mark(call_frame& frame);
 
 }
 

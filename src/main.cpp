@@ -19,16 +19,9 @@ void repl_catcher(vv::vm::machine& vm)
   write_error("caught exception: " + vm.retval->value());
 
   // Clear out remaining instructions once the current line's borked
-  auto remaining = vm.stack->instr_ptr.size();
-  vm.stack->instr_ptr = vm.stack->instr_ptr.subvec(remaining);
+  auto remaining = vm.frame->instr_ptr.size();
+  vm.frame->instr_ptr = vm.frame->instr_ptr.subvec(remaining);
   vm.retval = vv::gc::alloc<vv::value::nil>( );
-}
-
-void normal_catcher(vv::vm::machine& vm)
-{
-  std::cerr << "caught exception: " << vm.retval->value() << '\n';
-  vv::gc::empty();
-  exit(0);
 }
 
 std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
@@ -70,18 +63,18 @@ void run_repl()
 {
   vv::gc::init();
 
-  auto base_stack = std::make_shared<vv::vm::call_stack>(
-      std::shared_ptr<vv::vm::call_stack>{},
-      std::shared_ptr<vv::vm::call_stack>{},
+  auto base_frame = std::make_shared<vv::vm::call_frame>(
+      std::shared_ptr<vv::vm::call_frame>{},
+      std::shared_ptr<vv::vm::call_frame>{},
       0,
       vv::vector_ref<vv::vm::command>{{}} );
-  vv::builtin::make_base_env(*base_stack);
+  vv::builtin::make_base_env(*base_frame);
 
   while (!std::cin.eof()) {
     for (const auto& expr : get_valid_line()) {
       auto body = expr->generate();
-      base_stack->instr_ptr = vv::vector_ref<vv::vm::command>{body};
-      vv::vm::machine machine{base_stack, repl_catcher};
+      base_frame->instr_ptr = vv::vector_ref<vv::vm::command>{body};
+      vv::vm::machine machine{base_frame, repl_catcher};
       machine.run();
       std::cout << "=> " << machine.retval->value() << '\n';
     }

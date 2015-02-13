@@ -5,18 +5,18 @@
 
 using namespace vv;
 
-value::array::array(const std::vector<base*>& new_mems)
+value::array::array(const std::vector<base*>& new_val)
   : base {&builtin::type::array},
-    mems {new_mems}
+    val {new_val}
 { }
 
 std::string value::array::value() const
 {
   std::string str{'['};
-  if (mems.size()) {
-    for_each(begin(mems), end(mems) - 1,
+  if (val.size()) {
+    for_each(begin(val), end(val) - 1,
              [&](const auto& v) { str += v->value() += ", "; });
-    str += mems.back()->value();
+    str += val.back()->value();
   }
   str += ']';
   return str;
@@ -25,7 +25,7 @@ std::string value::array::value() const
 void value::array::mark()
 {
   base::mark();
-  for (auto* i : mems)
+  for (auto* i : val)
     if (!i->marked())
       i->mark();
 }

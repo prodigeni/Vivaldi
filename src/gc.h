@@ -5,7 +5,7 @@
 #include "value/boolean.h"
 #include "value/integer.h"
 #include "value/nil.h"
-#include "vm/call_stack.h"
+#include "vm/call_frame.h"
 
 #include <array>
 
@@ -50,7 +50,7 @@ inline value::base* alloc<value::integer>(int&& val)
   return gc::alloc<value::integer>( val );
 }
 
-void set_current_frame(std::shared_ptr<vm::call_stack> frame);
+void set_current_frame(std::shared_ptr<vm::call_frame> frame);
 void set_current_retval(value::base* val);
 
 void init();

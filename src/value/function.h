@@ -3,7 +3,7 @@
 
 #include "value.h"
 #include "utils.h"
-#include "vm/call_stack.h"
+#include "vm/call_frame.h"
 #include "vm/instruction.h"
 
 namespace vv {
@@ -12,12 +12,12 @@ namespace value {
 
 struct function : public base {
   function(const std::vector<vm::command>& body,
-           std::shared_ptr<vm::call_stack> enclosure);
+           std::shared_ptr<vm::call_frame> enclosure);
 
   std::string value() const override;
 
   std::vector<vm::command> body;
-  std::shared_ptr<vm::call_stack> enclosure;
+  std::shared_ptr<vm::call_frame> enclosure;
 };
 
 }

@@ -15,7 +15,7 @@ public:
   std::string value() const override;
   void mark() override;
 
-  std::vector<base*> mems;
+  std::vector<base*> val;
 };
 
 }

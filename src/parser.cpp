@@ -28,130 +28,147 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
+/// Implements a fairly simple recursive-descent parser
+
 using namespace vv;
 using namespace ast;
 
 // Grammar {{{
 
 /**
- * expression ::= assignment
- *            ::= block
- *            ::= cond_statement
- *            ::= for_loop
- *            ::= function_call
- *            ::= function_definition
- *            ::= literal
- *            ::= type_definition
- *            ::= name
- *            ::= variable_declaration
- *            ::= while_loop
- *            ::= member
- *            ::= '(' expression ')'
+ * Vivaldi's grammar can be expressed as:
  *
- * assignment ::= name '=' expression
+ * \code{.unparsed}
  *
- * block ::= '{' inner_block '}'
- * inner_block ::=
- *             ::= expression '\\n' inner_block
- *             ::= expression ';' inner_block
+ * toplevel ::= expression
+ *          ::= expression division toplevel
  *
- * cond_statement ::= 'cond' '{' inner_cond '}'
- *                ::= 'if' cond_pair
- *                ::= 'if' cond_pair 'else' expression
- * inner_cond ::=
- *            ::= cond_pair
- *            ::= cond_pair, inner_cond
- * cond_pair ::= expression ':' expression
+ * expression ::= prec12
  *
- * for_loop ::= 'for' name 'in' expression ':' expression
+ * nonop_expression ::= array_literal
+ *                  ::= assignment
+ *                  ::= block
+ *                  ::= cond_statement
+ *                  ::= except
+ *                  ::= if_statement
+ *                  ::= for_loop
+ *                  ::= function_definition
+ *                  ::= literal
+ *                  ::= require
+ *                  ::= return
+ *                  ::= try_catch
+ *                  ::= type_definition
+ *                  ::= variable_declaration
+ *                  ::= variable
+ *                  ::= while_loop
+ *
+ * prec0 ::= nonop_expression
+ *       ::= prec0 '.' variable
+ *       ::= prec0 '(' expr_list ')'
+ *
+ * prec1 ::= prec0
+ *       ::= '!' prec1
+ *       ::= '~' prec1
+ *       ::= '-' prec1
+ *
+ * prec2 ::= prec1
+ *       ::= prec1 '*' prec2
+ *       ::= prec1 '/' prec2
+ *       ::= prec1 '%' prec2
+ *
+ * prec3 ::= prec2
+ *       ::= prec2 '+' prec3
+ *       ::= prec2 '-' prec3
+ *
+ * prec4 ::= prec3
+ *       ::= prec3 '>>' prec4
+ *       ::= prec3 '<<' prec4
+ *
+ * prec5 ::= prec4
+ *       ::= prec4 '&' prec5
+ *
+ * prec6 ::= prec5
+ *       ::= prec5 '^' prec6
+ *
+ * prec7 ::= prec6
+ *       ::= prec6 '|' prec7
+ *
+ * prec8 ::= prec7
+ *       ::= prec7 'to' prec8
+ *
+ * prec9 ::= prec8
+ *       ::= prec8 '>' prec9
+ *       ::= prec8 '<' prec9
+ *       ::= prec8 '>=' prec9
+ *       ::= prec8 '<=' prec9
+ *
+ * prec10 ::= prec9
+ *        ::= prec9 '==' prec10
+ *        ::= prec9 '!=' prec10
+ *
+ * prec11 ::= prec10
+ *        ::= prec10 '&&' prec11
+ *
+ * prec12 ::= prec11
+ *        ::= prec11 '||' prec12
+ *
+ * array_literal ::= '[' expr_list ']'
+ *
+ * assignment ::= variable '=' expression
+ *
+ * block ::= '{' toplevel '}'
+ *
+ * cond_statement ::= 'cond' '{' inner_cond_statement '}'
+ *
+ * except ::= 'except' expression
+ *
+ * if_statement ::= 'if' expression ':' expression
+ *
+ * for_loop ::= 'for' variable 'in' expression ':' expression
+ *
+ * function_definition ::= 'fn' '(' arg_list ')' ':' expression
+ *                     ::= 'fn' variable '(' arg_list ')' ':' expression
+ *
+ * literal ::= bool
+ *         ::= float
+ *         ::= integer
+ *         ::= nil
+ *         ::= string
+ *         ::= symbol
+ *
+ * require ::= 'require' string
+ *
+ * return ::= 'return' expression
+ *
+ * try_catch ::= 'try' ':' expression division 'catch' variable ':' expression
+ *
+ * type_definition ::= 'variable' name method_list
+ *
+ * variable_declaration ::= 'let' variable '=' expression
+ *
+ * variable ::= /([^[:space:][:punct:]|_)+/
  *
  * while_loop ::= 'while' expression ':' expression
  *
- * function_call ::= expression '(' expr_list ')'
- *               ::= '[' expr_list ']'
- *               ::= '{' dict_list '}'
- * expr_list ::=
- *           ::= expression
- *           ::= expression ',' expr_list
- * dict_list ::=
- *           ::= dict_pair
- *           ::= dict_pair ',' dict_list
- * dict_pair ::= expression ':' expression
+ * symbol ::= '\'' variable
  *
- * binop_call ::= expression binop expression
- *            ::= expression '[' expression ']'
- * binop ::= '+'
- *       ::= '-'
- *       ::= '*'
- *       ::= '/'
- *       ::= '%'
- *       ::= '&'
- *       ::= '|'
- *       ::= '^'
- *       ::= '=='
- *       ::= '!='
- *       ::= '<'
- *       ::= '>'
- *       ::= '<='
- *       ::= '>='
- *       ::= '&&'
- *       ::= '||'
- * monop_call ::= monop expression
- * monop ::= '!'
- *       ::= '~'
- *       ::= '-'
- *       ::= '#'
+ * integer ::= /[1-9][0-9]* /
+ *         ::= /0[0-7]* /
+ *         ::= /0x[0-9a-fA-F]+/
+ *         ::= /0b[01]+/
  *
- * member  ::= expression '.' name
+ * float ::= /[1-9][0-9]*\.[0-9]+/
+ *       ::= /0\.[0-9]+/
  *
- * function_definition ::= 'fn' name '(' arg_list ')' ':' expression
- *                     ::= 'fn' '(' arg_list ')' ':' expression
- * arg_list ::=
- *          ::= name
- *          ::= name ',' arg_list
+ * bool ::= 'true'
+ *      ::= 'false'
  *
- * literal ::= number
- *         ::= string
- *         ::= symbol
- *         ::= 'true'
- *         ::= 'false'
- *         ::= 'nil'
+ * nil ::= 'nil'
  *
- * type_definition ::= 'type' name type_body
- *                 ::= 'type' name ':' name type_body
- * type_body ::= '{' inner_type_body '}'
- * inner_type_body ::=
- *                 ::= type_member
- *                 ::= type_member, inner_type_body
- * type_member ::= type_status variable_declaration
- *             ::= type_status function_definition
- * type_status ::=
- *             ::= 'public'
- *             ::= 'private'
- *             ::= 'static'
+ * string ::= /".*"/
  *
- * variable_declaration ::= 'let' name '=' expression
- *
+ * \endcode
  */
-
-// expression = ( assignment
-//              | block
-//              | cond_statement
-//              | for_loop
-//              | while_loop
-//              | literal
-//              | dict_literal
-//              | array_literal
-//              | function_definition
-//              | monop_call
-//              | variable
-//              | type_definition
-//              | variable_declaration
-//              ) { ( binop expression
-//                  | '(' expr_list ')'
-//                  | '.' name '(' expr_list ')'
-//                  | '[' expression ']'
-//                  ) }
 
 // }}}
 // Parsing {{{

@@ -10,6 +10,24 @@
 
 #include <fstream>
 
+namespace {
+
+std::string message_for(vv::vector_ref<std::string> tokens,
+                        vv::parser::val_res validator)
+{
+  if (validator.invalid()) {
+    const std::string* first{tokens.data()};
+    auto line = count(first, begin(*validator), "\n");
+    return "Invalid syntax at '" + validator->front()
+           + "' on line " + std::to_string(line + 1) + ": "
+           + validator.error();
+  }
+
+  return "Invalid syntax";
+}
+
+}
+
 vv::run_file_result vv::run_file(const std::string& filename)
 {
   std::ifstream file{filename};
@@ -20,21 +38,11 @@ vv::run_file_result vv::run_file(const std::string& filename)
 
   auto tokens = parser::tokenize(file);
   auto validator = parser::is_valid(tokens);
-  if (!validator) {
-    std::string error;
-    if (validator.invalid()) {
-      const std::string* first{tokens.data()};
-      auto line = count(first, begin(*validator), "\n");
-      error = "Invalid syntax at '" + validator->front()
-            + "' on line " + std::to_string(line + 1) + ": "
-            + validator.error();
-    } else {
-      error = "Invalid syntax";
-    }
+  if (!validator)
     return { run_file_result::result::failure,
-             gc::alloc<value::string>(error),
+             gc::alloc<value::string>( message_for(tokens, validator) ),
              {} };
-  }
+
   auto exprs = vv::parser::parse(tokens);
   std::vector<vv::vm::command> body;
   for (const auto& i : exprs) {
@@ -48,9 +56,9 @@ vv::run_file_result vv::run_file(const std::string& filename)
   if (path.has_parent_path())
     boost::filesystem::current_path(path.parent_path());
 
-  vm::call_stack base{nullptr, nullptr, 0, body};
-  builtin::make_base_env(base);
-  auto vm_base = std::make_shared<vm::call_stack>( base );
+  // Set up base env
+  auto vm_base = std::make_shared<vm::call_frame>(nullptr, nullptr, 0, body);
+  builtin::make_base_env(*vm_base);
 
   // Flag to check for exceptions--- slightly hacky, but oh well
   auto excepted = false;
