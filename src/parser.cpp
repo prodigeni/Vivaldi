@@ -14,6 +14,7 @@
 #include "ast/logical_or.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
+#include "ast/require.h"
 #include "ast/return_statement.h"
 #include "ast/try_catch.h"
 #include "ast/type_definition.h"
@@ -190,6 +191,7 @@ parse_res<> parse_if_statement(vector_ref<std::string> tokens);
 parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
+parse_res<> parse_require(vector_ref<std::string> tokens);
 parse_res<> parse_return(vector_ref<std::string> tokens);
 parse_res<> parse_try_catch(vector_ref<std::string> tokens);
 parse_res<> parse_type_definition(vector_ref<std::string> tokens);
@@ -484,6 +486,7 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
+  if ((res = parse_require(tokens)))               return res;
   if ((res = parse_return(tokens)))               return res;
   if ((res = parse_try_catch(tokens)))            return res;
   if ((res = parse_type_definition(tokens)))      return res;
@@ -654,6 +657,16 @@ parse_res<> parse_literal(vector_ref<std::string> tokens)
   if ((res = parse_symbol(tokens)))  return res;
   if ((res = parse_string(tokens)))  return res;
   return res;
+}
+
+parse_res<> parse_require(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "require")
+    return {};
+  tokens = tokens.subvec(1); // 'require'
+  std::string filename{++begin(tokens.front()), --end(tokens.front())};
+  tokens = tokens.subvec(1); // filename
+  return {{ std::make_unique<require>( filename ), tokens }};
 }
 
 parse_res<> parse_return(vector_ref<std::string> tokens)

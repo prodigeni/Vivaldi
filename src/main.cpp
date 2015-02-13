@@ -1,12 +1,12 @@
 #include "builtins.h"
 #include "gc.h"
 #include "parser.h"
+#include "run_file.h"
 #include "vm.h"
 #include "value/builtin_function.h"
 #include "value/nil.h"
 
 #include <iostream>
-#include <fstream>
 #include <sstream>
 
 void write_error(const std::string& error)
@@ -91,47 +91,26 @@ void run_repl()
 
 int main(int argc, char** argv)
 {
-  if (argc == 1) {
-    run_repl();
-    return 0;
-  }
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <file>\n";
+  if (argc > 2) {
+    std::cerr << "Usage: " << argv[0] << " [file]\n";
     return 1;
   }
 
   vv::gc::init();
 
-  std::ifstream file{argv[1]};
-  auto tokens = vv::parser::tokenize(file);
-  auto validator = vv::parser::is_valid(tokens);
-  if (!validator) {
-    if (validator.invalid()) {
-      const std::string* first{tokens.data()};
-      auto line = count(first, begin(*validator), "\n");
-      std::cerr << "Invalid syntax at '" << validator->front()
-                << "' on line " << (line + 1) << ": "
-                << validator.error() << '\n';
-    } else {
-      std::cerr << "Invalid syntax\n";
-    }
-    return 2;
-  }
-  auto exprs = vv::parser::parse(tokens);
-  std::vector<vv::vm::command> body;
-  for (const auto& i : exprs) {
-    auto code = i->generate();
-    copy(begin(code), end(code), back_inserter(body));
-  }
-  auto base_stack = std::make_shared<vv::vm::call_stack>(
-      std::shared_ptr<vv::vm::call_stack>{},
-      std::shared_ptr<vv::vm::call_stack>{},
-      0,
-      vv::vector_ref<vv::vm::command>{body} );
+  if (argc == 1) {
+    run_repl();
+    vv::gc::empty();
 
-  vv::builtin::make_base_env(*base_stack);
-  vv::vm::machine machine{base_stack, normal_catcher};
-  machine.run();
+  } else {
+    auto ret = vv::run_file(argv[1]);
 
-  vv::gc::empty();
+    if (ret.res == vv::run_file_result::result::file_not_found)
+      std::cerr << argv[1] << ": file not found\n";
+    else if (ret.res == vv::run_file_result::result::failure)
+      std::cerr << "Caught exception: " << ret.val->value() << '\n';
+
+    vv::gc::empty();
+    return ret.res != vv::run_file_result::result::success;
+  }
 }

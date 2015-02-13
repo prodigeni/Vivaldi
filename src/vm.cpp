@@ -3,7 +3,8 @@
 #include "builtins.h"
 #include "gc.h"
 #include "lang_utils.h"
-
+#include "parser.h"
+#include "run_file.h"
 #include "value.h"
 #include "value/builtin_function.h"
 #include "value/boolean.h"
@@ -78,6 +79,8 @@ void vm::machine::run()
 
     case instruction::push: push(); break;
     case instruction::pop:  pop();  break;
+
+    case instruction::req: req(get<std::string>(arg)); break;
 
     case instruction::jmp:       jmp(get<int>(arg));       break;
     case instruction::jmp_false: jmp_false(get<int>(arg)); break;
@@ -318,6 +321,18 @@ void vm::machine::pop()
   stack->pushed.pop_back();
 }
 
+void vm::machine::req(const std::string& filename)
+{
+  auto ret = run_file(filename);
+  retval = ret.val; // this was unintentional, but I'm pretty pleased by it
+  if (ret.res == run_file_result::result::success) {
+    for (const auto& i : ret.frame)
+      m_base->local.front()[i.first] = i.second;
+  } else {
+    except();
+  }
+}
+
 void vm::machine::jmp(int offset)
 {
   stack->instr_ptr = stack->instr_ptr.shifted_by(offset - 1);
@@ -352,6 +367,9 @@ void vm::machine::except()
 
   if (!stack->catcher) {
     m_exception_handler(*this);
+    // If we're still here, stop executing code since obviously some invariant's
+    // broken
+    stack->instr_ptr = stack->instr_ptr.subvec(stack->instr_ptr.size());
   } else {
     push_arg();
     retval = &*stack->catcher;

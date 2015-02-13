@@ -1,0 +1,7 @@
+// for now, break on first failure
+
+require "class.vv"
+require "except.vv"
+require "float.vv"
+require "integer.vv"
+require "logic.vv"

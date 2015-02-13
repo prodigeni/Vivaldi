@@ -32,6 +32,7 @@ class logical_and;
 class logical_or;
 class member;
 class member_assignment;
+class require;
 class return_statement;
 class try_catch;
 class type_definition;

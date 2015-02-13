@@ -1,0 +1,4 @@
+fn assert(test, err): if !test: {
+   puts("failed: ".append(err))
+   quit()
+}

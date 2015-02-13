@@ -25,6 +25,7 @@ val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
 val_res val_member(              vector_ref<std::string> tokens);
 val_res val_except(              vector_ref<std::string> tokens);
+val_res val_require(             vector_ref<std::string> tokens);
 val_res val_return(              vector_ref<std::string> tokens);
 val_res val_expr_list(           vector_ref<std::string> tokens);
 val_res val_function_definition( vector_ref<std::string> tokens);
@@ -35,6 +36,12 @@ val_res val_try_catch(           vector_ref<std::string> tokens);
 val_res val_type_definition(     vector_ref<std::string> tokens);
 val_res val_variable_declaration(vector_ref<std::string> tokens);
 val_res val_name(                vector_ref<std::string> tokens);
+
+val_res val_bool(  vector_ref<std::string> tokens);
+val_res val_nil(   vector_ref<std::string> tokens);
+val_res val_number(vector_ref<std::string> tokens);
+val_res val_string(vector_ref<std::string> tokens);
+val_res val_symbol(vector_ref<std::string> tokens);
 
 // comma-separated list {{{
 
@@ -94,6 +101,7 @@ val_res val_expression(vector_ref<std::string> tokens)
       || ((res = val_block(tokens))                || res.invalid())
       || ((res = val_cond_statement(tokens))       || res.invalid())
       || ((res = val_except(tokens))               || res.invalid())
+      || ((res = val_require(tokens))              || res.invalid())
       || ((res = val_return(tokens))               || res.invalid())
       || ((res = val_for_loop(tokens))             || res.invalid())
       || ((res = val_while_loop(tokens))           || res.invalid())
@@ -336,6 +344,19 @@ val_res val_except(vector_ref<std::string> tokens)
     return {};
   if (auto expr = val_expression(tokens.subvec(1)))
     return expr;
+  return {tokens, "expected expression"};
+}
+
+// }}}
+// require {{{
+
+val_res val_require(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "require")
+    return {};
+  tokens = tokens.subvec(1);
+  if (auto str = val_string(tokens))
+    return str;
   return {tokens, "expected expression"};
 }
 

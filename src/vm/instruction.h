@@ -5,6 +5,7 @@
 #include "symbol.h"
 #include "value.h"
 
+#include <pthread/pthread.h>
 #include <boost/variant/variant.hpp>
 
 namespace vv {
@@ -40,6 +41,8 @@ enum class instruction {
 
   push,
   pop,
+
+  req,
 
   jmp,
   jmp_false,

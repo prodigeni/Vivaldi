@@ -4,7 +4,10 @@ project (vivaldi)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wold-style-cast -Wconversion -Wsign-conversion -O3 -std=c++1y -lc++abi -ggdb")
 
-include_directories("src" SYSTEM "/usr/local/Cellar/boost/1.57.0/include")
+# CMake doesn't search /usr/local/* by default, of course, because that would
+# indicate some modicum of common sense and God knows we can't have that
+include_directories("src" SYSTEM "/usr/local/include")
+link_directories("/usr/local/lib")
 
 add_executable(vivaldi
   src/main.cpp
@@ -21,6 +24,8 @@ add_executable(vivaldi
   src/validator.cpp
   src/parser.cpp
 
+  src/run_file.cpp
+
   src/ast/assignment.cpp
   src/ast/block.cpp
   src/ast/cond_statement.cpp
@@ -33,6 +38,7 @@ add_executable(vivaldi
   src/ast/logical_or.cpp
   src/ast/member.cpp
   src/ast/member_assignment.cpp
+  src/ast/require.cpp
   src/ast/return_statement.cpp
   src/ast/try_catch.cpp
   src/ast/type_definition.cpp
@@ -55,3 +61,5 @@ add_executable(vivaldi
 
   src/vm/call_stack.cpp
   src/vm/instruction.cpp)
+
+target_link_libraries(vivaldi boost_system boost_filesystem)

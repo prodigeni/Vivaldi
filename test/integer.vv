@@ -1,7 +1,4 @@
-fn assert(test, err): if !test: {
-   puts("failed: ".append(err))
-   quit()
-}
+require "assert.vv"
 
 assert(0 != 1, "0 != 1")
 assert(0.type() == Integer, "0.type() == Integer")

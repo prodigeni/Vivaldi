@@ -1,7 +1,4 @@
-fn assert(test, err): if !test: {
-   puts("failed: ".append(err))
-   quit()
-}
+require "assert.vv"
 
 assert(true && true,      "true && true")
 assert(!(true && false),  "!(true && false)")

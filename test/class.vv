@@ -1,7 +1,4 @@
-fn assert(test, err): if !test: {
-   puts("failed: ".append(err))
-   quit()
-}
+require "assert.vv"
 
 class Base {
   fn set_a(a): self._a = a,

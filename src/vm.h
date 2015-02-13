@@ -41,6 +41,8 @@ public:
   void push();
   void pop();
 
+  void req(const std::string& file);
+
   void jmp(int offset);
   void jmp_false(int offset);
   void jmp_true(int offset);
@@ -54,7 +56,7 @@ public:
 
 private:
   std::shared_ptr<call_stack> m_base;
-  const std::function<void(machine&)> m_exception_handler;
+  std::function<void(machine&)> m_exception_handler;
 };
 
 }
