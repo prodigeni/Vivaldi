@@ -17,10 +17,6 @@ vv::run_file_result vv::run_file(const std::string& filename)
     return { run_file_result::result::file_not_found,
              gc::alloc<value::string>( '"' + filename + "\": file not found" ),
              {} };
-  // set working directory to path of file
-  boost::filesystem::path path{filename};
-  if (path.has_parent_path())
-    boost::filesystem::current_path(path.parent_path());
 
   auto tokens = parser::tokenize(file);
   auto validator = parser::is_valid(tokens);
@@ -46,13 +42,24 @@ vv::run_file_result vv::run_file(const std::string& filename)
     copy(begin(code), end(code), back_inserter(body));
   }
 
+  // set working directory to path of file
+  auto pwd = boost::filesystem::current_path();
+  boost::filesystem::path path{filename};
+  if (path.has_parent_path())
+    boost::filesystem::current_path(path.parent_path());
+
   vm::call_stack base{nullptr, nullptr, 0, body};
   builtin::make_base_env(base);
   auto vm_base = std::make_shared<vm::call_stack>( base );
 
+  // Flag to check for exceptions--- slightly hacky, but oh well
   auto excepted = false;
   vm::machine machine{vm_base, [&](vm::machine&) { excepted = true; }};
   machine.run();
+
+  // reset working directory
+  boost::filesystem::current_path(pwd);
+
   if (excepted)
     return { run_file_result::result::failure, machine.retval, {} };
 
