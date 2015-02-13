@@ -58,6 +58,22 @@ Simple mutable array type:
     let two = array.at(1)
 </code></pre>
 
+#### Ranges ####
+Provides a range over any pair of objects that can be
+* Compared with `==`
+* Incremented by adding 1
+
+A range covers [start, end):
+
+<pre><code>
+    >>> for i in 1 to 5: puts(i) // <x> to <y> is syntax sugar for Range(x, y)
+    1
+    2
+    3
+    4
+    => nil
+</code></pre>
+
 #### Functions ####
 Functions! Syntactically, a function is very simple:
 
@@ -155,7 +171,8 @@ type supports three methods:
 A range is even simpler; it only needs to support one method, `start()`, that
 returns an iterator pointing to its first element. In the standard library, both
 `Array` and `String` are ranges, and `ArrayIterator` and `String` are their
-corresponding iterators.
+corresponding iterators. `Range` is both a range (natch!) and an iterator---
+calling `start()` on a range just returns itself.
 
 Iterators are used to implement for loops:
 
@@ -292,8 +309,7 @@ are expressions.
 #### FizzBuzz ####
 
 <pre><code>
-    let i = 0
-    while (i = i + 1) < 100: cond {
+    for i in 1 to 100: cond {
       i % 15 == 0: puts("FizzBuzz"),
       i % 5 == 0:  puts("Buzz"),
       i % 3 == 0:  puts("Fizz"),

@@ -545,6 +545,17 @@ value::base* fn_range_start(vm::machine& vm)
   return &*vm.stack->self;
 }
 
+value::base* fn_range_size(vm::machine& vm)
+{
+  auto& rng = static_cast<value::range&>(*vm.stack->self);
+  vm.retval = rng.start;
+  vm.push_arg();
+  vm.retval = &rng.end;
+  vm.readm({"subtract"});
+  vm.call(1);
+  return vm.retval;
+}
+
 value::base* fn_range_at_end(vm::machine& vm)
 {
   auto& rng = static_cast<value::range&>(*vm.stack->self);
@@ -925,12 +936,14 @@ value::type type::floating_point{fn_floating_point_ctr, {
 
 namespace {
 builtin_function range_start     {fn_range_start,     0};
+builtin_function range_size      {fn_range_size,      0};
 builtin_function range_at_end    {fn_range_at_end,    0};
 builtin_function range_get       {fn_range_get,       0};
 builtin_function range_increment {fn_range_increment, 0};
 }
 value::type type::range {fn_range_ctr, {
   { {"start"},     &range_start },
+  { {"size"},      &range_size },
   { {"at_end"},    &range_at_end },
   { {"get"},       &range_get },
   { {"increment"}, &range_increment }

@@ -175,10 +175,11 @@ parse_res<> parse_prec4(vector_ref<std::string> tokens); // <<, >>
 parse_res<> parse_prec5(vector_ref<std::string> tokens); // &
 parse_res<> parse_prec6(vector_ref<std::string> tokens); // ^
 parse_res<> parse_prec7(vector_ref<std::string> tokens); // |
-parse_res<> parse_prec8(vector_ref<std::string> tokens); // <, >, <=, =>
-parse_res<> parse_prec9(vector_ref<std::string> tokens); // ==, !=
-parse_res<> parse_prec10(vector_ref<std::string> tokens); // &&
-parse_res<> parse_prec11(vector_ref<std::string> tokens); // ||
+parse_res<> parse_prec8(vector_ref<std::string> tokens); // to
+parse_res<> parse_prec9(vector_ref<std::string> tokens); // <, >, <=, =>
+parse_res<> parse_prec10(vector_ref<std::string> tokens); // ==, !=
+parse_res<> parse_prec11(vector_ref<std::string> tokens); // &&
+parse_res<> parse_prec12(vector_ref<std::string> tokens); // ||
 
 parse_res<> parse_array_literal(vector_ref<std::string> tokens);
 parse_res<> parse_assignment(vector_ref<std::string> tokens);
@@ -223,7 +224,7 @@ parse_res<std::pair<symbol, std::unique_ptr<function_definition>>>
 
 parse_res<> parse_expression(vector_ref<std::string> tokens)
 {
-  return parse_prec11(tokens);
+  return parse_prec12(tokens);
 }
 
 // Operators {{{
@@ -258,9 +259,9 @@ parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
   return left_res;
 }
 
-parse_res<> parse_prec11(vector_ref<std::string> tokens)
+parse_res<> parse_prec12(vector_ref<std::string> tokens)
 {
-  auto left_res = parse_prec10(tokens);
+  auto left_res = parse_prec11(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
@@ -268,7 +269,7 @@ parse_res<> parse_prec11(vector_ref<std::string> tokens)
   if (tokens.size() && tokens.front() == "||") {
     auto left = move(left_res->first);
 
-    auto right_res = parse_prec11(tokens.subvec(1)); // '||'
+    auto right_res = parse_prec12(tokens.subvec(1)); // '||'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -277,16 +278,16 @@ parse_res<> parse_prec11(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec10(vector_ref<std::string> tokens)
+parse_res<> parse_prec11(vector_ref<std::string> tokens)
 {
-  auto left_res = parse_prec9(tokens);
+  auto left_res = parse_prec10(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
   if (tokens.size() && tokens.front() == "&&") {
     auto left = move(left_res->first);
-    auto right_res = parse_prec10(tokens.subvec(1)); // '&&'
+    auto right_res = parse_prec11(tokens.subvec(1)); // '&&'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -295,9 +296,9 @@ parse_res<> parse_prec10(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec9(vector_ref<std::string> tokens)
+parse_res<> parse_prec10(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec8, parse_prec9,
+  return parse_operator_expr(tokens, parse_prec9, parse_prec10,
                              [](const auto& s)
                              {
                                return s == "==" || s == "!=";
@@ -308,9 +309,9 @@ parse_res<> parse_prec9(vector_ref<std::string> tokens)
                              });
 }
 
-parse_res<> parse_prec8(vector_ref<std::string> tokens)
+parse_res<> parse_prec9(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec7, parse_prec8,
+  return parse_operator_expr(tokens, parse_prec8, parse_prec9,
                              [](const auto& s)
                              {
                                return s == ">"
@@ -325,6 +326,30 @@ parse_res<> parse_prec8(vector_ref<std::string> tokens)
                                       (s == ">=") ? "greater_equals" :
                                                     "less_equals";
                              });
+}
+
+parse_res<> parse_prec8(vector_ref<std::string> tokens)
+{
+  auto left_res = parse_prec7(tokens);
+  if (!left_res)
+    return left_res;
+  tokens = left_res->second;
+
+  if (tokens.size() && tokens.front() == "to") {
+    auto left = move(left_res->first);
+    auto right_res = parse_prec8(tokens.subvec(1)); // 'to'
+    auto right = move(right_res->first);
+    tokens = right_res->second;
+
+    arg_t args;
+    args.emplace_back(move(left));
+    args.emplace_back(move(right));
+
+    auto range = std::make_unique<variable>( symbol{"Range"} );
+
+    return {{std::make_unique<function_call>(move(range), move(args)), tokens}};
+  }
+  return left_res;
 }
 
 parse_res<> parse_prec7(vector_ref<std::string> tokens)

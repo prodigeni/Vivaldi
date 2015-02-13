@@ -288,7 +288,8 @@ val_res val_binop(vector_ref<std::string> tokens)
                       || tokens.front() == "<="
                       || tokens.front() == ">="
                       || tokens.front() == "&&"
-                      || tokens.front() == "||"))
+                      || tokens.front() == "||"
+                      || tokens.front() == "to"))
     return tokens.subvec(1);
   return {};
 }
