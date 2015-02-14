@@ -16,8 +16,6 @@
 #include "value/string.h"
 #include "value/symbol.h"
 
-#include "vm/instruction.h"
-
 #include <boost/variant/get.hpp>
 
 using namespace vv;
@@ -33,7 +31,6 @@ vm::machine::machine(std::shared_ptr<call_frame> frame,
   gc::set_current_retval(retval);
 }
 
-#include <iostream>
 void vm::machine::run()
 {
   using boost::get;
@@ -290,7 +287,6 @@ void vm::machine::call(int argc)
   }
 }
 
-#include <iostream>
 void vm::machine::new_obj(int argc)
 {
   if (retval->type != &builtin::type::custom_type) {
@@ -306,6 +302,10 @@ void vm::machine::new_obj(int argc)
   while (!ctr_type->constructor)
     ctr_type = &static_cast<value::type&>(ctr_type->parent);
   retval = ctr_type->constructor();
+  // Hacky--- builtins that can't be instantiated directly have provided
+  // constructors that return nullptr, hence this message. The alternative would
+  // be them trying to except within their constructors, and tying that behavior
+  // back in with the VM can get pretty hairy (as in vm::call)
   if (!retval) {
     push_str("Cannot construct object of type " + type->value());
     except();
