@@ -28,3 +28,13 @@ assert(obj._pythonesque == nil,     "obj._pythonesque == nil")
 fn external_mem(): self.get_a()
 obj._external = external_mem
 assert(obj._external() == obj._a,   "obj._external == obj._a")
+
+class Uninstantiable
+  fn init(): except nil
+end
+
+let instantiated = true
+let i = nil
+try: new Uninstantiable()
+catch e: instantiated = false
+assert(!instantiated && i == nil, "returned object from exception in init")
