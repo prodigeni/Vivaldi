@@ -39,7 +39,15 @@ Vivaldi has a fairly limited set of builtin types:
 64-bit floating-point values.
 
 #### Integers ####
-32-bit signed integers.
+32-bit signed integers. Integer literals can be written in decimal, hexadecimal,
+octal, or binary:
+
+<pre><code>
+    let eighteen = 18
+    eighteen == 0x12
+    eighteen == 022
+    eighteen == 0b10010
+</code></pre>
 
 #### Strings ####
 Simple, mutable string class.
