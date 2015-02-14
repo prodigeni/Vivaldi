@@ -222,7 +222,8 @@ Vivaldi's basic control flow structures are cond statements, while loops, and
 for loops:
 
 <pre><code>
-    let i = cond false: "not me!", true: "me!"
+    let i = cond false: "not me!",
+                 true:  "me!"
     while true: puts("looping endlessly...")
 </code></pre>
 
@@ -231,7 +232,8 @@ until one is truthy (i.e. not `false` or `nil`). When the truthy member is
 found, the second half of that pair is evaluated and returned. If no truthy
 tests are found, the statement returns `nil`.
 
-Simple `if` statements are provided as syntax sugar:
+The keyword `if` is provided as a synonym to `cond`, since it reads more
+naturally for one-body cond statements:
 
 <pre><code>
     // i is a variable

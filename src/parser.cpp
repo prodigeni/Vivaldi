@@ -51,7 +51,6 @@ using namespace ast;
  *                  ::= block
  *                  ::= cond_statement
  *                  ::= except
- *                  ::= if_statement
  *                  ::= for_loop
  *                  ::= function_definition
  *                  ::= literal
@@ -117,13 +116,12 @@ using namespace ast;
  *
  * assignment ::= variable '=' expression
  *
- * block ::= '{' toplevel '}'
+ * block ::= 'do' toplevel 'end'
  *
- * cond_statement ::= 'cond' '{' inner_cond_statement '}'
+ * cond_statement ::= 'cond' inner_cond_statement
+ *                ::= 'if' inner_cond_statement
  *
  * except ::= 'except' expression
- *
- * if_statement ::= 'if' expression ':' expression
  *
  * for_loop ::= 'for' variable 'in' expression ':' expression
  *
@@ -210,7 +208,6 @@ parse_res<> parse_assignment(vector_ref<std::string> tokens);
 parse_res<> parse_block(vector_ref<std::string> tokens);
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
 parse_res<> parse_except(vector_ref<std::string> tokens);
-parse_res<> parse_if_statement(vector_ref<std::string> tokens);
 parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
@@ -505,7 +502,6 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_block(tokens)))                return res;
   if ((res = parse_cond_statement(tokens)))       return res;
   if ((res = parse_except(tokens)))               return res;
-  if ((res = parse_if_statement(tokens)))         return res;
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
@@ -571,7 +567,7 @@ parse_res<> parse_array_literal(vector_ref<std::string> tokens)
 
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "cond")
+  if (!tokens.size() || (tokens.front() != "cond" && tokens.front() != "if"))
     return {};
   tokens = ltrim(tokens.subvec(1), {"\n"});
 
@@ -591,26 +587,6 @@ parse_res<> parse_except(vector_ref<std::string> tokens)
   auto expr = move(expr_res->first);
   tokens = expr_res->second;
   return {{ std::make_unique<except>( move(expr) ), tokens }};
-}
-
-parse_res<> parse_if_statement(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != "if")
-    return {};
-
-  auto test_res = parse_expression(tokens.subvec(1)); // 'while'
-  auto test = move(test_res->first);
-  tokens = test_res->second;
-
-  auto body_res = parse_expression(tokens.subvec(1)); // ':'
-  auto body = move(body_res->first);
-  tokens = body_res->second;
-
-  auto pair = make_pair(move(test), move(body));
-  std::vector<decltype(pair)> arg{};
-  arg.push_back(move(pair));
-
-  return {{ std::make_unique<cond_statement>( move(arg) ), tokens }};
 }
 
 parse_res<> parse_for_loop(vector_ref<std::string> tokens)

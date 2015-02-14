@@ -188,27 +188,10 @@ val_res val_cond_pair(vector_ref<std::string> tokens)
   return {};
 }
 
-val_res val_if_statement(vector_ref<std::string> tokens)
-{
-  if (!tokens.size() || tokens.front() != "if")
-    return {};
-  if (auto test_res = val_expression(tokens.subvec(1))) {
-    tokens = *test_res;
-    if (tokens.size() && tokens.front() == ":") {
-      auto val = val_expression(tokens.subvec(1));
-      if (val)
-        return val;
-      return {tokens, "expected expression"};
-    }
-    return {tokens, "expected ':'"};
-  }
-  return {tokens, "expected expression"};
-}
-
 val_res val_cond_statement(vector_ref<std::string> tokens)
 {
-  if (!tokens.size() || tokens.front() != "cond")
-    return val_if_statement(tokens);
+  if (!tokens.size() || (tokens.front() != "cond" && tokens.front() != "if"))
+      return {};
   return val_comma_separated_list(ltrim(tokens.subvec(1), {"\n"}), val_cond_pair);
 }
 
