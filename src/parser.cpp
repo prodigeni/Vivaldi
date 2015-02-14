@@ -816,7 +816,7 @@ parse_res<> parse_integer(vector_ref<std::string> tokens)
   } else {
     val = stoi(str);
   }
-  return {{ std::make_unique<literal::integer>( stoi(str) ), tokens }};
+  return {{ std::make_unique<literal::integer>( val ), tokens }};
 }
 
 parse_res<> parse_float(vector_ref<std::string> tokens)
