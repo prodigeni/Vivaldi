@@ -534,11 +534,13 @@ value::base* fn_range_size(vm::machine& vm)
 value::base* fn_range_at_end(vm::machine& vm)
 {
   auto& rng = static_cast<value::range&>(*vm.frame->self);
-  vm.retval = &rng.end;
-  vm.push_arg();
   vm.retval = rng.start;
-  vm.readm({"equals"});
+  vm.push_arg();
+  vm.retval = &rng.end;
+  vm.readm({"greater"});
   vm.call(1);
+  vm.readm({"not"});
+  vm.call(0);
   return vm.retval;
 }
 
