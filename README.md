@@ -148,10 +148,10 @@ Everything in Vivaldi is an object, and has
 Defining custom types is simple:
 
 <pre><code>
-    class MyType {
-      fn init(x): self.x = x,
+    class MyType
+      fn init(x): self.x = x
       fn x_is_equal_to(y): self.x = y
-    }
+    end
 
     let my_obj = MyType(5)
     let yes = my_obj.x_is_equal_to(5)
@@ -192,11 +192,11 @@ is equivalent to something like:
 
 <pre><code>
     let <implicit_var> = range.start()
-    while !<implicit_var>.at_end(): {
+    while !<implicit_var>.at_end(): do
       let i = <implicit_var>.get()
       puts(i)
       <implicit_var>.increment()
-    }
+    end
 </code></pre>
 
 ### Structures ###
@@ -222,7 +222,7 @@ Vivaldi's basic control flow structures are cond statements, while loops, and
 for loops:
 
 <pre><code>
-    let i = cond { false: "not me!", true: "me!" }
+    let i = cond false: "not me!", true: "me!"
     while true: puts("looping endlessly...")
 </code></pre>
 
@@ -239,8 +239,8 @@ Simple `if` statements are provided as syntax sugar:
     if a == nil: puts("i isn't truthy")
 
     // equivalent:
-    let a = cond { i: "i is truthy" }
-    cond { a == nil: puts("i isn't truthy") }
+    let a = cond i: "i is truthy"
+    cond a == nil: puts("i isn't truthy")
 </code></pre>
 
 while loops are very straightforward:
@@ -267,34 +267,32 @@ actually interesting with them. Fortunately, it's possible, using blocks, to
 mash a bunch of expressions together in a sequence:
 
 <pre><code>
-    let i = {
+    let i = do
       puts("I'm in a block!")
       5; 4; 3; 2; 1
-    }
+    end
     i == 1
 </code></pre>
 
 Using this, it's possible to build actually useful constructs:
 
 <pre><code>
-    fn for_each(array, func): {
-      let i = 0
-      let size = func.size()
-      while i < size: {
-        func(array.at(i))
-        i = i + 1
-      }
-    }
+    fn filter(array, predicate): do
+      let filtered = []
+      for i in array: cond
+        pred(i): filtered.append(i)
+      filtered
+    end
 </code></pre>
 
 Blocks have nested scope:
 
 <pre><code>
-    { let j = 5 }
+    do let j = 5 end
     puts(j) // wrong --- j is out of scope
 
     let j = 5
-    { puts(j) } // fine
+    do puts(j) end // fine
 </code></pre>
 
 #### Exceptions ####
@@ -317,12 +315,11 @@ are expressions.
 #### FizzBuzz ####
 
 <pre><code>
-    for i in 1 to 100: cond {
+    for i in 1 to 100: cond
       i % 15 == 0: puts("FizzBuzz"),
       i % 5 == 0:  puts("Buzz"),
       i % 3 == 0:  puts("Fizz"),
       true:        puts(i)
-    }
 </code></pre>
 
 See examples folder for more.

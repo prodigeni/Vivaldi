@@ -1,6 +1,5 @@
-for i in 1 to 100: cond {
+for i in 1 to 100: cond
   i % 15 == 0: puts("FizzBuzz"),
   i % 5 == 0:  puts("Buzz"),
   i % 3 == 0:  puts("Fizz"),
   true:        puts(i)
-}

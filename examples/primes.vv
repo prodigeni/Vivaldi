@@ -1,20 +1,20 @@
-fn filter(arr, pred): {
+fn filter(arr, pred): do
   let new_arr = []
   for i in arr: if pred(i): new_arr.append(i)
   new_arr
-}
+end
 
-fn primes(upto): {
+fn primes(upto): do
   let candidates = []
   for i in 2 to upto: candidates.append(i)
   let found = []
-  while candidates.size() > 0: {
+  while candidates.size() > 0: do
     let prime = candidates.at(0)
     found.append(prime)
     candidates = filter(candidates, fn (x): x % prime != 0)
-  }
+  end
   found
-}
+end
 
 let p = primes(10000)
 puts(p)

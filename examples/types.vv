@@ -1,10 +1,10 @@
-class Foo {
+class Foo
   fn bar(x): self.b = x
-}
+end
 
-class Bar : Foo {
+class Bar : Foo
   fn baz(x): self.bar(x + 1)
-}
+end
 
 let i = Bar()
 i.baz(2)

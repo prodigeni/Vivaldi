@@ -176,6 +176,11 @@ using namespace ast;
 
 namespace {
 
+bool trim_test(const std::string& s)
+{
+  return s=="\n" || s==";";
+}
+
 // Declarations {{{
 
 template <typename T = std::unique_ptr<expression>>
@@ -532,20 +537,20 @@ parse_res<> parse_block(vector_ref<std::string> tokens)
 {
   const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
 
-  if (!tokens.size() || tokens.front() != "{")
+  if (!tokens.size() || tokens.front() != "do")
     return {};
-  tokens = tokens.subvec(1); // '{'
+  tokens = tokens.subvec(1); // 'do'
 
   std::vector<std::unique_ptr<expression>> subexprs;
   tokens = ltrim_if(tokens, trim_test);
-  while (tokens.front() != "}") {
+  while (tokens.front() != "end") {
     auto expr_res = parse_expression(tokens);
     subexprs.push_back(move(expr_res->first));
     tokens = expr_res->second;
     tokens = ltrim_if(tokens, trim_test);
   }
 
-  tokens = tokens.subvec(1); // '}'
+  tokens = tokens.subvec(1); // 'end'
   return {{ std::make_unique<block>( move(subexprs) ), tokens }};
 }
 
@@ -568,12 +573,9 @@ parse_res<> parse_cond_statement(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "cond")
     return {};
-  tokens = tokens.subvec(1);
+  tokens = ltrim(tokens.subvec(1), {"\n"});
 
-  auto pairs_res = parse_bracketed_subexpr(tokens, [](auto tokens)
-  {
-    return parse_comma_separated_list(tokens, parse_cond_pair);
-  }, "{", "}");
+  auto pairs_res = parse_comma_separated_list(tokens, parse_cond_pair);
   auto pairs = move(pairs_res->first);
   tokens = pairs_res->second;
 
@@ -734,16 +736,15 @@ parse_res<> parse_type_definition(vector_ref<std::string> tokens)
     tokens = tokens.subvec(2); // ':' parent
   }
 
-  auto method_res = parse_bracketed_subexpr(tokens, [](auto t)
-  {
-    return parse_comma_separated_list(t, parse_method_definition);
-  }, "{", "}");
-  auto methods = move(method_res->first);
-  tokens = method_res->second;
-
   std::unordered_map<symbol, function_definition> method_map;
-  for (auto&& i : methods)
-    method_map.emplace(i.first, i.second);
+  tokens = ltrim_if(tokens, trim_test);
+  while (tokens.front() != "end") {
+    auto method = parse_method_definition(tokens);
+    method_map.insert(std::make_pair(method->first.first,
+                                     method->first.second));
+    tokens = ltrim_if(method->second, trim_test);
+  }
+  tokens = tokens.subvec(1); // 'end'
 
   return {{ std::make_unique<type_definition>( name, parent, move(method_map) ),
             tokens }};
@@ -961,8 +962,6 @@ parse_res<std::pair<symbol, function_definition>>
 
 std::vector<std::unique_ptr<expression>> parser::parse(token_string tokens)
 {
-  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
-
   std::vector<std::unique_ptr<expression>> expressions;
   tokens = ltrim_if(tokens, trim_test);
 

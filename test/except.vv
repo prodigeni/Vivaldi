@@ -6,10 +6,10 @@ catch _: assert(false, "exceptionless try body")
 assert(i, "assigning from try body")
 
 let i = false
-try: {
+try: do
   except 55
   assert(false, "except")
-} catch e: i = e
+end catch e: i = e
 assert(i == 55, "assigning from catch body")
 
 try: 1 + "foo"

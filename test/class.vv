@@ -1,17 +1,17 @@
 require "assert.vv"
 
-class Base {
-  fn set_a(a): self._a = a,
+class Base
+  fn set_a(a): self._a = a
   fn get_i(): self._i
-}
+end
 
-class Derived : Base {
-  fn init(a, b): {
+class Derived : Base
+  fn init(a, b): do
     self._i = a + b
-  },
+  end
 
   fn get_a(): self._a
-}
+end
 
 let obj = Derived(1, 2)
 

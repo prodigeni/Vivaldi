@@ -1,4 +1,4 @@
-fn assert(test, err): if !test: {
+fn assert(test, err): if !test: do
   puts("failed: " + err)
   quit()
-}
+end

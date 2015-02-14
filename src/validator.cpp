@@ -5,6 +5,12 @@ using namespace parser;
 
 namespace {
 
+bool trim_test(const std::string& s)
+{
+  return s=="\n" || s==";";
+};
+
+
 template <typename F>
 val_res val_comma_separated_list(vector_ref<std::string> tokens,
                                  const F& val_item);
@@ -149,12 +155,10 @@ val_res val_assignment(vector_ref<std::string> tokens)
 
 val_res val_block(vector_ref<std::string> tokens)
 {
-  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
-
-  if (tokens.size() < 2 || tokens.front() != "{")
+  if (tokens.size() < 2 || tokens.front() != "do")
     return {};
   tokens = ltrim_if(tokens.subvec(1), trim_test);
-  while (tokens.size() && tokens.front() != "}") {
+  while (tokens.size() && tokens.front() != "end") {
     val_res expr_res;
     if (!(expr_res = val_expression(tokens))) {
       if (expr_res.invalid())
@@ -164,13 +168,25 @@ val_res val_block(vector_ref<std::string> tokens)
     tokens = *expr_res;
     tokens = ltrim_if(tokens, trim_test);
   }
-  if (tokens.size() && tokens.front() == "}")
+  if (tokens.size() && tokens.front() == "end")
     return tokens.subvec(1);
-  return {tokens, "expected '}'"};
+  return {tokens, "expected 'end'"};
 }
 
 // }}}
 // cond_statement {{{
+
+val_res val_cond_pair(vector_ref<std::string> tokens)
+{
+  if (!tokens.size())
+    return {};
+  if (auto test_res = val_expression(tokens)) {
+    tokens = *test_res;
+    if (tokens.size() && tokens.front() == ":")
+      return val_expression(tokens.subvec(1));
+  }
+  return {};
+}
 
 val_res val_if_statement(vector_ref<std::string> tokens)
 {
@@ -193,7 +209,7 @@ val_res val_cond_statement(vector_ref<std::string> tokens)
 {
   if (!tokens.size() || tokens.front() != "cond")
     return val_if_statement(tokens);
-  return val_dict_literal(tokens.subvec(1)); // convenient cheat
+  return val_comma_separated_list(ltrim(tokens.subvec(1), {"\n"}), val_cond_pair);
 }
 
 // }}}
@@ -581,13 +597,19 @@ val_res val_type_definition(vector_ref<std::string> tokens)
       tokens = *parent_res;
     }
 
-    auto body = val_bracketed_subexpr(tokens,
-         [](auto t)
-           { return val_comma_separated_list(t, val_method_definition); },
-          "{", "}");
-    if (body || body.invalid())
-      return body;
-    return {*name_res, "expected method list"};
+    tokens = ltrim_if(tokens, trim_test);
+    while (tokens.size() && tokens.front() != "end") {
+      auto method = val_method_definition(tokens);
+      if (!method) {
+        if (method.invalid())
+          return method;
+        return {tokens, "expected method definition"};
+      }
+      tokens = ltrim_if(*method, trim_test);
+    }
+    if (tokens.size())
+      return tokens.subvec(1); // 'end'
+    return {tokens, "expected 'end'"};
   }
   return {tokens, "expected type name"};
 }
@@ -634,7 +656,6 @@ val_res val_name(vector_ref<std::string> tokens)
 
 val_res parser::is_valid(parser::token_string tokens)
 {
-  const static auto trim_test = [](const auto& s) { return s=="\n" || s==";"; };
   tokens = ltrim_if(tokens, trim_test);
 
   while (tokens.size()) {
