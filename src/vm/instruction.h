@@ -1,21 +1,28 @@
 #ifndef VV_VM_INSTRUCTIONS_H
 #define VV_VM_INSTRUCTIONS_H
 
-#include "expression.h"
 #include "symbol.h"
-#include "value.h"
 
-#include <pthread/pthread.h>
 #include <boost/variant/variant.hpp>
+
+#include <unordered_map>
+#include <vector>
 
 namespace vv {
 
 namespace vm {
 
+struct command;
+
+struct function_t {
+  int argc;
+  std::vector<command> body;
+};
+
 struct type_t {
   symbol name;
   symbol parent;
-  std::unordered_map<symbol, std::vector<command>> methods;
+  std::unordered_map<symbol, function_t> methods;
 };
 
 struct nil_t { };
@@ -52,16 +59,16 @@ enum class instruction {
   self,
   /// pushes retval onto arg stack
   push_arg,
-  /// reads (and pops off) top of arg stack into retval
-  pop_arg,
-  /// verifies that the correct number of arguments have been passed
-  argc,
+  /// retrieves the nth passed argument, where n is the provided integer
+  arg,
   /// reads a member into retval
   readm,
   /// sets a member to retval
   writem,
   /// calls retval, using the provided number of pushed arguments
   call,
+  /// creates new object of the type in retval
+  new_obj,
 
   /// enters a new block
   eblk,
@@ -99,7 +106,7 @@ public:
   command(instruction instr, bool arg);
   command(instruction instr, const std::string& arg);
   command(instruction instr, double arg);
-  command(instruction instr, const std::vector<command>& arg);
+  command(instruction instr, const function_t& arg);
   command(instruction instr, const type_t& arg);
   command(instruction instr);
 
@@ -109,7 +116,7 @@ public:
                 bool,
                 std::string,
                 double,
-                std::vector<command>,
+                function_t,
                 type_t,
                 nil_t>
     arg;

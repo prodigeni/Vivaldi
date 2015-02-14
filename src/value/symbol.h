@@ -10,7 +10,7 @@ namespace value {
 
 struct symbol : public base {
 public:
-  symbol(vv::symbol val);
+  symbol(vv::symbol val = {});
 
   std::string value() const override;
 

@@ -2,6 +2,7 @@
 #define VV_VALUE_H
 
 #include "symbol.h"
+#include "vm/instruction.h"
 
 #include <unordered_map>
 #include <vector>
@@ -37,6 +38,7 @@ struct symbol;
 
 struct base {
   base(type* type);
+  base();
 
   virtual std::string value() const { return "<object>"; }
 
@@ -54,13 +56,14 @@ private:
 };
 
 struct type : public base {
-  type(const std::function<value::base*(vm::machine&)>& constructor,
+  type(const std::function<value::base*()>& constructor,
        const std::unordered_map<vv::symbol, value::base*>& methods,
        value::base& parent,
        vv::symbol name);
 
   std::unordered_map<vv::symbol, value::base*> methods;
-  std::function<value::base*(vm::machine&)> constructor;
+  std::function<value::base*()> constructor;
+  vm::function_t init_shim;
 
   value::base& parent;
   vv::symbol name;

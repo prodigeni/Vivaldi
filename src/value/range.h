@@ -9,10 +9,11 @@ namespace value {
 
 struct range : public base {
   range(value::base& start, value::base& end);
+  range();
   std::string value() const override;
 
   value::base* start;
-  value::base& end;
+  value::base* end;
 
   void mark() override;
 };

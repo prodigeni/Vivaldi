@@ -74,7 +74,7 @@ Provides a range over any pair of objects that can be
 A range covers [start, end):
 
 <pre><code>
-    >>> for i in 1 to 5: puts(i) // <x> to <y> is syntax sugar for Range(x, y)
+    >>> for i in 1 to 5: puts(i) // <x> to <y> is sugar for new Range(x, y)
     1
     2
     3
@@ -153,7 +153,7 @@ Defining custom types is simple:
       fn x_is_equal_to(y): self.x = y
     end
 
-    let my_obj = MyType(5)
+    let my_obj = new MyType(5)
     let yes = my_obj.x_is_equal_to(5)
     let no = my_obj.x_is_equal_to(47)
 </code></pre>

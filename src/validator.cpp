@@ -30,6 +30,7 @@ val_res val_function_call(       vector_ref<std::string> tokens);
 val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
 val_res val_member(              vector_ref<std::string> tokens);
+val_res val_new_obj(             vector_ref<std::string> tokens);
 val_res val_except(              vector_ref<std::string> tokens);
 val_res val_require(             vector_ref<std::string> tokens);
 val_res val_return(              vector_ref<std::string> tokens);
@@ -113,6 +114,7 @@ val_res val_expression(vector_ref<std::string> tokens)
       || ((res = val_while_loop(tokens))           || res.invalid())
       || ((res = val_function_definition(tokens))  || res.invalid())
       || ((res = val_monop_call(tokens))           || res.invalid())
+      || ((res = val_new_obj(tokens))              || res.invalid())
       || ((res = val_literal(tokens))              || res.invalid())
       || ((res = val_dict_literal(tokens))         || res.invalid())
       || ((res = val_array_literal(tokens))        || res.invalid())
@@ -332,6 +334,25 @@ val_res val_member(vector_ref<std::string> tokens)
   if (tokens.size() && tokens.front() == "=")
     return val_expression(tokens.subvec(1));
   return tokens;
+}
+
+// }}}
+// new_obj {{{
+
+val_res val_new_obj(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "new")
+    return {};
+  auto name = val_name(tokens.subvec(1)); // 'new'
+  if (name) {
+    auto call = val_function_call(*name);
+    if (call || call.invalid())
+      return call;
+    return {tokens, "expected argument list"};
+  }
+  if (name.invalid())
+    return name;
+  return {tokens, "expected type name"};
 }
 
 // }}}

@@ -6,9 +6,11 @@
 
 using namespace vv;
 
-value::function::function(const std::vector<vm::command>& new_body,
+value::function::function(int new_argc,
+                          const std::vector<vm::command>& new_body,
                           std::shared_ptr<vm::call_frame> new_enclosure)
   : base      {&builtin::type::function},
+    argc      {new_argc},
     body      {new_body},
     enclosure {new_enclosure}
 { }

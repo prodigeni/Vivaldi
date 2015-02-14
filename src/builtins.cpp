@@ -32,7 +32,7 @@ namespace {
 
 value::base* fn_print(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
 
   if (arg->type == &type::string)
     std::cout << static_cast<value::string*>(arg)->val;
@@ -112,16 +112,14 @@ boost::optional<vv::symbol> to_symbol(const value::base& boxed)
 
 // array {{{
 
-value::base* fn_array_ctr(vm::machine& vm)
+value::base* fn_array_init(vm::machine& vm)
 {
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-  auto arg = pop_arg(vm);
+  auto arr = static_cast<value::array*>(&*vm.frame->self);
+  auto arg = get_arg(vm, 0);
   if (arg->type != &type::array)
     return throw_exception("Arrays can only be constructed from other Arrays", vm);
-  return gc::alloc<value::array>( *static_cast<value::array*>(arg) );
+  arr->val = static_cast<value::array*>( arg )->val;
+  return arr;
 }
 
 value::base* fn_array_size(vm::machine& vm)
@@ -132,7 +130,7 @@ value::base* fn_array_size(vm::machine& vm)
 
 value::base* fn_array_append(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
   if (arg->type == &type::array) {
     auto& arr = static_cast<value::array&>(*vm.frame->self).val;
     const auto& new_val = static_cast<value::array*>(arg)->val;
@@ -145,7 +143,7 @@ value::base* fn_array_append(vm::machine& vm)
 
 value::base* fn_array_at(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
   if (arg->type != &type::integer)
     return throw_exception("Index must be an Integer", vm);
   auto val = static_cast<value::integer*>(arg)->val;
@@ -174,18 +172,6 @@ value::base* fn_array_end(vm::machine& vm)
 
 // }}}
 // array_iterator {{{
-
-value::base* fn_array_iterator_ctr(vm::machine& vm)
-{
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-  auto arg = pop_arg(vm);
-  if (arg->type != &type::array)
-    return throw_exception("ArrayIterators can only iterate over Arrays", vm);
-  return gc::alloc<value::array_iterator>( *static_cast<value::array*>(arg) );
-}
 
 value::base* fn_array_iterator_at_start(vm::machine& vm)
 {
@@ -228,7 +214,7 @@ value::base* fn_array_iterator_decrement(vm::machine& vm)
 value::base* fn_array_iterator_add(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
-  auto offset = to_int(*pop_arg(vm));
+  auto offset = to_int(*get_arg(vm, 0));
 
   if (!offset)
     return throw_exception("Only numeric types can be added to ArrayIterators", vm);
@@ -245,7 +231,7 @@ value::base* fn_array_iterator_add(vm::machine& vm)
 value::base* fn_array_iterator_subtract(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
-  auto offset = to_int(*pop_arg(vm));
+  auto offset = to_int(*get_arg(vm, 0));
 
   if (!offset)
     return throw_exception("Only numeric types can be added to ArrayIterators", vm);
@@ -262,7 +248,7 @@ value::base* fn_array_iterator_subtract(vm::machine& vm)
 value::base* fn_array_iterator_equals(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
-  auto other = static_cast<value::array_iterator*>(pop_arg(vm));
+  auto other = static_cast<value::array_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->arr == &other->arr
                                   && iter->idx == other->idx );
 }
@@ -270,7 +256,7 @@ value::base* fn_array_iterator_equals(vm::machine& vm)
 value::base* fn_array_iterator_unequal(vm::machine& vm)
 {
   auto iter = static_cast<value::array_iterator*>(&*vm.frame->self);
-  auto other = static_cast<value::array_iterator*>(pop_arg(vm));
+  auto other = static_cast<value::array_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->arr != &other->arr
                                   || iter->idx != other->idx );
 }
@@ -278,14 +264,9 @@ value::base* fn_array_iterator_unequal(vm::machine& vm)
 // }}}
 // boolean {{{
 
-value::base* fn_bool_ctr(vm::machine& vm)
+value::base* fn_bool_init(vm::machine& vm)
 {
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-  auto arg = pop_arg(vm);
-
+  auto arg = get_arg(vm, 0);
   if (arg->type == &type::boolean)
     return arg;
   return gc::alloc<value::boolean>( truthy(arg) );
@@ -293,24 +274,6 @@ value::base* fn_bool_ctr(vm::machine& vm)
 
 // }}}
 // custom_type {{{
-
-value::base* fn_custom_type_ctr(vm::machine& vm)
-{
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-
-  auto arg = pop_arg(vm);
-  if (arg->type != &type::custom_type)
-    return throw_exception("Types can only be constructed from other Types", vm);
-
-  // This whole lack-of-type-deduction thing is a real pain
-  return gc::alloc<value::type>( nullptr,
-                                 std::unordered_map<symbol, value::base*>{},
-                                 *arg,
-                                 symbol{"<anonymous type>"} );
-}
 
 value::base* fn_custom_type_parent(vm::machine& vm)
 {
@@ -320,34 +283,13 @@ value::base* fn_custom_type_parent(vm::machine& vm)
 // }}}
 // integer {{{
 
-value::base* fn_integer_ctr(vm::machine& vm)
-{
-  if (vm.frame->args == 0)
-    return gc::alloc<value::integer>( 0 );
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-
-  auto arg = pop_arg(vm);
-  auto type = arg->type;
-
-  if (type == &type::integer)
-    return arg;
-
-  if (type == &type::floating_point)
-    return gc::alloc<value::integer>( static_cast<int>(*to_float(*arg)) );
-
-  return throw_exception("Cannot create Integer from " + arg->type->value(), vm);
-}
-
 template <typename F>
 auto fn_int_or_flt_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
 
-    auto arg = pop_arg(vm);
+    auto arg = get_arg(vm, 0);
     if (arg->type == &type::floating_point) {
       auto left = *to_float(*vm.frame->self);
       auto right = *to_float(*arg);
@@ -371,7 +313,7 @@ auto fn_integer_op(const F& op)
   {
 
     auto left = to_int(*vm.frame->self);
-    auto right = to_int(*pop_arg(vm));
+    auto right = to_int(*get_arg(vm, 0));
     if (!right)
       return throw_exception("Right-hand argument is not an Integer", vm);
     // Apparently moving from integers is a bad idea; without the explicit int&&
@@ -395,7 +337,7 @@ auto fn_int_bool_op(const F& op)
   return [=](vm::machine& vm)
   {
 
-    auto arg = pop_arg(vm);
+    auto arg = get_arg(vm, 0);
     if (arg->type == &type::floating_point) {
       auto left = *to_float(*vm.frame->self);
       auto right = *to_float(*arg);
@@ -413,36 +355,13 @@ auto fn_int_bool_op(const F& op)
 // }}}
 // floating_point {{{
 
-value::base* fn_floating_point_ctr(vm::machine& vm)
-{
-  if (vm.frame->args == 0)
-    return gc::alloc<value::floating_point>( 0.0 );
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-
-  auto arg = pop_arg(vm);
-  auto type = arg->type;
-
-  if (type == &type::floating_point)
-    return arg;
-
-  if (type == &type::integer) {
-    auto int_val = *to_int(*arg);
-    return gc::alloc<value::floating_point>( static_cast<double>(int_val) );
-  }
-
-  return throw_exception("Cannot create Float from " + arg->value(), vm);
-}
-
 template <typename F>
 auto fn_floating_point_op(const F& op)
 {
   return [=](vm::machine& vm)
   {
     auto left = to_float(*vm.frame->self);
-    auto right = to_float(*pop_arg(vm));
+    auto right = to_float(*get_arg(vm, 0));
     if (!right)
       return throw_exception("Right-hand argument is not a Float", vm);
     return gc::alloc<value::floating_point>( op(*left, *right) );
@@ -455,7 +374,7 @@ auto fn_float_bool_op(const F& op)
   return [=](vm::machine& vm)
   {
     auto left = to_float(*vm.frame->self);
-    auto right = to_float(*pop_arg(vm));
+    auto right = to_float(*get_arg(vm, 0));
     if (!right)
       return throw_exception("Right-hand argument is not a Float", vm);
     return gc::alloc<value::boolean>( op(*left, *right) );
@@ -470,24 +389,14 @@ value::base* fn_floating_point_negative(vm::machine& vm)
 // }}}
 // object {{{
 
-
-value::base* fn_object_ctr(vm::machine& vm)
-{
-  if (vm.frame->args != 0) {
-    vm.argc(0);
-    return vm.retval;
-  }
-  return gc::alloc<value::base>( &type::object );
-}
-
 value::base* fn_object_equals(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( &*vm.frame->self == pop_arg(vm) );
+  return gc::alloc<value::boolean>( &*vm.frame->self == get_arg(vm, 0) );
 }
 
 value::base* fn_object_unequal(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( &*vm.frame->self != pop_arg(vm) );
+  return gc::alloc<value::boolean>( &*vm.frame->self != get_arg(vm, 0) );
 }
 
 value::base* fn_object_not(vm::machine& vm)
@@ -504,15 +413,12 @@ value::base* fn_object_type(vm::machine& vm)
 // range {{{
 
 
-value::base* fn_range_ctr(vm::machine& vm)
+value::base* fn_range_init(vm::machine& vm)
 {
-  if (vm.frame->args != 2) {
-    vm.argc(2);
-    return vm.retval;
-  }
-  auto end = pop_arg(vm);
-  auto start = pop_arg(vm);
-  return gc::alloc<value::range>( *start, *end );
+  auto& rng = static_cast<value::range&>(*vm.frame->self);
+  rng.end = get_arg(vm, 1);
+  rng.start = get_arg(vm, 0);
+  return &rng;
 }
 
 value::base* fn_range_start(vm::machine& vm)
@@ -525,7 +431,7 @@ value::base* fn_range_size(vm::machine& vm)
   auto& rng = static_cast<value::range&>(*vm.frame->self);
   vm.retval = rng.start;
   vm.push_arg();
-  vm.retval = &rng.end;
+  vm.retval = rng.end;
   vm.readm({"subtract"});
   vm.call(1);
   return vm.retval;
@@ -536,7 +442,7 @@ value::base* fn_range_at_end(vm::machine& vm)
   auto& rng = static_cast<value::range&>(*vm.frame->self);
   vm.retval = rng.start;
   vm.push_arg();
-  vm.retval = &rng.end;
+  vm.retval = rng.end;
   vm.readm({"greater"});
   vm.call(1);
   vm.readm({"not"});
@@ -564,16 +470,9 @@ value::base* fn_range_increment(vm::machine& vm)
 // }}}
 // string {{{
 
-value::base* fn_string_ctr(vm::machine& vm)
+value::base* fn_string_init(vm::machine& vm)
 {
-  if (vm.frame->args == 0)
-    return gc::alloc<value::string>( "" );
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
   if (arg->type == &type::string)
     return gc::alloc<value::string>( *to_string(*arg) );
   if (arg->type == &type::symbol)
@@ -589,7 +488,7 @@ value::base* fn_string_size(vm::machine& vm)
 
 value::base* fn_string_equals(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
@@ -598,7 +497,7 @@ value::base* fn_string_equals(vm::machine& vm)
 
 value::base* fn_string_unequal(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
   if (arg->type != &type::string)
     return gc::alloc<value::boolean>( false );
   return gc::alloc<value::boolean>(
@@ -607,7 +506,7 @@ value::base* fn_string_unequal(vm::machine& vm)
 
 value::base* fn_string_append(vm::machine& vm)
 {
-  auto str = to_string(*pop_arg(vm));
+  auto str = to_string(*get_arg(vm, 0));
   if (!str)
     return throw_exception("Only strings can be appended to other strings", vm);
   static_cast<value::string&>(*vm.frame->self).val += *str;
@@ -616,7 +515,7 @@ value::base* fn_string_append(vm::machine& vm)
 
 value::base* fn_string_add(vm::machine& vm)
 {
-  auto str = to_string(*pop_arg(vm));
+  auto str = to_string(*get_arg(vm, 0));
   if (!str)
     return throw_exception("Only Strings can be appended to other Strings", vm);
   auto new_str = static_cast<value::string&>(*vm.frame->self).val + *str;
@@ -625,7 +524,7 @@ value::base* fn_string_add(vm::machine& vm)
 
 value::base* fn_string_times(vm::machine& vm)
 {
-  auto times = to_int(*pop_arg(vm));
+  auto times = to_int(*get_arg(vm, 0));
   if (!times)
     return throw_exception("Strings can only be multiplied by numbers", vm);
   auto val = static_cast<value::string&>(*vm.frame->self).val;
@@ -637,18 +536,6 @@ value::base* fn_string_times(vm::machine& vm)
 
 // }}}
 // string_iterator {{{
-
-value::base* fn_string_iterator_ctr(vm::machine& vm)
-{
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-  auto arg = pop_arg(vm);
-  if (arg->type != &type::string)
-    return throw_exception("StringIterators can only iterate over strings", vm);
-  return gc::alloc<value::string_iterator>( *static_cast<value::string*>(arg) );
-}
 
 value::base* fn_string_iterator_at_start(vm::machine& vm)
 {
@@ -691,7 +578,7 @@ value::base* fn_string_iterator_decrement(vm::machine& vm)
 value::base* fn_string_iterator_add(vm::machine& vm)
 {
   auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
-  auto offset = to_int(*pop_arg(vm));
+  auto offset = to_int(*get_arg(vm, 0));
 
   if (!offset)
     return throw_exception("Only numeric types can be added to StringIterators", vm);
@@ -708,7 +595,7 @@ value::base* fn_string_iterator_add(vm::machine& vm)
 value::base* fn_string_iterator_subtract(vm::machine& vm)
 {
   auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
-  auto offset = to_int(*pop_arg(vm));
+  auto offset = to_int(*get_arg(vm, 0));
 
   if (!offset)
     return throw_exception("Only numeric types can be added to StringIterators", vm);
@@ -725,7 +612,7 @@ value::base* fn_string_iterator_subtract(vm::machine& vm)
 value::base* fn_string_iterator_equals(vm::machine& vm)
 {
   auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
-  auto other = static_cast<value::string_iterator*>(pop_arg(vm));
+  auto other = static_cast<value::string_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->str == &other->str
                                   && iter->idx == other->idx );
 }
@@ -733,7 +620,7 @@ value::base* fn_string_iterator_equals(vm::machine& vm)
 value::base* fn_string_iterator_unequal(vm::machine& vm)
 {
   auto iter = static_cast<value::string_iterator*>(&*vm.frame->self);
-  auto other = static_cast<value::string_iterator*>(pop_arg(vm));
+  auto other = static_cast<value::string_iterator*>(get_arg(vm, 0));
   return gc::alloc<value::boolean>( &iter->str != &other->str
                                   || iter->idx != other->idx );
 }
@@ -741,13 +628,9 @@ value::base* fn_string_iterator_unequal(vm::machine& vm)
 // }}}
 // symbol {{{
 
-value::base* fn_symbol_ctr(vm::machine& vm)
+value::base* fn_symbol_init(vm::machine& vm)
 {
-  if (vm.frame->args != 1) {
-    vm.argc(1);
-    return vm.retval;
-  }
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
 
   if (arg->type == &type::symbol)
     return arg;
@@ -760,7 +643,7 @@ value::base* fn_symbol_ctr(vm::machine& vm)
 
 value::base* fn_symbol_equals(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( false );
@@ -770,7 +653,7 @@ value::base* fn_symbol_equals(vm::machine& vm)
 
 value::base* fn_symbol_unequal(vm::machine& vm)
 {
-  auto arg = pop_arg(vm);
+  auto arg = get_arg(vm, 0);
 
   if (arg->type != &type::symbol)
     return gc::alloc<value::boolean>( true );
@@ -798,7 +681,7 @@ builtin_function obj_unequal {fn_object_unequal, 1};
 builtin_function obj_not     {fn_object_not,     0};
 builtin_function obj_type    {fn_object_type,    0};
 }
-value::type type::object {fn_object_ctr, {
+value::type type::object {gc::alloc<value::base>, {
   { {"equals"},  &obj_equals },
   { {"unequal"}, &obj_unequal },
   { {"not"},     &obj_not },
@@ -806,13 +689,15 @@ value::type type::object {fn_object_ctr, {
 }, builtin::type::object, {"Object"}};
 
 namespace {
+builtin_function array_init   {fn_array_init,   1};
 builtin_function array_size   {fn_array_size,   0};
 builtin_function array_append {fn_array_append, 1};
 builtin_function array_at     {fn_array_at,     1};
 builtin_function array_start  {fn_array_start,  0};
 builtin_function array_end    {fn_array_end,    0};
 }
-value::type type::array {fn_array_ctr, {
+value::type type::array {gc::alloc<value::array>, {
+  { {"init"},   &array_init },
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at },
@@ -831,7 +716,7 @@ builtin_function array_iterator_decrement {fn_array_iterator_decrement, 0};
 builtin_function array_iterator_add       {fn_array_iterator_add,       1};
 builtin_function array_iterator_subtract  {fn_array_iterator_subtract,  1};
 }
-value::type type::array_iterator {fn_array_iterator_ctr, {
+value::type type::array_iterator {[]{ return nullptr; }, {
   { {"at_start"},  &array_iterator_at_start },
   { {"at_end"},    &array_iterator_at_end },
   { {"get"},       &array_iterator_get },
@@ -863,7 +748,7 @@ builtin_function int_greater_equals {fn_int_bool_op([](auto a, auto b){ return a
 builtin_function int_negative       {fn_integer_monop(std::negate<int>{}),                  0};
 builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{}),                 0};
 }
-value::type type::integer{fn_integer_ctr, {
+value::type type::integer{[]{ return nullptr; }, {
   { {"add"},            &int_add            },
   { {"subtract"},       &int_subtract       },
   { {"times"},          &int_times          },
@@ -897,7 +782,7 @@ builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{})
 builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{}),  1};
 builtin_function flt_negative       {fn_floating_point_negative,                      0};
 }
-value::type type::floating_point{fn_floating_point_ctr, {
+value::type type::floating_point{[]{ return nullptr; }, {
   { {"equals"},         &flt_equals         },
   { {"unequal"},        &flt_unequal        },
   { {"add"},            &flt_add            },
@@ -912,13 +797,15 @@ value::type type::floating_point{fn_floating_point_ctr, {
 }, builtin::type::object, {"Float"}};
 
 namespace {
+builtin_function range_init      {fn_range_init,      2};
 builtin_function range_start     {fn_range_start,     0};
 builtin_function range_size      {fn_range_size,      0};
 builtin_function range_at_end    {fn_range_at_end,    0};
 builtin_function range_get       {fn_range_get,       0};
 builtin_function range_increment {fn_range_increment, 0};
 }
-value::type type::range {fn_range_ctr, {
+value::type type::range {gc::alloc<value::range>, {
+  { {"init"},      &range_init },
   { {"start"},     &range_start },
   { {"size"},      &range_size },
   { {"at_end"},    &range_at_end },
@@ -927,6 +814,7 @@ value::type type::range {fn_range_ctr, {
 }, builtin::type::object, {"Range"}};
 
 namespace {
+builtin_function string_init    {fn_string_init,    1};
 builtin_function string_size    {fn_string_size,    0};
 builtin_function string_append  {fn_string_append,  1};
 builtin_function string_equals  {fn_string_equals,  1};
@@ -934,7 +822,8 @@ builtin_function string_unequal {fn_string_unequal, 1};
 builtin_function string_add     {fn_string_add,     1};
 builtin_function string_times   {fn_string_times,   1};
 }
-value::type type::string {fn_string_ctr, {
+value::type type::string {gc::alloc<value::string>, {
+  { {"init"},    &string_init    },
   { {"size"},    &string_size    },
   { {"append"},  &string_append  },
   { {"equals"},  &string_equals  },
@@ -954,41 +843,50 @@ builtin_function string_iterator_decrement {fn_string_iterator_decrement, 0};
 builtin_function string_iterator_add       {fn_string_iterator_add,       1};
 builtin_function string_iterator_subtract  {fn_string_iterator_subtract,  1};
 }
-value::type type::string_iterator {fn_string_iterator_ctr, {
-  { {"at_start"},  &string_iterator_at_start },
-  { {"at_end"},    &string_iterator_at_end },
-  { {"get"},       &string_iterator_get },
-  { {"equals"},    &string_iterator_equals },
-  { {"unequal"},   &string_iterator_unequal },
+value::type type::string_iterator {[]{ return nullptr; }, {
+  { {"at_start"},  &string_iterator_at_start  },
+  { {"at_end"},    &string_iterator_at_end    },
+  { {"get"},       &string_iterator_get       },
+  { {"equals"},    &string_iterator_equals    },
+  { {"unequal"},   &string_iterator_unequal   },
   { {"increment"}, &string_iterator_increment },
   { {"decrement"}, &string_iterator_decrement },
-  { {"add"},       &string_iterator_add },
-  { {"subtract"},  &string_iterator_subtract },
+  { {"add"},       &string_iterator_add       },
+  { {"subtract"},  &string_iterator_subtract  },
 }, builtin::type::object, {"StringIterator"}};
 
 namespace {
+builtin_function symbol_init    {fn_symbol_init,    1};
 builtin_function symbol_equals  {fn_symbol_equals,  1};
 builtin_function symbol_unequal {fn_symbol_unequal, 1};
 builtin_function symbol_to_str  {fn_symbol_to_str,  0};
 }
-value::type type::symbol {fn_symbol_ctr, {
+value::type type::symbol {gc::alloc<value::symbol>, {
+  { {"init"},    &symbol_init    },
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
   { {"to_str"},  &symbol_to_str  }
 }, builtin::type::object, {"Symbol"}};
 
-value::type type::boolean {fn_bool_ctr, {
+namespace {
+builtin_function bool_init {fn_bool_init, 1};
+}
+value::type type::boolean {gc::alloc<value::boolean>, {
+  { {"init"}, &bool_init }
 }, builtin::type::object, {"Bool"}};
 
 namespace {
 builtin_function custom_type_parent {fn_custom_type_parent, 0};
 }
-value::type type::custom_type {fn_custom_type_ctr, {
+value::type type::custom_type {[]{ return nullptr; }, {
   { {"parent"}, &custom_type_parent }
 }, builtin::type::object, {"Type"}};
 
-value::type type::nil      {nullptr, { }, builtin::type::object, {"Nil"}};
-value::type type::function {nullptr, { }, builtin::type::object, {"Function"}};
+value::type type::nil      {[]{ return nullptr; }, {
+}, builtin::type::object, {"Nil"}};
+
+value::type type::function {[]{ return nullptr; }, {
+}, builtin::type::object, {"Function"}};
 
 // }}}
 

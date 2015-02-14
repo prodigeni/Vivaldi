@@ -33,7 +33,7 @@ vm::command::command(instruction new_instr, double new_arg)
     arg   {new_arg}
 { }
 
-vm::command::command(instruction new_instr, const std::vector<command>& new_arg)
+vm::command::command(instruction new_instr, const function_t& new_arg)
   : instr {new_instr},
     arg   {new_arg}
 { }

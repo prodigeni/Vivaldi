@@ -15,17 +15,20 @@ ast::function_definition::function_definition(symbol name,
 
 std::vector<vm::command> ast::function_definition::generate() const
 {
+  const auto argc = static_cast<int>(m_args.size());
   std::vector<vm::command> definition;
-  definition.emplace_back(vm::instruction::argc, static_cast<int>(m_args.size()));
-  transform(rbegin(m_args), rend(m_args), back_inserter(definition),
-            [](auto i) { return vm::command{vm::instruction::pop_arg, i}; });
+  for (auto i = argc; i--;) {
+    definition.emplace_back(vm::instruction::arg, i);
+    definition.emplace_back(vm::instruction::let, m_args[i]);
+  }
 
   auto body = m_body->generate();
   copy(begin(body), end(body), back_inserter(definition));
   definition.emplace_back(vm::instruction::ret);
 
   std::vector<vm::command> vec;
-  vec.emplace_back(vm::instruction::push_fn, move(definition));
+  vec.emplace_back( vm::instruction::push_fn,
+                    vm::function_t{argc, move(definition)} );
 
   if (m_name != symbol{})
     vec.emplace_back(vm::instruction::let, m_name);

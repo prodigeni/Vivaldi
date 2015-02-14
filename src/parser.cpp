@@ -15,6 +15,7 @@
 #include "ast/logical_or.h"
 #include "ast/member.h"
 #include "ast/member_assignment.h"
+#include "ast/object_creation.h"
 #include "ast/require.h"
 #include "ast/return_statement.h"
 #include "ast/try_catch.h"
@@ -54,6 +55,7 @@ using namespace ast;
  *                  ::= for_loop
  *                  ::= function_definition
  *                  ::= literal
+ *                  ::= new_obj
  *                  ::= require
  *                  ::= return
  *                  ::= try_catch
@@ -135,6 +137,8 @@ using namespace ast;
  *         ::= string
  *         ::= symbol
  *
+ * new_obj ::= 'new' variable '(' expr_list ')'
+ *
  * require ::= 'require' string
  *
  * return ::= 'return' expression
@@ -211,6 +215,7 @@ parse_res<> parse_except(vector_ref<std::string> tokens);
 parse_res<> parse_for_loop(vector_ref<std::string> tokens);
 parse_res<> parse_function_definition(vector_ref<std::string> tokens);
 parse_res<> parse_literal(vector_ref<std::string> tokens);
+parse_res<> parse_new_obj(vector_ref<std::string> tokens);
 parse_res<> parse_require(vector_ref<std::string> tokens);
 parse_res<> parse_return(vector_ref<std::string> tokens);
 parse_res<> parse_try_catch(vector_ref<std::string> tokens);
@@ -369,7 +374,7 @@ parse_res<> parse_prec8(vector_ref<std::string> tokens)
 
     auto range = std::make_unique<variable>( symbol{"Range"} );
 
-    return {{std::make_unique<function_call>(move(range), move(args)), tokens}};
+    return {{std::make_unique<object_creation>(move(range), move(args)), tokens}};
   }
   return left_res;
 }
@@ -505,7 +510,8 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
   if ((res = parse_literal(tokens)))              return res;
-  if ((res = parse_require(tokens)))               return res;
+  if ((res = parse_new_obj(tokens)))              return res;
+  if ((res = parse_require(tokens)))              return res;
   if ((res = parse_return(tokens)))               return res;
   if ((res = parse_try_catch(tokens)))            return res;
   if ((res = parse_type_definition(tokens)))      return res;
@@ -652,6 +658,25 @@ parse_res<> parse_literal(vector_ref<std::string> tokens)
   if ((res = parse_symbol(tokens)))  return res;
   if ((res = parse_string(tokens)))  return res;
   return res;
+}
+
+parse_res<> parse_new_obj(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "new")
+    return {};
+  tokens = tokens.subvec(1); // 'new'
+
+  auto type_res = parse_variable(tokens);
+  auto type = move(type_res->first);
+  tokens = type_res->second;
+  tokens = type_res->second;
+
+  auto args_res = parse_function_call(tokens);
+  auto args = move(args_res->first);
+  tokens = args_res->second;
+
+  return {{ std::make_unique<object_creation>( move(type), move(args) ),
+            tokens }};
 }
 
 parse_res<> parse_require(vector_ref<std::string> tokens)

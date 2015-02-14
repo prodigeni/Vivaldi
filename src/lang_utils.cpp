@@ -20,11 +20,9 @@ vv::value::base* vv::throw_exception(const std::string& value, vm::machine& vm)
   return vm.retval;
 }
 
-vv::value::base* vv::pop_arg(vm::machine& vm)
+vv::value::base* vv::get_arg(vm::machine& vm, size_t idx)
 {
-  auto arg = vm.frame->parent->pushed.back();
-  vm.frame->parent->pushed.pop_back();
-  return arg;
+  return *(end(vm.frame->parent->pushed) - vm.frame->args + idx);
 }
 
 vv::value::base* vv::find_method(value::type* type, symbol name)

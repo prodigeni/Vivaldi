@@ -31,6 +31,8 @@ public:
     m_sz   ( static_cast<size_t>(last - first) )
   { }
 
+  vector_ref() : m_data{nullptr}, m_sz{0} { }
+
   vector_ref subvec(size_t front, size_t back = npos) const
   {
     return {m_data + front, m_data + (back == npos ? m_sz : back)};

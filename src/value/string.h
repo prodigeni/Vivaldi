@@ -11,7 +11,7 @@ namespace value {
 
 struct string : public base {
 public:
-  string(const std::string& val);
+  string(const std::string& val = "");
 
   std::string value() const override;
 

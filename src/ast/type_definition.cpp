@@ -19,19 +19,10 @@ ast::type_definition::type_definition(
 
 std::vector<vm::command> ast::type_definition::generate() const
 {
-  // This is ABSOLUTELY HIDEOUS. Instead of doing it the right way and having a
-  // builtin type-definition instruction, I create types by calling the Type
-  // constructor with the following function arguments:
-  // 1. a type name
-  // 1. a parent class
-  // 2. a method name
-  // 3. a method body
-  // (where 2 and 3 are repeated for each method given)
-  // At some point I should probably do not that, but it does *work*
-  std::unordered_map<symbol, std::vector<vm::command>> methods;
+  std::unordered_map<symbol, vm::function_t> methods;
   for (const auto& i : m_methods) {
     auto arg = i.second.generate().front().arg;
-    methods[i.first] = boost::get<std::vector<vm::command>>(arg);
+    methods[i.first] = boost::get<vm::function_t>(arg);
   }
 
   std::vector<vm::command> vec;

@@ -13,7 +13,7 @@ class Derived : Base
   fn get_a(): self._a
 end
 
-let obj = Derived(1, 2)
+let obj = new Derived(1, 2)
 
 assert(obj.type() == Derived,       "obj.type() == Derived")
 assert(obj.type().parent() == Base, "obj.type().parent() == Base")
@@ -28,10 +28,3 @@ assert(obj._pythonesque == nil,     "obj._pythonesque == nil")
 fn external_mem(): self.get_a()
 obj._external = external_mem
 assert(obj._external() == obj._a,   "obj._external == obj._a")
-
-let custom_type = Type(Base)
-assert(custom_type.parent() == Base, "custom_type.parent() == Base")
-let custom_obj = custom_type()
-assert(custom_obj.type() == custom_type, "custom_obj.type() == custom_type")
-custom_obj.set_a(3)
-assert(custom_obj._a == 3, "custom_obj._a == 3")

@@ -9,7 +9,7 @@ namespace value {
 
 struct boolean : public base {
 public:
-  boolean(bool val);
+  boolean(bool val = true);
 
   std::string value() const override;
 

@@ -39,6 +39,7 @@ add_executable(vivaldi
   src/ast/logical_or.cpp
   src/ast/member.cpp
   src/ast/member_assignment.cpp
+  src/ast/object_creation.cpp
   src/ast/require.cpp
   src/ast/return_statement.cpp
   src/ast/try_catch.cpp

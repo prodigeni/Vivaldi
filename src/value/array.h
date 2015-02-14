@@ -10,7 +10,7 @@ namespace value {
 
 struct array : public base {
 public:
-  array(const std::vector<base*>& mems);
+  array(const std::vector<base*>& mems = {});
 
   std::string value() const override;
   void mark() override;

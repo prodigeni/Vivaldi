@@ -11,6 +11,7 @@ namespace value {
 struct string_iterator : public base {
 public:
   string_iterator(string& str);
+  string_iterator();
 
   std::string value() const override;
   void mark() override;

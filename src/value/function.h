@@ -11,11 +11,13 @@ namespace vv {
 namespace value {
 
 struct function : public base {
-  function(const std::vector<vm::command>& body,
+  function(int argc,
+           const std::vector<vm::command>& body,
            std::shared_ptr<vm::call_frame> enclosure);
 
   std::string value() const override;
 
+  int argc;
   std::vector<vm::command> body;
   std::shared_ptr<vm::call_frame> enclosure;
 };

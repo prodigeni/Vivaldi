@@ -55,28 +55,28 @@ void vm::machine::run()
       frame->pushed_self = {};
 
     switch (instr) {
-    case instruction::push_bool: push_bool(get<bool>(arg));               break;
-    case instruction::push_flt:  push_flt(get<double>(arg));              break;
-    case instruction::push_fn:   push_fn(get<std::vector<command>>(arg)); break;
-    case instruction::push_int:  push_int(get<int>(arg));                 break;
-    case instruction::push_nil:  push_nil();                              break;
-    case instruction::push_str:  push_str(get<std::string>(arg));         break;
-    case instruction::push_sym:  push_sym(get<symbol>(arg));              break;
-    case instruction::push_type: push_type(get<type_t>(arg));             break;
+    case instruction::push_bool: push_bool(get<bool>(arg));       break;
+    case instruction::push_flt:  push_flt(get<double>(arg));      break;
+    case instruction::push_fn:   push_fn(get<function_t>(arg));   break;
+    case instruction::push_int:  push_int(get<int>(arg));         break;
+    case instruction::push_nil:  push_nil();                      break;
+    case instruction::push_str:  push_str(get<std::string>(arg)); break;
+    case instruction::push_sym:  push_sym(get<symbol>(arg));      break;
+    case instruction::push_type: push_type(get<type_t>(arg));     break;
 
-    case instruction::make_arr:  make_arr(get<int>(arg));  break;
+    case instruction::make_arr:  make_arr(get<int>(arg)); break;
 
     case instruction::read:  read(get<symbol>(arg));  break;
     case instruction::write: write(get<symbol>(arg)); break;
     case instruction::let:   let(get<symbol>(arg));   break;
 
-    case instruction::self:     self();                    break;
-    case instruction::push_arg: push_arg();                break;
-    case instruction::pop_arg:  pop_arg(get<symbol>(arg)); break;
-    case instruction::argc:     argc(get<int>(arg));       break;
-    case instruction::readm:    readm(get<symbol>(arg));   break;
-    case instruction::writem:   writem(get<symbol>(arg));  break;
-    case instruction::call:     call(get<int>(arg));       break;
+    case instruction::self:     self();                   break;
+    case instruction::push_arg: push_arg();               break;
+    case instruction::arg:      this->arg(get<int>(arg)); break;
+    case instruction::readm:    readm(get<symbol>(arg));  break;
+    case instruction::writem:   writem(get<symbol>(arg)); break;
+    case instruction::call:     call(get<int>(arg));      break;
+    case instruction::new_obj:  new_obj(get<int>(arg));   break;
 
     case instruction::eblk: eblk(); break;
     case instruction::lblk: lblk(); break;
@@ -110,9 +110,9 @@ void vm::machine::push_flt(double val)
   retval = gc::alloc<value::floating_point>( val );
 }
 
-void vm::machine::push_fn(const std::vector<command>& val)
+void vm::machine::push_fn(const function_t& val)
 {
-  retval = gc::alloc<value::function>( val, frame );
+  retval = gc::alloc<value::function>( val.argc, val.body, frame );
 }
 
 void vm::machine::push_int(int val)
@@ -217,20 +217,9 @@ void vm::machine::push_arg()
   frame->pushed.push_back(retval);
 }
 
-void vm::machine::pop_arg(symbol sym)
+void vm::machine::arg(int idx)
 {
-  frame->local.back()[sym] = frame->parent->pushed.back();
-  frame->parent->pushed.pop_back();
-}
-
-void vm::machine::argc(int count)
-{
-  if (frame->args != static_cast<size_t>(count)) {
-    push_str("Wrong number of arguments--- expected "
-            + std::to_string(count) + ", got "
-            + std::to_string(frame->args));
-    except();
-  }
+  retval = get_arg(*this, idx);
 }
 
 void vm::machine::readm(symbol sym)
@@ -264,54 +253,31 @@ void vm::machine::call(int argc)
 {
   std::vector<value::base*> args;
 
-  auto function = retval;
-  if (auto type = dynamic_cast<value::type*>(function)) {
-    auto init = find_method(type, {"init"});
-    frame = std::make_shared<call_frame>( frame,
-                                          m_base,
-                                          init ? 0 : argc, // save args for init
-                                          frame->instr_ptr );
-    frame->caller = *function;
-
-    auto except_flag = frame.get();
-    gc::set_current_frame(frame);
-
-    // Since everything inherits from Object, we're guaranteed to find a
-    // constructor
-    auto ctr_type = type;
-    while (!ctr_type->constructor)
-      ctr_type = &static_cast<value::type&>(ctr_type->parent);
-    retval = ctr_type->constructor(*this);
-    retval->type = type;
-
-    if (except_flag == frame.get()) {
-      ret();
-      if (init) {
-        frame->pushed_self = *retval;
-        auto real_instr_ptr = frame->instr_ptr;
-        retval = init;
-        std::vector<command> instr{ {instruction::call, argc} };
-        frame->instr_ptr = instr;
-        run();
-        frame->instr_ptr = real_instr_ptr;
-        retval = &*frame->pushed_self;
-      }
-    }
-
-  } else if (auto fn = dynamic_cast<value::function*>(function)) {
-    frame = std::make_shared<call_frame>(frame, fn->enclosure, argc, fn->body);
-    frame->caller = *function;
-
-    gc::set_current_frame(frame);
-
-  } else if (auto fn = dynamic_cast<value::builtin_function*>(function)) {
+  if (auto fn = dynamic_cast<value::function*>(retval)) {
     if (argc != fn->argc) {
-      this->argc(fn->argc);
+      push_str("Wrong number of arguments--- expected "
+              + std::to_string(fn->argc) + ", got "
+              + std::to_string(argc));
+      except();
+      return;
+    };
+
+    frame = std::make_shared<call_frame>(frame, fn->enclosure, argc, fn->body);
+    frame->caller = *fn;
+
+    gc::set_current_frame(frame);
+
+  } else if (auto fn = dynamic_cast<value::builtin_function*>(retval)) {
+    if (argc != fn->argc) {
+      push_str("Wrong number of arguments--- expected "
+              + std::to_string(fn->argc) + ", got "
+              + std::to_string(argc));
+      except();
       return;
     };
 
     frame = std::make_shared<call_frame>(frame, m_base, argc, frame->instr_ptr);
-    frame->caller = *function;
+    frame->caller = *fn;
 
     auto except_flag = frame.get();
     gc::set_current_frame(frame);
@@ -319,9 +285,37 @@ void vm::machine::call(int argc)
     if (except_flag == frame.get())
       ret();
   } else {
-    push_str("Only functions and types can be called");
+    push_str("Only functions can be called");
     except();
   }
+}
+
+#include <iostream>
+void vm::machine::new_obj(int argc)
+{
+  if (retval->type != &builtin::type::custom_type) {
+    push_str("Objects can only be constructed from Types");
+    except();
+    return;
+  }
+  auto type = static_cast<value::type*>(retval);
+
+  // Since everything inherits from Object, we're guaranteed to find a
+  // constructor
+  auto ctr_type = type;
+  while (!ctr_type->constructor)
+    ctr_type = &static_cast<value::type&>(ctr_type->parent);
+  retval = ctr_type->constructor();
+  if (!retval) {
+    push_str("Cannot construct object of type " + type->value());
+    except();
+    return;
+  }
+  retval->type = type;
+
+  frame->pushed_self = *retval;
+  push_fn(type->init_shim);
+  call(argc);
 }
 
 void vm::machine::eblk()
@@ -337,6 +331,8 @@ void vm::machine::lblk()
 void vm::machine::ret()
 {
   if (frame->parent) {
+    frame->parent->pushed.erase(end(frame->parent->pushed) - frame->args,
+                                end(frame->parent->pushed));
     frame = frame->parent;
     gc::set_current_frame(frame);
   } else {

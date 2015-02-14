@@ -16,7 +16,7 @@ public:
 
   void push_bool(bool val);
   void push_flt(double val);
-  void push_fn(const std::vector<command>& val);
+  void push_fn(const function_t& val);
   void push_int(int val);
   void push_nil();
   void push_str(const std::string& val);
@@ -31,11 +31,11 @@ public:
 
   void self();
   void push_arg();
-  void pop_arg(symbol sym);
-  void argc(int count);
+  void arg(int idx);
   void readm(symbol sym);
   void writem(symbol sym);
   void call(int args);
+  void new_obj(int args);
 
   void eblk();
   void lblk();
