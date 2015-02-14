@@ -453,8 +453,7 @@ parse_res<> parse_prec1(vector_ref<std::string> tokens)
     auto expr = move(expr_res->first);
     auto member = std::make_unique<ast::member>( move(expr), method );
 
-    arg_t empty{};
-    return {{ std::make_unique<function_call>( move(member), move(empty) ),
+    return {{ std::make_unique<function_call>( move(member), arg_t{} ),
               tokens }};
   }
   return parse_prec0(tokens);
