@@ -25,6 +25,15 @@ Comments in Vivaldi are C-style `// till end of line` comments&mdash; multiline
 comments aren't supported yet. For a full description of the grammar in
 Backus-Naur form, see grammar.txt.
 
+### Compiling
+
+Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
+3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
+unfortunately, since Boost binaries are used, so is a Boost compiled with
+libc++. Supporting libstdc++ would basically consist of ripping out a bunch of
+C++14 features, which I'm not inclined to do unless there's a particularly
+pressing need.
+
 ### Builtins ###
 
 Vivaldi has a fairly limited set of builtin types:
