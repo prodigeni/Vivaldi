@@ -69,6 +69,20 @@ Simple mutable array type:
     array // [1, 2, "foo"]
 </code></pre>
 
+#### Dictionaries ####
+Mutable hash-map type. At the moment, there's no way to override a type's
+equality or hash methods, so you're stuck with whatever you're inheriting
+from--- which is based on object ID if you derive from Object:
+
+<pre><code>
+    let dict = { 'foo: 5, "bar": 6 }
+    let two = dict.size()
+    dict[0.5] = 'baz
+    let three = dict.size()
+    let five = dict['foo]
+    dict // { 0.500000: 'baz, 'foo: 5, "bar": 6 }
+</code></pre>
+
 #### Ranges ####
 Provides a range over any pair of objects that can be
 * Compared with `>`
