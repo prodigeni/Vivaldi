@@ -13,17 +13,18 @@
 namespace {
 
 std::string message_for(vv::vector_ref<std::string> tokens,
+                        const std::string& filename,
                         vv::parser::val_res validator)
 {
   if (validator.invalid()) {
     const std::string* first{tokens.data()};
     auto line = count(first, begin(*validator), "\n");
     return "Invalid syntax at '" + validator->front()
-           + "' on line " + std::to_string(line + 1) + ": "
+           + "' in " + filename + " on line " + std::to_string(line + 1) + ": "
            + validator.error();
   }
 
-  return "Invalid syntax";
+  return "Invalid syntax in " + filename;
 }
 
 }
@@ -40,7 +41,7 @@ vv::run_file_result vv::run_file(const std::string& filename)
   auto validator = parser::is_valid(tokens);
   if (!validator)
     return { run_file_result::result::failure,
-             gc::alloc<value::string>( message_for(tokens, validator) ),
+             gc::alloc<value::string>(message_for(tokens, filename, validator)),
              {} };
 
   auto exprs = vv::parser::parse(tokens);
