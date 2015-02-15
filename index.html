@@ -65,14 +65,36 @@ Backus-Naur form, see grammar.txt.</p>
 <p>Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
 3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
 unfortunately, since Boost binaries are used, so is a Boost compiled with
-libc++. Supporting libstdc++ would basically consist of ripping out a bunch of
-C++14 features, which I'm not inclined to do unless there's a particularly
-pressing need.</p>
+libc++. The codebase (or should be!) is fully conforming C++14--- it's quite
+easy to add support for libstdc++, since it would basically consist of ripping
+out a bunch of C++14 features, but I'm not really inclined to do that unless
+there's a particularly pressing need.</p>
 
 <h3>
 <a id="builtins" class="anchor" href="#builtins" aria-hidden="true"><span class="octicon octicon-link"></span></a>Builtins</h3>
 
 <p>Vivaldi has a fairly limited set of builtin types:</p>
+
+<h4>
+<a id="objects" class="anchor" href="#objects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Objects</h4>
+
+<p>The root of the inheritance tree; every type in Vivaldi inherits from Object
+(which in turn inherits from... itself; it really is turtles all the way down!)
+Objects support a few universal methods:</p>
+
+<ul>
+<li>
+<code>type()</code> — Returns the type of <code>self</code>.</li>
+<li>
+<code>not()</code> —  Returns whether or not <code>self</code> is truthy (i.e. not <code>false</code> or
+<code>nil</code>).</li>
+<li>
+<code>equals(x)</code>, <code>unequal(x)</code> — Returns true if <code>self</code> has the same object
+ID as <code>x</code>, and <code>false</code> otherwise (vice versa for <code>unequal</code>). These methods
+should be overridden by any classes with value-based concepts of semantics (for
+instance, in the standard library, <code>String</code>, <code>Symbol</code>, <code>Integer</code>, and so forth
+all override them).</li>
+</ul>
 
 <h4>
 <a id="nil" class="anchor" href="#nil" aria-hidden="true"><span class="octicon octicon-link"></span></a>Nil</h4>
@@ -275,7 +297,7 @@ function(1) // 1
 </code></pre>
 
 <p>In functions and methods, <code>self</code> works a little differently than in Python or
-Ruby. It's not explicitly passed as an argument, but rather is implictly passed
+Ruby. It's not explicitly passed as an argument, but rather is implicitly passed
 whenever called as a member of an object. The following is perfectly valid:</p>
 
 <pre><code>fn not_method(): return self.a
@@ -508,7 +530,9 @@ are expressions.</p>
 
 <p>Vivaldi operators, aside from <code>&amp;&amp;</code>, <code>||</code>, <code>to</code> (which is syntax sugar for
 Range), and <code>=</code> (which isn't actually an operator at all— it just looks like
-one), are all just syntax sugar for method calls:</p>
+one), are all just syntax sugar for method calls. Here they are in order of
+precedence (basically C precedence, with the bitwise mistake fixed and <code>**</code> and
+<code>to</code> inserted where appropriate):</p>
 
 <pre><code>a[b]     // a.at(b)
 a[b] = c // a.set_at(b, c)
@@ -526,6 +550,7 @@ a &gt;&gt; b   // a.lshift(b)
 a &amp; b    // a.bitand(b)
 a ^ b    // a.xor(b)
 a | b    // a.bitor(b)
+a to b   // Range(a, b)
 a &lt; b    // a.less(b)
 a &gt; b    // a.greater(b)
 a &lt;= b   // a.less_equals(b)
