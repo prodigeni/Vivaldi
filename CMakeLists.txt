@@ -18,6 +18,18 @@ add_executable(vivaldi
   src/value.cpp
   src/vm.cpp
 
+  src/builtins/object.cpp
+  src/builtins/type.cpp
+
+  src/builtins/array.cpp
+  src/builtins/bool.cpp
+  src/builtins/floating_point.cpp
+  src/builtins/integer.cpp
+  src/builtins/nil.cpp
+  src/builtins/range.cpp
+  src/builtins/string.cpp
+  src/builtins/symbol.cpp
+
   src/builtins.cpp
 
   src/tokenizer.cpp
