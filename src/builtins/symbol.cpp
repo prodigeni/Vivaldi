@@ -21,19 +21,18 @@ vv::symbol to_symbol(const value::base* boxed)
   return static_cast<const value::symbol*>(boxed)->val;
 }
 
-// symbol {{{
-
 value::base* fn_symbol_init(vm::machine& vm)
 {
+  auto& sym = static_cast<value::symbol&>(*vm.frame->self);
   auto arg = get_arg(vm, 0);
-
   if (arg->type == &type::symbol)
-    return arg;
+    sym.val = to_symbol(arg);
   if (arg->type == &type::string)
-    return gc::alloc<value::symbol>( symbol{to_string(arg)} );
-  return throw_exception(
-    "Symbols can only be constructed a String or another Symbol",
-    vm);
+    sym.val = vv::symbol{to_string(arg)};
+  else
+    return throw_exception("Symbols can only be constructed a String or another Symbol",
+                           vm);
+  return &sym;
 }
 
 value::base* fn_symbol_equals(vm::machine& vm)
