@@ -36,12 +36,10 @@ extern value::type array;
 extern value::type array_iterator;
 extern value::type dictionary;
 extern value::type symbol;
-extern value::type iterator;
 extern value::type range;
 extern value::type nil;
 extern value::type function;
 extern value::type custom_type;
-extern value::type custom_object;
 
 }
 
