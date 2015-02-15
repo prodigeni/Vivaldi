@@ -23,7 +23,8 @@ Vivaldi can be run either from a file or from the REPL:
 
 Vivaldi expressions are separated by newlines or semicolons.
 Comments in Vivaldi are C-style `// till end of line` comments--- multiline
-comments aren't supported yet.
+comments aren't supported yet. For a full description of the grammar in
+Backus-Naur form, see grammar.txt.
 
 ### Builtins ###
 
@@ -68,13 +69,13 @@ Simple mutable array type:
 
 #### Ranges ####
 Provides a range over any pair of objects that can be
-* Compared with `==`
+* Compared with `>`
 * Incremented by adding 1
 
 A range covers [start, end):
 
 <pre><code>
-    >>> for i in 1 to 5: puts(i) // <x> to <y> is sugar for new Range(x, y)
+    >>> for i in 1 to 5: puts(i) // "<x> to <y>" is sugar for "new Range(x, y)"
     1
     2
     3
