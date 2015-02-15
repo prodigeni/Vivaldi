@@ -22,7 +22,8 @@ std::vector<vm::command> ast::while_loop::generate() const
   copy(begin(body), end(body), back_inserter(vec));
 
   vec.emplace_back(vm::instruction::jmp, -static_cast<int>(vec.size()));
-  vec[test_jump_idx].arg = static_cast<int>(vec.size() - test_jump_idx);
+  vec.emplace_back(vm::instruction::push_nil);
+  vec[test_jump_idx].arg = static_cast<int>(vec.size() - 1 - test_jump_idx);
 
   return vec;
 }
