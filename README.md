@@ -325,3 +325,11 @@ are expressions.
 </code></pre>
 
 See examples folder for more.
+
+### TODO ###
+
+* Expand the standard library
+
+* Add C API
+
+* Improve performance, especially concerning the call stack
