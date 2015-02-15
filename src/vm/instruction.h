@@ -47,6 +47,8 @@ enum class instruction {
 
   /// sets retval to an Array made out of the provided number of pushed args
   make_arr,
+  /// sets retval to a Dictionary made out of the provided number of pushed args
+  make_dict,
 
   /// reads a variable into retval
   read,

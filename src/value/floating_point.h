@@ -12,6 +12,8 @@ public:
   floating_point(double val);
 
   std::string value() const override;
+  size_t hash() const override;
+  bool equals(const base& other) const override;
 
   double val;
 };

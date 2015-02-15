@@ -24,6 +24,7 @@ public:
   void push_type(const type_t& type);
 
   void make_arr(int size);
+  void make_dict(int size);
 
   void read(symbol sym);
   void write(symbol sym);

@@ -11,12 +11,12 @@ namespace {
 
 value::base* fn_object_equals(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( &*vm.frame->self == get_arg(vm, 0) );
+  return gc::alloc<value::boolean>( vm.frame->self->equals(*get_arg(vm, 0)) );
 }
 
 value::base* fn_object_unequal(vm::machine& vm)
 {
-  return gc::alloc<value::boolean>( &*vm.frame->self != get_arg(vm, 0) );
+  return gc::alloc<value::boolean>( !vm.frame->self->equals(*get_arg(vm, 0)) );
 }
 
 value::base* fn_object_not(vm::machine& vm)

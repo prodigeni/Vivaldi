@@ -14,6 +14,8 @@ public:
   string(const std::string& val = "");
 
   std::string value() const override;
+  size_t hash() const override;
+  bool equals(const base& other) const override;
 
   std::string val;
 };

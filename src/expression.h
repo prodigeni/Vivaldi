@@ -25,6 +25,7 @@ class assignment;
 class array;
 class block;
 class cond_statement;
+class dictionary;
 class except;
 class for_loop;
 class function_call;

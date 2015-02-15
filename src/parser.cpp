@@ -6,6 +6,7 @@
 #include "ast/array.h"
 #include "ast/block.h"
 #include "ast/cond_statement.h"
+#include "ast/dictionary.h"
 #include "ast/except.h"
 #include "ast/for_loop.h"
 #include "ast/function_call.h"
@@ -70,6 +71,7 @@ parse_res<> parse_prec12(vector_ref<std::string> tokens); // &&
 parse_res<> parse_prec13(vector_ref<std::string> tokens); // ||
 
 parse_res<> parse_array_literal(vector_ref<std::string> tokens);
+parse_res<> parse_dict_literal(vector_ref<std::string> tokens);
 parse_res<> parse_assignment(vector_ref<std::string> tokens);
 parse_res<> parse_block(vector_ref<std::string> tokens);
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens);
@@ -402,6 +404,7 @@ parse_res<> parse_nonop_expression(vector_ref<std::string> tokens)
   if ((res = parse_assignment(tokens)))           return res;
   if ((res = parse_block(tokens)))                return res;
   if ((res = parse_cond_statement(tokens)))       return res;
+  if ((res = parse_dict_literal(tokens)))         return res;
   if ((res = parse_except(tokens)))               return res;
   if ((res = parse_for_loop(tokens)))             return res;
   if ((res = parse_function_definition(tokens)))  return res;
@@ -460,11 +463,32 @@ parse_res<> parse_array_literal(vector_ref<std::string> tokens)
   auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
   {
     return parse_comma_separated_list(t, parse_expression);
-  },"[", "]");
+  }, "[", "]");
   auto vals = move(vals_res->first);
   tokens = vals_res->second;
 
   return {{ std::make_unique<array>( move(vals) ), tokens }};
+}
+
+parse_res<> parse_dict_literal(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "{")
+    return {};
+
+  auto vals_res = parse_bracketed_subexpr(tokens, [](auto t)
+  {
+    return parse_comma_separated_list(t, parse_cond_pair);
+  }, "{", "}");
+  auto vals = move(vals_res->first);
+  tokens = vals_res->second;
+  // inefficient, but do I really care at this point?
+  arg_t flattened;
+  for (auto& i : vals) {
+    flattened.push_back(move(i.first));
+    flattened.push_back(move(i.second));
+  }
+
+  return {{ std::make_unique<dictionary>( move(flattened) ), tokens }};
 }
 
 parse_res<> parse_cond_statement(vector_ref<std::string> tokens)

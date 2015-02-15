@@ -21,6 +21,17 @@ value::base::base()
     m_marked {false}
 { }
 
+size_t value::base::hash() const
+{
+  const static std::hash<const void*> hasher{};
+  return hasher(static_cast<const void*>(this));
+}
+
+bool value::base::equals(const value::base& other) const
+{
+  return this == &other;
+}
+
 void value::base::mark()
 {
   m_marked = true;
@@ -80,4 +91,15 @@ void value::type::mark()
       i.second->mark();
   if (!parent.marked())
     parent.mark();
+}
+
+size_t std::hash<vv::value::base*>::operator()(const vv::value::base* b) const
+{
+  return b->hash();
+}
+
+bool std::equal_to<vv::value::base*>::operator()(const vv::value::base* left,
+                                                 const vv::value::base* right) const
+{
+  return left->equals(*right);
 }

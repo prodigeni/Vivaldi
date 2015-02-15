@@ -9,6 +9,7 @@
 #include "value/array.h"
 #include "value/builtin_function.h"
 #include "value/boolean.h"
+#include "value/dictionary.h"
 #include "value/integer.h"
 #include "value/floating_point.h"
 #include "value/function.h"
@@ -61,7 +62,8 @@ void vm::machine::run()
     case instruction::push_sym:  push_sym(get<symbol>(arg));      break;
     case instruction::push_type: push_type(get<type_t>(arg));     break;
 
-    case instruction::make_arr:  make_arr(get<int>(arg)); break;
+    case instruction::make_arr:  make_arr(get<int>(arg));  break;
+    case instruction::make_dict: make_dict(get<int>(arg)); break;
 
     case instruction::read:  read(get<symbol>(arg));  break;
     case instruction::write: write(get<symbol>(arg)); break;
@@ -156,6 +158,16 @@ void vm::machine::make_arr(int size)
 {
   std::vector<value::base*> args{end(frame->pushed) - size, end(frame->pushed)};
   retval = gc::alloc<value::array>( args );
+  frame->pushed.erase(end(frame->pushed) - size, end(frame->pushed));
+}
+
+void vm::machine::make_dict(int size)
+{
+  std::unordered_map<value::base*, value::base*> dict;
+  for (auto i = end(frame->pushed) - size; i != end(frame->pushed); i += 2) {
+    dict[i[0]] = i[1];
+  }
+  retval = gc::alloc<value::dictionary>( dict );
   frame->pushed.erase(end(frame->pushed) - size, end(frame->pushed));
 }
 

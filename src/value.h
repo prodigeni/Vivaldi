@@ -48,6 +48,9 @@ struct base {
   std::unordered_map<vv::symbol, value::base*> members;
   type* type;
 
+  virtual size_t hash() const;
+  virtual bool equals(const value::base& other) const;
+
   virtual void mark();
   bool marked() const { return m_marked; }
   void unmark() { m_marked = false; }
@@ -91,5 +94,15 @@ struct type : public base {
 }
 
 }
+
+template <>
+struct std::hash<vv::value::base*> {
+  size_t operator()(const vv::value::base* b) const;
+};
+
+template <>
+struct std::equal_to<vv::value::base*> {
+  bool operator()(const vv::value::base* left, const vv::value::base* right) const;
+};
 
 #endif
