@@ -27,10 +27,23 @@ Backus-Naur form, see grammar.txt.
 
 ### Compiling
 
+* If you don't already have it, install boost (`brew install boost` on OS X;
+  Linux might be trickier, for reasons explained below)
+* If you don't have CMake 3.0 or above, install it (`brew install cmake`,
+  `pacman -S cmake`, `sudo apt-get install cmake` for OS X, Arch Linux, and
+  Ubuntu respectively)
+* Ensure that clang++ and libc++ >= 3.5 are installed.
+
+        $ git clone git@github.com:jeorgun/Vivaldi.git
+        $ cd Vivaldi
+        $ mkdir build
+        $ cd build
+        $ cmake .. && make
+
 Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
 3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
 unfortunately, since Boost binaries are used, so is a Boost compiled with
-libc++. The codebase (or should be!) is fully conforming C++14--- it's quite
+libc++. The codebase is (or should be!) is fully conforming C++14--- it's quite
 easy to add support for libstdc++, since it would basically consist of ripping
 out a bunch of C++14 features, but I'm not really inclined to do that unless
 there's a particularly pressing need.
