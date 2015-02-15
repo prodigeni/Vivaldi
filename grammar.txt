@@ -23,6 +23,7 @@
 <prec0> ::= <nonop_expression>
           | <prec0> '.' <variable>
           | <prec0> '(' <expr_list> ')'
+          | <prec0> '[' <expression> ']'
 
 <prec1> ::= <prec0>
           | '!' <prec1>

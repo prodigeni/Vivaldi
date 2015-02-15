@@ -54,7 +54,7 @@ using arg_t = std::vector<std::unique_ptr<expression>>;
 parse_res<> parse_expression(vector_ref<std::string> tokens);
 
 parse_res<> parse_nonop_expression(vector_ref<std::string> tokens);
-parse_res<> parse_prec0(vector_ref<std::string> tokens); // member, call
+parse_res<> parse_prec0(vector_ref<std::string> tokens); // member, call, index
 parse_res<> parse_prec1(vector_ref<std::string> tokens); // monops
 parse_res<> parse_prec2(vector_ref<std::string> tokens); // **
 parse_res<> parse_prec3(vector_ref<std::string> tokens); // *, /, %
@@ -336,13 +336,25 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
   tokens = expr_res->second;
 
   auto expr = move(expr_res->first);
-  while (tokens.size() && (tokens.front() == "(" || tokens.front() == ".")) {
+  while (tokens.size() && (tokens.front() == "("
+                        || tokens.front() == "."
+                        || tokens.front() == "[")) {
     if (tokens.front() == "(") {
       auto list_res = parse_function_call(tokens);
       auto list = move(list_res->first);
       tokens = list_res->second;
 
       expr = std::make_unique<function_call>(move(expr), move(list));
+
+    } else if (tokens.front() == "[") {
+      auto idx_res = parse_bracketed_subexpr(tokens, parse_expression, "[", "]");
+      auto idx = move(idx_res->first);
+      tokens = idx_res->second;
+
+      auto member = std::make_unique<ast::member>( move(expr), symbol{"at"} );
+      arg_t arg{};
+      arg.emplace_back(move(idx));
+      expr = std::make_unique<function_call>(move(member), move(arg));
 
     } else {
       tokens = tokens.subvec(1); // '.'

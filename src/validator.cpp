@@ -32,6 +32,7 @@ val_res val_while_loop(          vector_ref<std::string> tokens);
 val_res val_function_call(       vector_ref<std::string> tokens);
 val_res val_monop_call(          vector_ref<std::string> tokens);
 val_res val_binop_call(          vector_ref<std::string> tokens);
+val_res val_index(               vector_ref<std::string> tokens);
 val_res val_member(              vector_ref<std::string> tokens);
 val_res val_new_obj(             vector_ref<std::string> tokens);
 val_res val_except(              vector_ref<std::string> tokens);
@@ -133,10 +134,13 @@ val_res val_expression(vector_ref<std::string> tokens)
   for (;;) {
     res = nres;
     tokens = *res;
-    if (!( (nres = val_function_call(tokens))
-        || (nres = val_member(tokens))
-        || (nres = val_binop_call(tokens))))
+    if (!( ((nres = val_function_call(tokens)) || nres.invalid())
+        || ((nres = val_index(tokens))         || nres.invalid())
+        || ((nres = val_member(tokens))        || nres.invalid())
+        || ((nres = val_binop_call(tokens)))   || nres.invalid()))
       return res;
+    if (nres.invalid())
+      return nres;
   }
 }
 
@@ -316,6 +320,19 @@ val_res val_binop_call(vector_ref<std::string> tokens)
     return {*op_res, "expected right-hand argument"};
   }
   return {};
+}
+
+// }}}
+// index {{{
+
+val_res val_index(vector_ref<std::string> tokens)
+{
+  if (!tokens.size() || tokens.front() != "[")
+    return {};
+  auto expr = val_bracketed_subexpr(tokens, val_expression, "[", "]");
+  if (expr || expr.invalid())
+    return expr;
+  return {tokens, "expected expression"};
 }
 
 // }}}
