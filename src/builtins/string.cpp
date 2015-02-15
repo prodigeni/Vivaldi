@@ -32,12 +32,15 @@ vv::symbol to_symbol(const value::base* boxed)
 
 value::base* fn_string_init(vm::machine& vm)
 {
+  auto& str = static_cast<value::string&>(*vm.frame->self);
   auto arg = get_arg(vm, 0);
   if (arg->type == &type::string)
-    return gc::alloc<value::string>( to_string(arg) );
-  if (arg->type == &type::symbol)
-    return gc::alloc<value::string>( to_string(to_symbol(arg)) );
-  return gc::alloc<value::string>( arg->value() );
+    str.val = to_string(arg);
+  else if (arg->type == &type::symbol)
+    str.val = to_string(to_symbol(arg));
+  else
+     str.val = arg->value();
+  return &str;
 }
 
 value::base* fn_string_size(vm::machine& vm)
