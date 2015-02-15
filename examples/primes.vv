@@ -7,7 +7,7 @@ end
 fn primes(upto): do
   let candidates = (2 to upto).to_arr()
   let found = []
-  while candidates.at(0) < upto ** 0.5: do
+  while candidates.at(0) < upto.sqrt(): do
     let prime = candidates.at(0)
     found.append(prime)
     candidates = filter(candidates, fn (x): x % prime != 0)

@@ -48,9 +48,13 @@ auto fn_float_bool_op(const F& op)
   };
 }
 
-value::base* fn_floating_point_negative(vm::machine& vm)
+template <typename F>
+auto fn_floating_point_monop(const F& op)
 {
-  return gc::alloc<value::floating_point>( -to_float(&*vm.frame->self) );
+  return [=](vm::machine& vm)
+  {
+    return gc::alloc<value::floating_point>( op(to_float(&*vm.frame->self)) );
+  };
 }
 
 builtin_function flt_add      {fn_floating_point_op(std::plus<double>{}),       1};
@@ -64,7 +68,11 @@ builtin_function flt_lt       {fn_float_bool_op(std::less<double>{}),           
 builtin_function flt_gt       {fn_float_bool_op(std::greater<double>{}),        1};
 builtin_function flt_le       {fn_float_bool_op(std::less_equal<double>{}),     1};
 builtin_function flt_ge       {fn_float_bool_op(std::greater_equal<double>{}),  1};
-builtin_function flt_negative {fn_floating_point_negative,                      0};
+builtin_function flt_negative {fn_floating_point_monop(std::negate<double>{}),  0};
+builtin_function flt_sqrt     {fn_floating_point_monop(sqrt),                   0};
+builtin_function flt_sin      {fn_floating_point_monop(sin),                    0};
+builtin_function flt_cos      {fn_floating_point_monop(cos),                    0};
+builtin_function flt_tan      {fn_floating_point_monop(tan),                    0};
 }
 value::type type::floating_point{[]{ return nullptr; }, {
   { {"add"},            &flt_add      },
@@ -78,5 +86,9 @@ value::type type::floating_point{[]{ return nullptr; }, {
   { {"greater"},        &flt_gt       },
   { {"less_equals"},    &flt_le       },
   { {"greater_equals"}, &flt_ge       },
-  { {"negative"},       &flt_negative }
+  { {"negative"},       &flt_negative },
+  { {"sqrt"},           &flt_sqrt     },
+  { {"sin"},            &flt_sin      },
+  { {"cos"},            &flt_cos      },
+  { {"tan"},            &flt_tan      }
 }, builtin::type::object, {"Float"}};

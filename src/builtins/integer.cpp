@@ -66,6 +66,15 @@ auto fn_integer_monop(const F& op)
 }
 
 template <typename F>
+auto fn_int_to_flt_monop(const F& op)
+{
+  return [=](vm::machine& vm)
+  {
+    return gc::alloc<value::floating_point>( op(to_int(&*vm.frame->self)) );
+  };
+}
+
+template <typename F>
 auto fn_int_bool_op(const F& op)
 {
   return [=](vm::machine& vm)
@@ -152,6 +161,10 @@ builtin_function int_le       {fn_int_bool_op([](auto a, auto b){ return a <= b;
 builtin_function int_ge       {fn_int_bool_op([](auto a, auto b){ return a >= b; }),  1};
 builtin_function int_negative {fn_integer_monop(std::negate<int>{}),                  0};
 builtin_function int_negate   {fn_integer_monop(std::bit_not<int>{}),                 0};
+builtin_function int_sqrt     {fn_int_to_flt_monop(sqrt),                             0};
+builtin_function int_sin      {fn_int_to_flt_monop(sin),                              0};
+builtin_function int_cos      {fn_int_to_flt_monop(cos),                              0};
+builtin_function int_tan      {fn_int_to_flt_monop(tan),                              0};
 
 }
 
@@ -174,5 +187,9 @@ value::type type::integer{[]{ return nullptr; }, {
   { {"less_equals"},    &int_le       },
   { {"greater_equals"}, &int_ge       },
   { {"negative"},       &int_negative },
-  { {"negate"},         &int_negate   }
+  { {"negate"},         &int_negate   },
+  { {"sqrt"},           &int_sqrt     },
+  { {"sin"},            &int_sin      },
+  { {"cos"},            &int_cos      },
+  { {"tan"},            &int_tan      }
 }, builtin::type::object, {"Integer"}};
