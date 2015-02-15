@@ -57,10 +57,20 @@ auto fn_floating_point_monop(const F& op)
   };
 }
 
+value::base* fn_floating_point_divides(vm::machine& vm)
+{
+  if (!is_float(get_arg(vm, 0)))
+    return throw_exception("Right-hand argument is not a Float", vm);
+  if (to_float(get_arg(vm, 0)))
+    return throw_exception("Cannot divide by zero", vm);
+  return gc::alloc<value::floating_point>( to_float(&*vm.frame->self) /
+                                           to_float(get_arg(vm, 0)) );
+}
+
 builtin_function flt_add      {fn_floating_point_op(std::plus<double>{}),       1};
 builtin_function flt_subtract {fn_floating_point_op(std::minus<double>{}),      1};
 builtin_function flt_times    {fn_floating_point_op(std::multiplies<double>{}), 1};
-builtin_function flt_divides  {fn_floating_point_op(std::divides<double>{}),    1};
+builtin_function flt_divides  {fn_floating_point_divides,                       1};
 builtin_function flt_pow      {fn_floating_point_op(pow),                       1};
 builtin_function flt_eq       {fn_float_bool_op(std::equal_to<double>{}),       1};
 builtin_function flt_neq      {fn_float_bool_op(std::not_equal_to<double>{}),   1};

@@ -22,8 +22,8 @@ double to_float(value::base* boxed)
   return static_cast<value::floating_point*>(boxed)->val;
 }
 
-// integer {{{
-
+// Generic binop generators, if the operator doesn't require any special casing
+// and is just a direct wrapper for a C++ equivalent.
 template <typename F>
 auto fn_int_or_flt_op(const F& op)
 {
@@ -95,6 +95,23 @@ auto fn_int_bool_op(const F& op)
   };
 }
 
+value::base* fn_integer_divides(vm::machine& vm)
+{
+  auto left = to_int(&*vm.frame->self);
+  auto arg = get_arg(vm, 0);
+  if (arg->type == &type::floating_point) {
+    if (to_float(arg) == 0.0)
+      return throw_exception("cannot divide by zero", vm);
+    return gc::alloc<value::floating_point>( left / to_float(arg) );
+  }
+
+  if (arg->type != &type::integer)
+    return throw_exception("Right-hand argument is not an Integer", vm);
+  if (to_int(arg) == 0)
+    return throw_exception("cannot divide by zero", vm);
+  return gc::alloc<value::integer>( left / to_int(arg));
+}
+
 bool boxed_integer_equal(vm::machine& vm)
 {
   auto arg = get_arg(vm, 0);
@@ -140,12 +157,10 @@ value::base* fn_integer_pow(vm::machine& vm)
   return gc::alloc<value::integer>( static_cast<int>(pow(left, right)) );
 }
 
-// }}}
-
 builtin_function int_add      {fn_int_or_flt_op([](auto a, auto b){ return a + b; }), 1};
 builtin_function int_subtract {fn_int_or_flt_op([](auto a, auto b){ return a - b; }), 1};
 builtin_function int_times    {fn_int_or_flt_op([](auto a, auto b){ return a * b; }), 1};
-builtin_function int_divides  {fn_int_or_flt_op([](auto a, auto b){ return a / b; }), 1};
+builtin_function int_divides  {fn_integer_divides,                                    1};
 builtin_function int_modulo   {fn_integer_op(std::modulus<int>{}),                    1};
 builtin_function int_pow      {fn_integer_pow,                                        1};
 builtin_function int_lshift   {fn_integer_op([](int a, int b) { return a << b; }),    1};
