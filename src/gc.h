@@ -17,6 +17,7 @@ namespace internal {
 
 value::base* emplace(value::base* item);
 
+// Optimize common values
 extern value::nil g_nil;
 extern value::boolean g_true;
 extern value::boolean g_false;
@@ -30,6 +31,7 @@ inline value::base* alloc(Args&&... args)
   return internal::emplace(new T{args...});
 }
 
+// Optimized template overrides for alloc:
 template <>
 inline value::base* alloc<value::boolean>(bool&& val)
 {
@@ -53,6 +55,7 @@ inline value::base* alloc<value::integer>(int&& val)
 void set_current_frame(std::shared_ptr<vm::call_frame> frame);
 void set_current_retval(value::base* val);
 
+// Called in main at the start and end of the program. TODO: RAII
 void init();
 void empty();
 

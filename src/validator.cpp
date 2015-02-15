@@ -5,9 +5,12 @@ using namespace parser;
 
 namespace {
 
+// Validates a string of tokens via recursive descent, so that when we're
+// parsing it properly we don't have to worry about malformed syntax
+
 bool trim_test(const std::string& s)
 {
-  return s=="\n" || s==";";
+  return s == "\n" || s == ";";
 };
 
 

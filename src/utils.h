@@ -6,6 +6,8 @@
 
 namespace vv {
 
+// Dumping ground for random, non-component-specific functions, classes, etc.
+
 inline boost::string_ref ltrim(boost::string_ref str)
 {
   auto last = std::find_if_not(begin(str), end(str), isspace);

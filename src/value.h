@@ -40,6 +40,7 @@ struct base {
   base(type* type);
   base();
 
+  // Used in REPL, and in 'puts' and 'print' for non-String types
   virtual std::string value() const { return "<object>"; }
 
   virtual ~base() { }
@@ -63,9 +64,23 @@ struct type : public base {
 
   std::unordered_map<vv::symbol, value::base*> methods;
   std::function<value::base*()> constructor;
+  // This shim is necessary because, of course, when you create a new object you
+  // want to get that object back. Unfortunately it's not possible to guarantee
+  // this in the init function, since someone could do something like
+  //   class Foo
+  //     fn init(): 5
+  //   end
+  // When you instantiate Foo, you'd prefer you get your new object back, not 5.
+  // So the init shim creates a function that looks something like
+  //   fn (<args...): do
+  //     self.init(<args...>)
+  //     self
+  //   end
+  // and the constructor calls that fake init function instead of 'init'
   vm::function_t init_shim;
 
   value::base& parent;
+  // Stored in class so value() can be prettier than just <type>
   vv::symbol name;
 
   std::string value() const override;
