@@ -818,17 +818,7 @@ parse_res<> parse_integer(vector_ref<std::string> tokens)
   auto str = tokens.front();
   tokens = tokens.subvec(1); // number
 
-  int val{};
-  if (str.front() == '0' && str.size() > 1) {
-    switch (str[1]) {
-    case 'x': val = stoi(str.substr(2), nullptr, 16); break;
-    case 'b': val = stoi(str.substr(2), nullptr, 2);  break;
-    default:  val = stoi(str.substr(1), nullptr, 8);  break;
-    }
-  } else {
-    val = stoi(str);
-  }
-  return {{ std::make_unique<literal::integer>( val ), tokens }};
+  return {{ std::make_unique<literal::integer>( to_int(str) ), tokens }};
 }
 
 parse_res<> parse_float(vector_ref<std::string> tokens)

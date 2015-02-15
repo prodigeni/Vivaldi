@@ -80,6 +80,21 @@ vector_ref<T> ltrim_if(vector_ref<T> vec, const F& pred)
   return vec.subvec(static_cast<size_t>(last - begin(vec)));
 }
 
+// Expanded/smarter version of std::stoi
+inline int to_int(const std::string& str)
+{
+  if (str.front() == '0' && str.size() > 1) {
+    switch (str[1]) {
+    case 'x': return stoi(str.substr(2), nullptr, 16);
+    case 'b': return stoi(str.substr(2), nullptr, 2);
+    default:  return stoi(str.substr(1), nullptr, 8);
+    }
+  }
+  if (isdigit(str.front()))
+     return stoi(str);
+  return 0;
+}
+
 }
 
 #endif

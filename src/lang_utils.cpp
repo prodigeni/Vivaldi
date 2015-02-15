@@ -34,3 +34,5 @@ vv::value::base* vv::find_method(value::type* type, symbol name)
 
   return nullptr;
 }
+
+int to_int(const std::string& str);

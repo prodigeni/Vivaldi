@@ -2,6 +2,7 @@
 
 #include "gc.h"
 #include "lang_utils.h"
+#include "utils.h"
 #include "value/builtin_function.h"
 #include "value/string.h"
 #include "value/string_iterator.h"
@@ -92,6 +93,11 @@ value::base* fn_string_times(vm::machine& vm)
   for (auto i = to_int(get_arg(vm, 0)); i--;)
     new_str += val;
   return gc::alloc<value::string>( new_str );
+}
+
+value::base* fn_string_to_int(vm::machine& vm)
+{
+  return gc::alloc<value::integer>( vv::to_int(to_string(&*vm.frame->self)) );
 }
 
 // }}}
@@ -194,6 +200,7 @@ value::builtin_function string_equals  {fn_string_equals,  1};
 value::builtin_function string_unequal {fn_string_unequal, 1};
 value::builtin_function string_add     {fn_string_add,     1};
 value::builtin_function string_times   {fn_string_times,   1};
+value::builtin_function string_to_int  {fn_string_to_int,  0};
 
 value::builtin_function string_iterator_at_start  {fn_string_iterator_at_start,  0};
 value::builtin_function string_iterator_at_end    {fn_string_iterator_at_end,    0};
@@ -214,7 +221,8 @@ value::type type::string {gc::alloc<value::string>, {
   { {"equals"},  &string_equals  },
   { {"unequal"}, &string_unequal },
   { {"add"},     &string_add     },
-  { {"times"},   &string_times   }
+  { {"times"},   &string_times   },
+  { {"to_int"},  &string_to_int  }
 }, builtin::type::object, {"String"}};
 
 value::type type::string_iterator {[]{ return nullptr; }, {
