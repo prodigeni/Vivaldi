@@ -328,6 +328,8 @@ parse_res<> parse_prec1(vector_ref<std::string> tokens)
   return parse_prec0(tokens);
 }
 
+// TODO: split function calls, members, and indexing into their own functions so
+// this one isn't so monstruously long
 parse_res<> parse_prec0(vector_ref<std::string> tokens)
 {
   auto expr_res = parse_nonop_expression(tokens);
@@ -351,6 +353,20 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
       auto idx = move(idx_res->first);
       tokens = idx_res->second;
 
+      if (tokens.size() && tokens.front() == "=") {
+        auto value_res = parse_expression(tokens.subvec(1)); // '='
+        auto value = move(value_res->first);
+        tokens = value_res->second;
+
+        auto member = std::make_unique<ast::member>( move(expr), symbol{"set_at"} );
+        arg_t args{};
+        args.emplace_back(move(idx));
+        args.emplace_back(move(value));
+
+        return {{ std::make_unique<function_call>( move(member), move(args) ),
+                  tokens }};
+      }
+
       auto member = std::make_unique<ast::member>( move(expr), symbol{"at"} );
       arg_t arg{};
       arg.emplace_back(move(idx));
@@ -362,7 +378,7 @@ parse_res<> parse_prec0(vector_ref<std::string> tokens)
       tokens = tokens.subvec(1); // name
 
       if (tokens.size() && tokens.front() == "=") {
-        auto value_res = parse_expression(tokens.subvec(1));
+        auto value_res = parse_expression(tokens.subvec(1)); // '='
         auto value = move(value_res->first);
         tokens = value_res->second;
         return {{ std::make_unique<member_assignment>( move(expr),

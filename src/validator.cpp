@@ -134,8 +134,9 @@ val_res val_expression(vector_ref<std::string> tokens)
   for (;;) {
     res = nres;
     tokens = *res;
-    if (!( ((nres = val_function_call(tokens)) || nres.invalid())
-        || ((nres = val_index(tokens))         || nres.invalid())
+    if ((nres = val_function_call(tokens)) || nres.invalid())
+      return nres;
+    if (!( ((nres = val_index(tokens))         || nres.invalid())
         || ((nres = val_member(tokens))        || nres.invalid())
         || ((nres = val_binop_call(tokens)))   || nres.invalid()))
       return res;

@@ -57,6 +57,21 @@ value::base* fn_array_at(vm::machine& vm)
   return arr[static_cast<unsigned>(val)];
 }
 
+value::base* fn_array_set_at(vm::machine& vm)
+{
+  auto arg = get_arg(vm, 0);
+  if (arg->type != &type::integer)
+    return throw_exception("Index must be an Integer", vm);
+  auto val = static_cast<value::integer*>(arg)->val;
+  auto& arr = static_cast<value::array&>(*vm.frame->self).val;
+  if (arr.size() <= static_cast<unsigned>(val) || val < 0)
+    return throw_exception("Out of range (expected 0-"
+                           + std::to_string(arr.size()) + ", got "
+                           + std::to_string(val) + ")",
+                           vm);
+  return arr[static_cast<unsigned>(val)] = get_arg(vm, 1);
+}
+
 value::base* fn_array_start(vm::machine& vm)
 {
   auto& self = static_cast<value::array&>(*vm.frame->self);
@@ -183,6 +198,7 @@ value::builtin_function array_init   {fn_array_init,   1};
 value::builtin_function array_size   {fn_array_size,   0};
 value::builtin_function array_append {fn_array_append, 1};
 value::builtin_function array_at     {fn_array_at,     1};
+value::builtin_function array_set_at {fn_array_set_at, 2};
 value::builtin_function array_start  {fn_array_start,  0};
 value::builtin_function array_end    {fn_array_end,    0};
 value::builtin_function array_add    {fn_array_add,    1};
@@ -203,6 +219,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"size"},   &array_size },
   { {"append"}, &array_append },
   { {"at"},     &array_at },
+  { {"set_at"}, &array_set_at },
   { {"start"},  &array_start },
   { {"end"},    &array_end },
   { {"add"},    &array_add }

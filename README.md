@@ -64,7 +64,9 @@ Simple mutable array type:
     let three = array.size()
     array.append('foo)
     let four = array.size()
-    let two = array.at(1)
+    let two = array[1]
+    array[2] = "foo"
+    array // [1, 2, "foo"]
 </code></pre>
 
 #### Ranges ####
