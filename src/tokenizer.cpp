@@ -46,7 +46,8 @@ tok_res zero_token(boost::string_ref line)
         last = post_dot;
 
     } else if (line[1] == 'x') {
-      last = std::find_if_not(begin(line) + 2, end(line), ishexnumber);
+      last = std::find_if(begin(line) + 2, end(line),
+                         [](auto c) { return !isdigit(c) || c < 'a' || c > 'f'; });
 
     } else if (line[1] == 'b') {
       last = std::find_if(begin(line) + 2, end(line),
