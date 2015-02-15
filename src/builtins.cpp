@@ -170,6 +170,17 @@ value::base* fn_array_end(vm::machine& vm)
   return iter;
 }
 
+value::base* fn_array_add(vm::machine& vm)
+{
+  auto arr = static_cast<value::array*>(&*vm.frame->self);
+  auto arg = get_arg(vm, 0);
+  if (arg->type != &type::array)
+    return throw_exception("Only Arrays can be added to other Arrays", vm);
+  auto other = static_cast<value::array*>(arg);
+  copy(begin(other->val), end(other->val), back_inserter(arr->val));
+  return arr;
+}
+
 // }}}
 // array_iterator {{{
 
@@ -714,6 +725,7 @@ builtin_function array_append {fn_array_append, 1};
 builtin_function array_at     {fn_array_at,     1};
 builtin_function array_start  {fn_array_start,  0};
 builtin_function array_end    {fn_array_end,    0};
+builtin_function array_add    {fn_array_add,    1};
 }
 value::type type::array {gc::alloc<value::array>, {
   { {"init"},   &array_init },
@@ -722,6 +734,7 @@ value::type type::array {gc::alloc<value::array>, {
   { {"at"},     &array_at },
   { {"start"},  &array_start },
   { {"end"},    &array_end },
+  { {"add"},    &array_add }
 }, builtin::type::object, {"Array"}};
 
 namespace {
