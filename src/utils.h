@@ -64,7 +64,7 @@ private:
 
 inline bool isnamechar(char c)
 {
-  return !isspace(c) && (!ispunct(c) || c == '_');
+  return isalnum(c) || c == '_';
 }
 
 template <typename T>

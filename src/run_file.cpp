@@ -19,8 +19,10 @@ std::string message_for(vv::vector_ref<std::string> tokens,
   if (validator.invalid()) {
     const std::string* first{tokens.data()};
     auto line = count(first, begin(*validator), "\n");
-    return "Invalid syntax at '" + validator->front()
-           + "' in " + filename + " on line " + std::to_string(line + 1) + ": "
+    auto token = validator->size() == 0 ? "end of input"
+                                        : '\'' + validator->front() + '\'';
+    return "Invalid syntax at " + token
+           + " in " + filename + " on line " + std::to_string(line + 1) + ": "
            + validator.error();
   }
 

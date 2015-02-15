@@ -40,14 +40,15 @@ std::vector<std::unique_ptr<vv::ast::expression>> get_valid_line()
     if (validator.valid())
       break;
 
-    if (validator.valid() || validator->size()) {
+    if (validator.invalid() && validator->size()) {
       std::string error{"invalid syntax"};
-      if (validator.invalid())
+      if (validator.invalid()) {
         error += " at "
               + (validator->front() == "\n"
                   ? "end of line: "
                   : '\'' + validator->front() + "': ")
               + validator.error();
+      }
       write_error(error);
       tokens.clear();
       std::cout << ">>> ";

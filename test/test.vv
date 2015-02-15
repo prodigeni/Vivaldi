@@ -1,5 +1,6 @@
 // for now, break on first failure
 
+require "array.vv"
 require "class.vv"
 require "except.vv"
 require "float.vv"
