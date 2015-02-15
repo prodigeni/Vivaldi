@@ -30,13 +30,29 @@ Backus-Naur form, see grammar.txt.
 Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
 3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
 unfortunately, since Boost binaries are used, so is a Boost compiled with
-libc++. Supporting libstdc++ would basically consist of ripping out a bunch of
-C++14 features, which I'm not inclined to do unless there's a particularly
-pressing need.
+libc++. The codebase (or should be!) is fully conforming C++14--- it's quite
+easy to add support for libstdc++, since it would basically consist of ripping
+out a bunch of C++14 features, but I'm not really inclined to do that unless
+there's a particularly pressing need.
 
 ### Builtins ###
 
 Vivaldi has a fairly limited set of builtin types:
+
+#### Objects ####
+
+The root of the inheritance tree; every type in Vivaldi inherits from Object
+(which in turn inherits from... itself; it really is turtles all the way down!)
+Objects support a few universal methods:
+
+* `type()` &mdash; Returns the type of `self`.
+* `not()` &mdash;  Returns whether or not `self` is truthy (i.e. not `false` or
+  `nil`).
+* `equals(x)`, `unequal(x)` &mdash; Returns true if `self` has the same object
+ID as `x`, and `false` otherwise (vice versa for `unequal`). These methods
+should be overridden by any classes with value-based concepts of semantics (for
+instance, in the standard library, `String`, `Symbol`, `Integer`, and so forth
+all override them).
 
 #### Nil ####
 `nil` &mdash; like `nil` in Ruby and Lisp, or `None` in Python.
@@ -171,7 +187,7 @@ Once defined, functions work more or less like in Python:
     function(1) // 1
 
 In functions and methods, `self` works a little differently than in Python or
-Ruby. It's not explicitly passed as an argument, but rather is implictly passed
+Ruby. It's not explicitly passed as an argument, but rather is implicitly passed
 whenever called as a member of an object. The following is perfectly valid:
 
     fn not_method(): return self.a
@@ -360,7 +376,9 @@ are expressions.
 
 Vivaldi operators, aside from `&&`, `||`, `to` (which is syntax sugar for
 Range), and `=` (which isn't actually an operator at all&mdash; it just looks like
-one), are all just syntax sugar for method calls:
+one), are all just syntax sugar for method calls. Here they are in order of
+precedence (basically C precedence, with the bitwise mistake fixed and `**` and
+`to` inserted where appropriate):
 
     a[b]     // a.at(b)
     a[b] = c // a.set_at(b, c)
@@ -378,6 +396,7 @@ one), are all just syntax sugar for method calls:
     a & b    // a.bitand(b)
     a ^ b    // a.xor(b)
     a | b    // a.bitor(b)
+    a to b   // Range(a, b)
     a < b    // a.less(b)
     a > b    // a.greater(b)
     a <= b   // a.less_equals(b)
