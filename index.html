@@ -1,0 +1,584 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Vivaldi by jeorgun</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Vivaldi</h1>
+        <p>Interpreted language inspired by Python, Ruby, Lisp, and so forth</p>
+
+        <p class="view"><a href="https://github.com/jeorgun/Vivaldi">View the Project on GitHub <small>jeorgun/Vivaldi</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/jeorgun/Vivaldi/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/jeorgun/Vivaldi/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/jeorgun/Vivaldi">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="vivaldi" class="anchor" href="#vivaldi" aria-hidden="true"><span class="octicon octicon-link"></span></a>Vivaldi</h1>
+
+<p>Vivaldi is a simple interpreted language inspired by Ruby, Python, Lisp, etc,
+supporting duck-typing, object orientation, and some functional constructs.</p>
+
+<h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<h3>
+<a id="basics" class="anchor" href="#basics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basics</h3>
+
+<p>Vivaldi can be run either from a file or from the REPL:</p>
+
+<pre><code>$ cat test.vv
+puts("Hello, world!")
+$ vivaldi ./test.vv
+Hello, world!
+$ ./vivaldi
+&gt;&gt;&gt; puts("Hello, REPL!")
+Hello, REPL!
+=&gt; nil
+&gt;&gt;&gt; quit()
+$
+</code></pre>
+
+<p>Vivaldi expressions are separated by newlines or semicolons.
+Comments in Vivaldi are C-style <code>// till end of line</code> comments— multiline
+comments aren't supported yet. For a full description of the grammar in
+Backus-Naur form, see grammar.txt.</p>
+
+<h3>
+<a id="compiling" class="anchor" href="#compiling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling</h3>
+
+<p>Vivaldi's been tested on 64-bit OS X 10.10.2, and 32-bit Arch Linux with Linux
+3.18, both with Clang/libc++ 3.5 and Boost 1.57.0. libc++ is required, and,
+unfortunately, since Boost binaries are used, so is a Boost compiled with
+libc++. Supporting libstdc++ would basically consist of ripping out a bunch of
+C++14 features, which I'm not inclined to do unless there's a particularly
+pressing need.</p>
+
+<h3>
+<a id="builtins" class="anchor" href="#builtins" aria-hidden="true"><span class="octicon octicon-link"></span></a>Builtins</h3>
+
+<p>Vivaldi has a fairly limited set of builtin types:</p>
+
+<h4>
+<a id="nil" class="anchor" href="#nil" aria-hidden="true"><span class="octicon octicon-link"></span></a>Nil</h4>
+
+<p><code>nil</code> — like <code>nil</code> in Ruby and Lisp, or <code>None</code> in Python.</p>
+
+<h4>
+<a id="bools" class="anchor" href="#bools" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bools</h4>
+
+<p><code>true</code> and <code>false</code>. What'd you expect?</p>
+
+<h4>
+<a id="floats" class="anchor" href="#floats" aria-hidden="true"><span class="octicon octicon-link"></span></a>Floats</h4>
+
+<p>64-bit floating-point values.</p>
+
+<h4>
+<a id="integers" class="anchor" href="#integers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Integers</h4>
+
+<p>32-bit signed integers. Integer literals can be written in decimal, hexadecimal,
+octal, or binary:</p>
+
+<pre><code>let eighteen = 18
+eighteen == 0x12
+eighteen == 022
+eighteen == 0b10010
+</code></pre>
+
+<h4>
+<a id="strings" class="anchor" href="#strings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Strings</h4>
+
+<p>Simple, mutable string class. Currently supports:</p>
+
+<ul>
+<li>
+<code>init(x)</code>— if <code>x</code> is a String or a Symbol, copies its string value;
+otherwise, creates a String with <code>x</code>'s display value. For instance, <code>new
+String(12)</code> will return <code>"12"</code>.</li>
+<li>
+<code>size()</code>— returns the size of the string.</li>
+<li>
+<code>append(x)</code>— Appends the String <code>x</code> to <code>self</code>.</li>
+<li>
+<code>add(x)</code>— Returns a string formed form concatenating <code>self</code> and the String
+<code>x</code>, leaving <code>self</code> unchanged.</li>
+<li>
+<code>times(x)</code>— Returns a string formed by concatenating <code>x</code> copies of <code>self</code>,
+leaving <code>self</code> unchanged.</li>
+<li>
+<code>equals(x)</code>, <code>unequal(x)</code>— Returns <code>true</code> if <code>x</code> is a String equal in value
+to <code>self</code>, and <code>false</code> otherwise (vice versa for <code>unequal</code>).</li>
+</ul>
+
+<h4>
+<a id="symbols" class="anchor" href="#symbols" aria-hidden="true"><span class="octicon octicon-link"></span></a>Symbols</h4>
+
+<p><code>'symbol_name</code> - as in Ruby or Lisp:</p>
+
+<ul>
+<li>
+<code>init(x)</code>— Creates a new Symbol with the string value of <code>x</code>, where <code>x</code> is a
+String or a Symbol.</li>
+<li>
+<code>equals(x)</code>, <code>unequal(x)</code>— Returns <code>true</code> if <code>x</code> is a Symbol equal in value
+to <code>self</code>, and <code>false</code> otherwise (vice versa for <code>unequal</code>).</li>
+</ul>
+
+<h4>
+<a id="arrays" class="anchor" href="#arrays" aria-hidden="true"><span class="octicon octicon-link"></span></a>Arrays</h4>
+
+<p>Simple mutable array type:</p>
+
+<pre><code>let array = [1, 2, 3]
+let three = array.size()
+array.append('foo)
+let four = array.size()
+let two = array[1]
+array[2] = "foo"
+array // [1, 2, "foo"]
+</code></pre>
+
+<ul>
+<li>
+<code>init(x)</code>— Returns a copy of the Array <code>x</code>.</li>
+<li>
+<code>size()</code>— Returns the size of <code>self</code>.</li>
+<li>
+<code>append(x)</code>— Pushes the value <code>x</code> onto the end of <code>self</code>.</li>
+<li>
+<code>at(x)</code>— Returns the value at index <code>x</code>.</li>
+<li>
+<code>set_at(x, y)</code>— Sets the value at index <code>x</code> to <code>y</code>, returning <code>y</code>.</li>
+<li>
+<code>start()</code>— Returns an iterator pointing to the beginning of <code>self</code>.</li>
+<li>
+<code>end()</code>— Returns an iterator pointing to the end of <code>self</code>.</li>
+<li>
+<code>add(x)</code>— Returns the concatenation of <code>self</code> and Array <code>x</code>, leaving <code>self</code>
+unchanged.</li>
+</ul>
+
+<h4>
+<a id="dictionaries" class="anchor" href="#dictionaries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dictionaries</h4>
+
+<p>Mutable hash-map type. At the moment, there's no way to override a type's
+equality or hash methods, so you're stuck with whatever you're inheriting
+from— which is based on object ID if you derive from Object:</p>
+
+<pre><code>let dict = { 'foo: 5, "bar": 6 }
+let two = dict.size()
+dict[0.5] = 'baz
+let three = dict.size()
+let five = dict['foo]
+dict // { 0.500000: 'baz, 'foo: 5, "bar": 6 }
+</code></pre>
+
+<ul>
+<li>
+<code>init(x)</code>— Returns a copy of the Dictionary <code>x</code>.</li>
+<li>
+<code>size()</code>— Returns the size of <code>self</code>.</li>
+<li>
+<code>at(x)</code>— Returns the value at key <code>x</code>; if no such value exists, inserts (and
+returns) <code>nil</code> at <code>x</code>.</li>
+<li>
+<code>set_at(x, y)</code>— Sets the value at key <code>x</code> to <code>y</code>, returning <code>y</code>.</li>
+</ul>
+
+<h4>
+<a id="ranges" class="anchor" href="#ranges" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ranges</h4>
+
+<p>Provides a range over any pair of objects that can be</p>
+
+<ul>
+<li>Compared with <code>&gt;</code> (<code>greater</code>)</li>
+<li>Incremented by adding 1 (via <code>add</code>)</li>
+</ul>
+
+<p>A range covers [start, end):</p>
+
+<pre><code>&gt;&gt;&gt; for i in 1 to 5: puts(i) // "&lt;x&gt; to &lt;y&gt;" is sugar for "new Range(x, y)"
+1
+2
+3
+4
+=&gt; nil
+</code></pre>
+
+<ul>
+<li>
+<code>init(x, y)</code>— Returns a Range from <code>x</code> to <code>y</code>. If they're not comparable or
+incrementable, this won't blow up <em>immediately</em>— only when you first try to
+use it.</li>
+<li>
+<code>start()</code>— Just returns <code>self</code>; see the section on Iterators to understand
+why.</li>
+<li>
+<code>size()</code>— Returns <code>y - x</code>. Don't call this if subtraction won't work!</li>
+<li>
+<code>at_end()</code>— Returns if <code>x == y</code> (well, actually, if <code>!(y &gt; x)</code>, so a Range
+from <code>1.3</code> to <code>5.0</code> doesn't go on infinitely).</li>
+<li>
+<code>increment</code>— Add 1 to <code>x</code>
+</li>
+<li>
+<code>to_arr</code>— Creates an Array from all values from <code>x</code> to <code>y</code>.</li>
+</ul>
+
+<h4>
+<a id="functions" class="anchor" href="#functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Functions</h4>
+
+<p>Functions! Syntactically, a function is very simple:</p>
+
+<pre><code>fn &lt;name&gt;(&lt;arguments&gt;): &lt;body&gt;
+</code></pre>
+
+<p>A function body is any valid Vivaldi expression (which is to say any valid
+Vivaldi code):</p>
+
+<pre><code>fn is_three(x): x == 3
+</code></pre>
+
+<p>A lambda is identical to a function, just without the name— or, more
+accurately, a function is just a lambda with a name. The following:</p>
+
+<pre><code>let five_returner = fn(): 5
+</code></pre>
+
+<p>is completely identical to</p>
+
+<pre><code>fn five_returner(): 5
+</code></pre>
+
+<p>Once defined, functions work more or less like in Python:</p>
+
+<pre><code>fn id(x): x
+
+let function = id
+function(1) // 1
+</code></pre>
+
+<p>In functions and methods, <code>self</code> works a little differently than in Python or
+Ruby. It's not explicitly passed as an argument, but rather is implictly passed
+whenever called as a member of an object. The following is perfectly valid:</p>
+
+<pre><code>fn not_method(): return self.a
+not_method() // throws exception
+
+let myobj = new Object()
+myobj.a = 5
+myobj.yes_method = not_method
+myobj.yes_method() // returns 5
+</code></pre>
+
+<p><code>return</code> can be used to exit out of a function early, but it's unnecessary for
+the last expression of a function body (or <em>only</em> expression, unless it's
+wrapped in a block):</p>
+
+<pre><code>// contrived; this could just be 'fn is_even(x): x % 2 == 0'
+fn is_even(x): do
+  if x % 2 == 0: return true
+  false
+end
+</code></pre>
+
+<h4>
+<a id="types" class="anchor" href="#types" aria-hidden="true"><span class="octicon octicon-link"></span></a>Types</h4>
+
+<p>Everything in Vivaldi is an object, and has</p>
+
+<ul>
+<li>
+<p>Members:</p>
+
+<pre><code>// a is an object
+a.foo = 5
+let five = a.foo
+</code></pre>
+</li>
+<li>
+<p>Methods (actually just members that happen to be functions):</p>
+
+<pre><code>// a is an object
+a.foo = 5
+a.bar = fn(): self.foo
+let five = a.bar()
+</code></pre>
+</li>
+<li>
+<p>A type:</p>
+
+<pre><code>let int_type = int.type()
+int_type == Integer
+</code></pre>
+</li>
+</ul>
+
+<p>Defining custom types is simple:</p>
+
+<pre><code>class MyType
+  fn init(x): self.x = x
+  fn x_is_equal_to(y): self.x = y
+end
+
+let my_obj = new MyType(5)
+let yes = my_obj.x_is_equal_to(5)
+let no = my_obj.x_is_equal_to(47)
+</code></pre>
+
+<ul>
+<li>
+<code>parent()</code>— Returns the parent type of <code>self</code>.</li>
+</ul>
+
+<h4>
+<a id="iterators-and-ranges" class="anchor" href="#iterators-and-ranges" aria-hidden="true"><span class="octicon octicon-link"></span></a>Iterators and Ranges</h4>
+
+<p>Iterators are the basic way to, well, iterate over something. A basic iterator
+type supports three methods:</p>
+
+<ul>
+<li>
+<code>get()</code> — returns the item currently pointed to</li>
+<li>
+<code>increment</code> — moves the iterator to the next item in its range, and returns
+itself.</li>
+<li>
+<p><code>at_end()</code> — returns whether or not the iterator is at the end of its range.
+If it is, the iterator doesn't point to anything valid— conceptually, it
+works like this:</p>
+
+<pre><code>  { item 0, item 2 ... item n - 1, item n }
+    ^                                     ^
+    start                                 end
+</code></pre>
+</li>
+</ul>
+
+<p>A range is even simpler; it only needs to support one method, <code>start()</code>, that
+returns an iterator pointing to its first element. In the standard library, both
+<code>Array</code> and <code>String</code> are ranges, and <code>ArrayIterator</code> and <code>String</code> are their
+corresponding iterators. <code>Range</code> is both a range (natch!) and an iterator—
+calling <code>start()</code> on a range just returns itself.</p>
+
+<p>Iterators are used to implement for loops:</p>
+
+<pre><code>for i in range: puts(i)
+</code></pre>
+
+<p>is equivalent to something like:</p>
+
+<pre><code>let &lt;implicit_var&gt; = range.start()
+while !&lt;implicit_var&gt;.at_end(): do
+  let i = &lt;implicit_var&gt;.get()
+  puts(i)
+  &lt;implicit_var&gt;.increment()
+end
+</code></pre>
+
+<h3>
+<a id="structures" class="anchor" href="#structures" aria-hidden="true"><span class="octicon octicon-link"></span></a>Structures</h3>
+
+<p>Vivaldi expressions comprise:</p>
+
+<h4>
+<a id="literals" class="anchor" href="#literals" aria-hidden="true"><span class="octicon octicon-link"></span></a>Literals</h4>
+
+<p><code>5</code>, <code>5.0</code>, <code>true</code>, <code>nil</code>, <code>"string"</code>, <code>'symbol</code>, <code>['array]</code>, and so forth.</p>
+
+<h4>
+<a id="variables-declarations-and-assignments" class="anchor" href="#variables-declarations-and-assignments" aria-hidden="true"><span class="octicon octicon-link"></span></a>Variables, Declarations and Assignments</h4>
+
+<p>All variables must be declared before use:</p>
+
+<pre><code>i = 5     // wrong &amp;mdash; i hasn't been declared yet
+let i = 5 // right
+i = 3     // right &amp;mdash; i has been declared, so assigning to it is OK
+</code></pre>
+
+<h4>
+<a id="control-flow" class="anchor" href="#control-flow" aria-hidden="true"><span class="octicon octicon-link"></span></a>Control Flow</h4>
+
+<p>Vivaldi's basic control flow structures are cond statements, while loops, and
+for loops:</p>
+
+<pre><code>let i = cond false: "not me!",
+             true:  "me!"
+while true: puts("looping endlessly...")
+</code></pre>
+
+<p>Cond statements work as in Lisp: the first member of each pair is evaluated
+until one is truthy (i.e. not <code>false</code> or <code>nil</code>). When the truthy member is
+found, the second half of that pair is evaluated and returned. If no truthy
+tests are found, the statement returns <code>nil</code>.</p>
+
+<p>The keyword <code>if</code> is provided as a synonym to <code>cond</code>, since it reads more
+naturally for one-body cond statements:</p>
+
+<pre><code>// i is a variable
+let a = if i: "i is truthy"
+if a == nil: puts("i isn't truthy")
+
+// equivalent:
+let a = cond i: "i is truthy"
+cond a == nil: puts("i isn't truthy")
+</code></pre>
+
+<p>while loops are very straightforward:</p>
+
+<pre><code>while &lt;condition&gt;: &lt;expression&gt;
+</code></pre>
+
+<p>For loops are familiar to anyone who's ever used Python or Ruby:</p>
+
+<pre><code>for &lt;i&gt; in &lt;range&gt;: &lt;expression&gt;
+</code></pre>
+
+<p>For more on for loops, see iterators.</p>
+
+<p>Note that while and loops always evaluate to <code>nil</code>.</p>
+
+<h4>
+<a id="blocks" class="anchor" href="#blocks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Blocks</h4>
+
+<p>Functions, cond/if statements, and while loops are all limited to a single
+expression for their bodies. This kind of sucks if you want to do anything
+actually interesting with them. Fortunately, it's possible, using blocks, to
+mash a bunch of expressions together in a sequence, and return the last computed
+result:</p>
+
+<pre><code>let i = do
+  puts("I'm in a block!")
+  5; 4; 3; 2; 1
+end
+i == 1
+</code></pre>
+
+<p>Using this, it's possible to build actually useful constructs:</p>
+
+<pre><code>fn filter(array, predicate): do
+  let filtered = []
+  for i in array: if pred(i): filtered.append(i)
+  filtered
+end
+</code></pre>
+
+<p>Blocks have nested scope:</p>
+
+<pre><code>do let j = 5 end
+puts(j) // wrong &amp;mdash; j is out of scope
+
+let j = 5
+do puts(j) end // fine
+</code></pre>
+
+<h4>
+<a id="exceptions" class="anchor" href="#exceptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Exceptions</h4>
+
+<p>Like in C++, exceptions in Vivaldi don't have any special type (in fact at the
+moment there is no builtin exception type; strings are used instead). Otherwise
+they work pretty much as you'd expect:</p>
+
+<pre><code>let i = try: except 5
+catch e: e + 1
+i == 6
+</code></pre>
+
+<p>As everywhere else in Vivaldi, the pieces of code following <code>try</code> and <code>catch</code>
+are expressions.</p>
+
+<h4>
+<a id="operators" class="anchor" href="#operators" aria-hidden="true"><span class="octicon octicon-link"></span></a>Operators</h4>
+
+<p>Vivaldi operators, aside from <code>&amp;&amp;</code>, <code>||</code>, <code>to</code> (which is syntax sugar for
+Range), and <code>=</code> (which isn't actually an operator at all— it just looks like
+one), are all just syntax sugar for method calls:</p>
+
+<pre><code>a[b]     // a.at(b)
+a[b] = c // a.set_at(b, c)
+!a       // a.not()
+-a       // a.negative()
+~a       // a.negate()
+a ** b   // a.pow(b)
+a * b    // a.times(b)
+a / b    // a.divides(b)
+a % b    // a.modulo(b)
+a + b    // a.add(b)
+a - b    // a.subtract(b)
+a &lt;&lt; b   // a.rshift(b)
+a &gt;&gt; b   // a.lshift(b)
+a &amp; b    // a.bitand(b)
+a ^ b    // a.xor(b)
+a | b    // a.bitor(b)
+a &lt; b    // a.less(b)
+a &gt; b    // a.greater(b)
+a &lt;= b   // a.less_equals(b)
+a &gt;= b   // a.greater_equals(b)
+a == b   // a.equals(b)
+a != b   // a.unequal(b)
+</code></pre>
+
+<h3>
+<a id="builtins-1" class="anchor" href="#builtins-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Builtins</h3>
+
+<p>In addition to the above types, Vivaldi has a select few builtin functions:</p>
+
+<ul>
+<li><p><code>puts(x)</code>— as in Ruby, write the passed value plus a newline. Takes only one
+argument.</p></li>
+<li><p><code>print(x)</code>— identical to <code>puts</code>, sans newline.</p></li>
+<li><p><code>gets()</code>— returns a String containing a single line of user input.</p></li>
+<li><p><code>quit()</code>— exits the program unconditionally.</p></li>
+</ul>
+
+<p>More to be added eventually.</p>
+
+<h3>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h3>
+
+<h4>
+<a id="fizzbuzz" class="anchor" href="#fizzbuzz" aria-hidden="true"><span class="octicon octicon-link"></span></a>FizzBuzz</h4>
+
+<pre><code>for i in 1 to 100: cond
+  i % 15 == 0: puts("FizzBuzz"),
+  i % 5 == 0:  puts("Buzz"),
+  i % 3 == 0:  puts("Fizz"),
+  true:        puts(i)
+</code></pre>
+
+<p>See examples folder for more.</p>
+
+<h3>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span class="octicon octicon-link"></span></a>TODO</h3>
+
+<ul>
+<li><p>Expand the standard library</p></li>
+<li><p>Add C API</p></li>
+<li><p>Improve performance, especially concerning the call stack</p></li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/jeorgun">jeorgun</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
