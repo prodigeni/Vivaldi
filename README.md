@@ -329,6 +329,21 @@ much as you'd expect:
 As everywhere else in Vivaldi, the pieces of code following `try` and `catch`
 are expressions.
 
+### Builtins ###
+
+In addition to the above types, Vivaldi has a select few builtin functions:
+
+* `puts(x)`--- as in Ruby, write the passed value plus a newline. Takes only one
+  argument.
+
+* `print(x)`--- identical to `puts`, sans newline.
+
+* `gets()`--- returns a String containing a single line of user input.
+
+* `quit()`--- exits the program unconditionally.
+
+More to be added eventually.
+
 ### Example ###
 
 #### FizzBuzz ####
