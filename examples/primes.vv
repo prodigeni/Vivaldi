@@ -8,12 +8,12 @@ fn primes(upto): do
   let candidates = []
   for i in 2 to upto: candidates.append(i)
   let found = []
-  while candidates.size() > 0: do
+  while candidates.at(0) < upto ** 0.5: do
     let prime = candidates.at(0)
     found.append(prime)
     candidates = filter(candidates, fn (x): x % prime != 0)
   end
-  found
+  found + candidates
 end
 
 let p = primes(10000)
