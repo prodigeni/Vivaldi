@@ -1,0 +1,20 @@
+require "assert.vv"
+
+assert("".size() == 0, "''.size() == 0")
+assert(" ".size() == 1, "' '.size() == 1")
+assert("foo".size() == 3, "'foo'.size() == 2")
+
+let str = "foo"
+
+assert(str[0] == "f", "(str[0] == 'f'");
+assert(str[2] == "o", "(str[2] == 'o'");
+
+let excepted = false
+try: str[128]
+catch e: excepted = true
+assert(excepted, "string accepted index past end")
+
+let other = str + "bar"
+
+assert(str == "foo", "assignment mutated original")
+assert(other == "foobar", "assignment didn't concatenate")
