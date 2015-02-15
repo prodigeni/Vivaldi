@@ -497,6 +497,35 @@ value::base* fn_range_increment(vm::machine& vm)
   return &rng;
 }
 
+value::base* fn_range_to_arr(vm::machine& vm)
+{
+  auto& rng = static_cast<value::range&>(*vm.frame->self);
+  std::vector<value::base*> vals;
+  auto iter = vm.retval = rng.start;
+  for (;;) {
+    vm.push_arg();
+    vm.retval = rng.end;
+    vm.readm({"greater"});
+    vm.call(1);
+    if (!truthy(vm.retval))
+      break;
+    vals.push_back(iter);
+    vm.retval = iter;
+    vm.push();
+    vm.push_int(1);
+    vm.push_arg();
+    vm.retval = iter;
+    vm.readm({"add"});
+    vm.call(1);
+    iter = vm.retval;
+  }
+
+  auto ret = gc::alloc<value::array>( vals );
+  for (auto i = vals.size(); i--;)
+    vm.pop();
+  return ret;
+}
+
 // }}}
 // string {{{
 
@@ -839,6 +868,7 @@ builtin_function range_size      {fn_range_size,      0};
 builtin_function range_at_end    {fn_range_at_end,    0};
 builtin_function range_get       {fn_range_get,       0};
 builtin_function range_increment {fn_range_increment, 0};
+builtin_function range_to_arr    {fn_range_to_arr,    0};
 }
 value::type type::range {gc::alloc<value::range>, {
   { {"init"},      &range_init },
@@ -846,7 +876,8 @@ value::type type::range {gc::alloc<value::range>, {
   { {"size"},      &range_size },
   { {"at_end"},    &range_at_end },
   { {"get"},       &range_get },
-  { {"increment"}, &range_increment }
+  { {"increment"}, &range_increment },
+  { {"to_arr"},    &range_to_arr },
 }, builtin::type::object, {"Range"}};
 
 namespace {
