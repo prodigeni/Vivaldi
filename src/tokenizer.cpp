@@ -8,8 +8,6 @@ using namespace vv;
  * '[', ']'
  * '(', ')'
  * '.'
- * '..'
- * '...'
  * ','
  * ':'
  * '='
@@ -80,18 +78,6 @@ tok_res digit_token(boost::string_ref line)
 }
 
 // }}}
-// '.' {{{
-
-tok_res dot_tokens(boost::string_ref line)
-{
-  if (line.size() == 1 || line[1] != '.')
-    return {".", ltrim(line.substr(1))};
-  if (line.size() == 2 || line[2] != '.')
-    return {"..", ltrim(line.substr(2))};
-  return {"...", ltrim(line.substr(3))};
-}
-
-// }}}
 // '=' {{{
 
 tok_res eq_tokens(boost::string_ref line)
@@ -109,6 +95,16 @@ tok_res bang_tokens(boost::string_ref line)
   if (line.size() == 1 || line[1] != '=')
     return {"!", ltrim(line.substr(1))};
   return {"!=", ltrim(line.substr(2))};
+}
+
+// }}}
+// '*' {{{
+
+tok_res star_tokens(boost::string_ref line)
+{
+  if (line.size() == 1 || line[1] != '*')
+    return {"*", ltrim(line.substr(1))};
+  return {"**", ltrim(line.substr(2))};
 }
 
 // }}}
@@ -229,11 +225,11 @@ tok_res first_token(boost::string_ref line)
   case ';':
   case '+':
   case '-':
-  case '*':
   case '~':
   case '^':
   case '%':
   case '#':
+  case '.':
   case '\'': return {{line.front()}, ltrim(line.substr(1))};
   case '1':
   case '2':
@@ -245,9 +241,9 @@ tok_res first_token(boost::string_ref line)
   case '8':
   case '9': return digit_token(line);
   case '0': return zero_token(line);
-  case '.': return dot_tokens(line);
   case '=': return eq_tokens(line);
   case '!': return bang_tokens(line);
+  case '*': return star_tokens(line);
   case '&': return and_tokens(line);
   case '|': return or_tokens(line);
   case '<': return lt_tokens(line);

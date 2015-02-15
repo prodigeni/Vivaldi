@@ -74,45 +74,48 @@ using namespace ast;
  *       ::= '-' prec1
  *
  * prec2 ::= prec1
- *       ::= prec1 '*' prec2
- *       ::= prec1 '/' prec2
- *       ::= prec1 '%' prec2
+ *       ::= prec1 '**' prec2
  *
  * prec3 ::= prec2
- *       ::= prec2 '+' prec3
- *       ::= prec2 '-' prec3
+ *       ::= prec2 '*' prec3
+ *       ::= prec2 '/' prec3
+ *       ::= prec2 '%' prec3
  *
  * prec4 ::= prec3
- *       ::= prec3 '>>' prec4
- *       ::= prec3 '<<' prec4
+ *       ::= prec3 '+' prec4
+ *       ::= prec3 '-' prec4
  *
  * prec5 ::= prec4
- *       ::= prec4 '&' prec5
+ *       ::= prec4 '>>' prec5
+ *       ::= prec4 '<<' prec5
  *
  * prec6 ::= prec5
- *       ::= prec5 '^' prec6
+ *       ::= prec5 '&' prec6
  *
  * prec7 ::= prec6
- *       ::= prec6 '|' prec7
+ *       ::= prec6 '^' prec7
  *
  * prec8 ::= prec7
- *       ::= prec7 'to' prec8
+ *       ::= prec7 '|' prec8
  *
  * prec9 ::= prec8
- *       ::= prec8 '>' prec9
- *       ::= prec8 '<' prec9
- *       ::= prec8 '>=' prec9
- *       ::= prec8 '<=' prec9
+ *       ::= prec8 'to' prec9
  *
  * prec10 ::= prec9
- *        ::= prec9 '==' prec10
- *        ::= prec9 '!=' prec10
+ *        ::= prec9 '>' prec10
+ *        ::= prec9 '<' prec10
+ *        ::= prec9 '>=' prec10
+ *        ::= prec9 '<=' prec10
  *
  * prec11 ::= prec10
- *        ::= prec10 '&&' prec11
+ *        ::= prec10 '==' prec11
+ *        ::= prec10 '!=' prec11
  *
  * prec12 ::= prec11
- *        ::= prec11 '||' prec12
+ *        ::= prec11 '&&' prec12
+ *
+ * prec13 ::= prec12
+ *        ::= prec12 '||' prec13
  *
  * array_literal ::= '[' expr_list ']'
  *
@@ -195,17 +198,18 @@ parse_res<> parse_expression(vector_ref<std::string> tokens);
 parse_res<> parse_nonop_expression(vector_ref<std::string> tokens);
 parse_res<> parse_prec0(vector_ref<std::string> tokens); // member, call
 parse_res<> parse_prec1(vector_ref<std::string> tokens); // monops
-parse_res<> parse_prec2(vector_ref<std::string> tokens); // *, /, %
-parse_res<> parse_prec3(vector_ref<std::string> tokens); // +, -
-parse_res<> parse_prec4(vector_ref<std::string> tokens); // <<, >>
-parse_res<> parse_prec5(vector_ref<std::string> tokens); // &
-parse_res<> parse_prec6(vector_ref<std::string> tokens); // ^
-parse_res<> parse_prec7(vector_ref<std::string> tokens); // |
-parse_res<> parse_prec8(vector_ref<std::string> tokens); // to
-parse_res<> parse_prec9(vector_ref<std::string> tokens); // <, >, <=, =>
-parse_res<> parse_prec10(vector_ref<std::string> tokens); // ==, !=
-parse_res<> parse_prec11(vector_ref<std::string> tokens); // &&
-parse_res<> parse_prec12(vector_ref<std::string> tokens); // ||
+parse_res<> parse_prec2(vector_ref<std::string> tokens); // **
+parse_res<> parse_prec3(vector_ref<std::string> tokens); // *, /, %
+parse_res<> parse_prec4(vector_ref<std::string> tokens); // +, -
+parse_res<> parse_prec5(vector_ref<std::string> tokens); // <<, >>
+parse_res<> parse_prec6(vector_ref<std::string> tokens); // &
+parse_res<> parse_prec7(vector_ref<std::string> tokens); // ^
+parse_res<> parse_prec8(vector_ref<std::string> tokens); // |
+parse_res<> parse_prec9(vector_ref<std::string> tokens); // to
+parse_res<> parse_prec10(vector_ref<std::string> tokens); // <, >, <=, =>
+parse_res<> parse_prec11(vector_ref<std::string> tokens); // ==, !=
+parse_res<> parse_prec12(vector_ref<std::string> tokens); // &&
+parse_res<> parse_prec13(vector_ref<std::string> tokens); // ||
 
 parse_res<> parse_array_literal(vector_ref<std::string> tokens);
 parse_res<> parse_assignment(vector_ref<std::string> tokens);
@@ -251,7 +255,7 @@ parse_res<std::pair<symbol, function_definition>>
 
 parse_res<> parse_expression(vector_ref<std::string> tokens)
 {
-  return parse_prec12(tokens);
+  return parse_prec13(tokens);
 }
 
 // Operators {{{
@@ -286,9 +290,9 @@ parse_res<> parse_operator_expr(vector_ref<std::string> tokens,
   return left_res;
 }
 
-parse_res<> parse_prec12(vector_ref<std::string> tokens)
+parse_res<> parse_prec13(vector_ref<std::string> tokens)
 {
-  auto left_res = parse_prec11(tokens);
+  auto left_res = parse_prec12(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
@@ -296,7 +300,7 @@ parse_res<> parse_prec12(vector_ref<std::string> tokens)
   if (tokens.size() && tokens.front() == "||") {
     auto left = move(left_res->first);
 
-    auto right_res = parse_prec12(tokens.subvec(1)); // '||'
+    auto right_res = parse_prec13(tokens.subvec(1)); // '||'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -305,16 +309,16 @@ parse_res<> parse_prec12(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec11(vector_ref<std::string> tokens)
+parse_res<> parse_prec12(vector_ref<std::string> tokens)
 {
-  auto left_res = parse_prec10(tokens);
+  auto left_res = parse_prec11(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
   if (tokens.size() && tokens.front() == "&&") {
     auto left = move(left_res->first);
-    auto right_res = parse_prec11(tokens.subvec(1)); // '&&'
+    auto right_res = parse_prec12(tokens.subvec(1)); // '&&'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -323,9 +327,9 @@ parse_res<> parse_prec11(vector_ref<std::string> tokens)
   return left_res;
 }
 
-parse_res<> parse_prec10(vector_ref<std::string> tokens)
+parse_res<> parse_prec11(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec9, parse_prec10,
+  return parse_operator_expr(tokens, parse_prec10, parse_prec11,
                              [](const auto& s)
                              {
                                return s == "==" || s == "!=";
@@ -336,9 +340,9 @@ parse_res<> parse_prec10(vector_ref<std::string> tokens)
                              });
 }
 
-parse_res<> parse_prec9(vector_ref<std::string> tokens)
+parse_res<> parse_prec10(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec8, parse_prec9,
+  return parse_operator_expr(tokens, parse_prec9, parse_prec10,
                              [](const auto& s)
                              {
                                return s == ">"
@@ -355,16 +359,16 @@ parse_res<> parse_prec9(vector_ref<std::string> tokens)
                              });
 }
 
-parse_res<> parse_prec8(vector_ref<std::string> tokens)
+parse_res<> parse_prec9(vector_ref<std::string> tokens)
 {
-  auto left_res = parse_prec7(tokens);
+  auto left_res = parse_prec8(tokens);
   if (!left_res)
     return left_res;
   tokens = left_res->second;
 
   if (tokens.size() && tokens.front() == "to") {
     auto left = move(left_res->first);
-    auto right_res = parse_prec8(tokens.subvec(1)); // 'to'
+    auto right_res = parse_prec9(tokens.subvec(1)); // 'to'
     auto right = move(right_res->first);
     tokens = right_res->second;
 
@@ -379,30 +383,30 @@ parse_res<> parse_prec8(vector_ref<std::string> tokens)
   return left_res;
 }
 
+parse_res<> parse_prec8(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec7, parse_prec8,
+                             [](const auto& s) { return s == "|"; },
+                             [](const auto&) { return "bitor"; });
+}
+
 parse_res<> parse_prec7(vector_ref<std::string> tokens)
 {
   return parse_operator_expr(tokens, parse_prec6, parse_prec7,
-                             [](const auto& s) { return s == "|"; },
-                             [](const auto&) { return "bitor"; });
+                             [](const auto& s) { return s == "^"; },
+                             [](const auto&) { return "xor"; });
 }
 
 parse_res<> parse_prec6(vector_ref<std::string> tokens)
 {
   return parse_operator_expr(tokens, parse_prec5, parse_prec6,
-                             [](const auto& s) { return s == "^"; },
-                             [](const auto&) { return "xor"; });
+                             [](const auto& s) { return s == "&"; },
+                             [](const auto&) { return "bitand"; });
 }
 
 parse_res<> parse_prec5(vector_ref<std::string> tokens)
 {
   return parse_operator_expr(tokens, parse_prec4, parse_prec5,
-                             [](const auto& s) { return s == "&"; },
-                             [](const auto&) { return "bitand"; });
-}
-
-parse_res<> parse_prec4(vector_ref<std::string> tokens)
-{
-  return parse_operator_expr(tokens, parse_prec3, parse_prec4,
                              [](const auto& s)
                              {
                                return s == ">>" || s == "<<";
@@ -413,9 +417,9 @@ parse_res<> parse_prec4(vector_ref<std::string> tokens)
                              });
 }
 
-parse_res<> parse_prec3(vector_ref<std::string> tokens)
+parse_res<> parse_prec4(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec2, parse_prec3,
+  return parse_operator_expr(tokens, parse_prec3, parse_prec4,
                              [](const auto& s) { return s == "+" || s == "-"; },
                              [](const auto& s)
                              {
@@ -423,9 +427,9 @@ parse_res<> parse_prec3(vector_ref<std::string> tokens)
                              });
 }
 
-parse_res<> parse_prec2(vector_ref<std::string> tokens)
+parse_res<> parse_prec3(vector_ref<std::string> tokens)
 {
-  return parse_operator_expr(tokens, parse_prec1, parse_prec2,
+  return parse_operator_expr(tokens, parse_prec2, parse_prec3,
                              [](const auto& s)
                              {
                                return s == "*" || s == "/" || s == "%";
@@ -436,6 +440,13 @@ parse_res<> parse_prec2(vector_ref<std::string> tokens)
                                       (s == "/") ? "divides" :
                                                    "modulo";
                              });
+}
+
+parse_res<> parse_prec2(vector_ref<std::string> tokens)
+{
+  return parse_operator_expr(tokens, parse_prec1, parse_prec2,
+                             [](const auto& s) { return s == "**"; },
+                             [](const auto&) { return "pow"; });
 }
 
 parse_res<> parse_prec1(vector_ref<std::string> tokens)

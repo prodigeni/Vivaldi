@@ -352,6 +352,25 @@ auto fn_int_bool_op(const F& op)
   };
 }
 
+value::base* fn_integer_pow(vm::machine& vm)
+{
+  auto arg = get_arg(vm, 0);
+  if (arg->type == &type::floating_point) {
+    auto left = *to_float(*vm.frame->self);
+    auto right = *to_float(*arg);
+    return gc::alloc<value::floating_point>( pow(left, right) );
+  }
+
+  auto left = *to_int(*vm.frame->self);
+  auto right = to_int(*arg);
+  if (!right)
+    return throw_exception("Right-hand argument is not an Integer", vm);
+
+  if (*right < 0)
+    return gc::alloc<value::floating_point>( pow(left, *right) );
+  return gc::alloc<value::integer>( static_cast<int>(pow(left, *right)) );
+}
+
 // }}}
 // floating_point {{{
 
@@ -729,71 +748,75 @@ value::type type::array_iterator {[]{ return nullptr; }, {
 }, builtin::type::object, {"ArrayIterator"}};
 
 namespace {
-builtin_function int_add            {fn_int_or_flt_op([](auto a, auto b){ return a + b; }), 1};
-builtin_function int_subtract       {fn_int_or_flt_op([](auto a, auto b){ return a - b; }), 1};
-builtin_function int_times          {fn_int_or_flt_op([](auto a, auto b){ return a * b; }), 1};
-builtin_function int_divides        {fn_int_or_flt_op([](auto a, auto b){ return a / b; }), 1};
-builtin_function int_modulo         {fn_integer_op(std::modulus<int>{}),                    1};
-builtin_function int_lshift         {fn_integer_op([](int a, int b) { return a << b; }),    1};
-builtin_function int_rshift         {fn_integer_op([](int a, int b) { return a >> b; }),    1};
-builtin_function int_bitand         {fn_integer_op(std::bit_and<int>{}),                    1};
-builtin_function int_bitor          {fn_integer_op(std::bit_or<int>{}),                     1};
-builtin_function int_xor            {fn_integer_op(std::bit_xor<int>{}),                    1};
-builtin_function int_equals         {fn_int_bool_op([](auto a, auto b){ return a == b; }),  1};
-builtin_function int_unequal        {fn_int_bool_op([](auto a, auto b){ return a != b; }),  1};
-builtin_function int_less           {fn_int_bool_op([](auto a, auto b){ return a < b;  }),  1};
-builtin_function int_greater        {fn_int_bool_op([](auto a, auto b){ return a > b;  }),  1};
-builtin_function int_less_equals    {fn_int_bool_op([](auto a, auto b){ return a <= b; }),  1};
-builtin_function int_greater_equals {fn_int_bool_op([](auto a, auto b){ return a >= b; }),  1};
-builtin_function int_negative       {fn_integer_monop(std::negate<int>{}),                  0};
-builtin_function int_negate         {fn_integer_monop(std::bit_not<int>{}),                 0};
+builtin_function int_add      {fn_int_or_flt_op([](auto a, auto b){ return a + b; }), 1};
+builtin_function int_subtract {fn_int_or_flt_op([](auto a, auto b){ return a - b; }), 1};
+builtin_function int_times    {fn_int_or_flt_op([](auto a, auto b){ return a * b; }), 1};
+builtin_function int_divides  {fn_int_or_flt_op([](auto a, auto b){ return a / b; }), 1};
+builtin_function int_modulo   {fn_integer_op(std::modulus<int>{}),                    1};
+builtin_function int_pow      {fn_integer_pow,                                        1};
+builtin_function int_lshift   {fn_integer_op([](int a, int b) { return a << b; }),    1};
+builtin_function int_rshift   {fn_integer_op([](int a, int b) { return a >> b; }),    1};
+builtin_function int_bitand   {fn_integer_op(std::bit_and<int>{}),                    1};
+builtin_function int_bitor    {fn_integer_op(std::bit_or<int>{}),                     1};
+builtin_function int_xor      {fn_integer_op(std::bit_xor<int>{}),                    1};
+builtin_function int_eq       {fn_int_bool_op([](auto a, auto b){ return a == b; }),  1};
+builtin_function int_neq      {fn_int_bool_op([](auto a, auto b){ return a != b; }),  1};
+builtin_function int_lt       {fn_int_bool_op([](auto a, auto b){ return a < b;  }),  1};
+builtin_function int_gt       {fn_int_bool_op([](auto a, auto b){ return a > b;  }),  1};
+builtin_function int_le       {fn_int_bool_op([](auto a, auto b){ return a <= b; }),  1};
+builtin_function int_ge       {fn_int_bool_op([](auto a, auto b){ return a >= b; }),  1};
+builtin_function int_negative {fn_integer_monop(std::negate<int>{}),                  0};
+builtin_function int_negate   {fn_integer_monop(std::bit_not<int>{}),                 0};
 }
 value::type type::integer{[]{ return nullptr; }, {
-  { {"add"},            &int_add            },
-  { {"subtract"},       &int_subtract       },
-  { {"times"},          &int_times          },
-  { {"divides"},        &int_divides        },
-  { {"modulo"},         &int_modulo         },
-  { {"bitand"},         &int_bitand         },
-  { {"bitor"},          &int_bitor          },
-  { {"xor"},            &int_xor            },
-  { {"lshift"},         &int_lshift         },
-  { {"rshift"},         &int_rshift         },
-  { {"equals"},         &int_equals         },
-  { {"unequal"},        &int_unequal        },
-  { {"less"},           &int_less           },
-  { {"greater"},        &int_greater        },
-  { {"less_equals"},    &int_less_equals    },
-  { {"greater_equals"}, &int_greater_equals },
-  { {"negative"},       &int_negative       },
-  { {"negate"},         &int_negate         }
+  { {"add"},            &int_add      },
+  { {"subtract"},       &int_subtract },
+  { {"times"},          &int_times    },
+  { {"divides"},        &int_divides  },
+  { {"modulo"},         &int_modulo   },
+  { {"pow"},            &int_pow      },
+  { {"bitand"},         &int_bitand   },
+  { {"bitor"},          &int_bitor    },
+  { {"xor"},            &int_xor      },
+  { {"lshift"},         &int_lshift   },
+  { {"rshift"},         &int_rshift   },
+  { {"equals"},         &int_eq       },
+  { {"unequal"},        &int_neq      },
+  { {"less"},           &int_lt       },
+  { {"greater"},        &int_gt       },
+  { {"less_equals"},    &int_le       },
+  { {"greater_equals"}, &int_ge       },
+  { {"negative"},       &int_negative },
+  { {"negate"},         &int_negate   }
 }, builtin::type::object, {"Integer"}};
 
 namespace {
-builtin_function flt_add            {fn_floating_point_op(std::plus<double>{}),       1};
-builtin_function flt_subtract       {fn_floating_point_op(std::minus<double>{}),      1};
-builtin_function flt_times          {fn_floating_point_op(std::multiplies<double>{}), 1};
-builtin_function flt_divides        {fn_floating_point_op(std::divides<double>{}),    1};
-builtin_function flt_equals         {fn_float_bool_op(std::equal_to<double>{}),       1};
-builtin_function flt_unequal        {fn_float_bool_op(std::not_equal_to<double>{}),   1};
-builtin_function flt_less           {fn_float_bool_op(std::less<double>{}),           1};
-builtin_function flt_greater        {fn_float_bool_op(std::greater<double>{}),        1};
-builtin_function flt_less_equals    {fn_float_bool_op(std::less_equal<double>{}),     1};
-builtin_function flt_greater_equals {fn_float_bool_op(std::greater_equal<double>{}),  1};
-builtin_function flt_negative       {fn_floating_point_negative,                      0};
+builtin_function flt_add      {fn_floating_point_op(std::plus<double>{}),       1};
+builtin_function flt_subtract {fn_floating_point_op(std::minus<double>{}),      1};
+builtin_function flt_times    {fn_floating_point_op(std::multiplies<double>{}), 1};
+builtin_function flt_divides  {fn_floating_point_op(std::divides<double>{}),    1};
+builtin_function flt_pow      {fn_floating_point_op(pow),                       1};
+builtin_function flt_eq       {fn_float_bool_op(std::equal_to<double>{}),       1};
+builtin_function flt_neq      {fn_float_bool_op(std::not_equal_to<double>{}),   1};
+builtin_function flt_lt       {fn_float_bool_op(std::less<double>{}),           1};
+builtin_function flt_gt       {fn_float_bool_op(std::greater<double>{}),        1};
+builtin_function flt_le       {fn_float_bool_op(std::less_equal<double>{}),     1};
+builtin_function flt_ge       {fn_float_bool_op(std::greater_equal<double>{}),  1};
+builtin_function flt_negative {fn_floating_point_negative,                      0};
 }
 value::type type::floating_point{[]{ return nullptr; }, {
-  { {"equals"},         &flt_equals         },
-  { {"unequal"},        &flt_unequal        },
-  { {"add"},            &flt_add            },
-  { {"subtract"},       &flt_subtract       },
-  { {"times"},          &flt_times          },
-  { {"divides"},        &flt_divides        },
-  { {"less"},           &flt_less           },
-  { {"greater"},        &flt_greater        },
-  { {"less_equals"},    &flt_less_equals    },
-  { {"greater_equals"}, &flt_greater_equals },
-  { {"negative"},       &flt_negative       }
+  { {"add"},            &flt_add      },
+  { {"subtract"},       &flt_subtract },
+  { {"times"},          &flt_times    },
+  { {"divides"},        &flt_divides  },
+  { {"pow"},            &flt_pow      },
+  { {"equals"},         &flt_eq       },
+  { {"unequal"},        &flt_neq      },
+  { {"less"},           &flt_lt       },
+  { {"greater"},        &flt_gt       },
+  { {"less_equals"},    &flt_le       },
+  { {"greater_equals"}, &flt_ge       },
+  { {"negative"},       &flt_negative }
 }, builtin::type::object, {"Float"}};
 
 namespace {
