@@ -84,6 +84,8 @@ Simple, mutable string class. Currently supports:
   `x`, leaving `self` unchanged.
 * `times(x)`&mdash; Returns a string formed by concatenating `x` copies of `self`,
   leaving `self` unchanged.
+* `start()`&mdash; Returns an iterator pointing to the beginning of `self`.
+* `end()`&mdash; Returns an iterator pointing to the end of `self`.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 
