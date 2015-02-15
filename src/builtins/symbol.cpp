@@ -53,17 +53,11 @@ value::base* fn_symbol_unequal(vm::machine& vm)
   return gc::alloc<value::boolean>(to_symbol(&*vm.frame->self)!=to_symbol(arg));
 }
 
-value::base* fn_symbol_to_str(vm::machine& vm)
-{
-  return gc::alloc<value::string>( to_string(to_symbol(&*vm.frame->self)) );
-}
-
 // }}}
 
 value::builtin_function symbol_init    {fn_symbol_init,    1};
 value::builtin_function symbol_equals  {fn_symbol_equals,  1};
 value::builtin_function symbol_unequal {fn_symbol_unequal, 1};
-value::builtin_function symbol_to_str  {fn_symbol_to_str,  0};
 
 }
 
@@ -71,5 +65,4 @@ value::type type::symbol {gc::alloc<value::symbol>, {
   { {"init"},    &symbol_init    },
   { {"equals"},  &symbol_equals  },
   { {"unequal"}, &symbol_unequal },
-  { {"to_str"},  &symbol_to_str  }
 }, builtin::type::object, {"Symbol"}};
