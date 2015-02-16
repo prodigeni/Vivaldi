@@ -26,20 +26,21 @@ extern value::builtin_function quit;
 
 namespace type {
 
-extern value::type object;
-extern value::type string;
-extern value::type string_iterator;
-extern value::type integer;
-extern value::type floating_point;
-extern value::type boolean;
 extern value::type array;
 extern value::type array_iterator;
+extern value::type boolean;
 extern value::type dictionary;
+extern value::type custom_type;
+extern value::type file;
+extern value::type floating_point;
+extern value::type function;
+extern value::type integer;
+extern value::type object;
+extern value::type nil;
+extern value::type string;
+extern value::type string_iterator;
 extern value::type symbol;
 extern value::type range;
-extern value::type nil;
-extern value::type function;
-extern value::type custom_type;
 
 }
 

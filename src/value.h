@@ -22,10 +22,10 @@ namespace value {
 
 struct array;
 struct array_iterator;
-struct type;
 struct boolean;
 struct builtin_function;
 struct dictionary;
+struct file;
 struct floating_point;
 struct function;
 struct integer;
@@ -35,6 +35,7 @@ struct range;
 struct string;
 struct string_iterator;
 struct symbol;
+struct type;
 
 struct base {
   base(type* type);

@@ -180,6 +180,44 @@ A range covers [start, end):
 * `increment`&mdash; Add 1 to `x`
 * `to_arr`&mdash; Creates an Array from all values from `x` to `y`.
 
+#### Files ####
+
+File support right now is pretty minimal. Files are valid ranges (and iterators;
+`start` just returns the file it's called on) over their contained lines:
+
+    $ cat myfile.txt
+    hello
+    world
+    $ ./vivaldi
+    >>> let file = new File("myfile.txt")
+    >>> for i in file: puts("line: " + i)
+    line: hello
+    line: world
+    => nil
+    >>> i.at_end()
+    => true
+
+Alternatively, the contents of the file can be read in one fell swoop:
+
+    >>> file.contents()
+    => "hello
+    world"
+    >>> file.at_end()
+    => true
+
+That's basically it for now; expanded methods, plus writing to files, will be
+added later.
+
+* `init(x)` Creates a new File with the filename `x`, where `x` is a String.
+* `start()` Returns `self` (see ranges for why this is needed).
+* `get()` Returns the current line `self` is pointing to.
+* `increment()` Discards the current line and grabs the next, returning `self`;
+  excepts if `self` is already at the end of the file.
+* `at_end()` Returns `true` if `self` is at the end of the file, and `false`
+  otherwise.
+* `contents` Returns the full contents of the file from the current line to the
+  end, incrementing `self` to the end of the file.
+
 #### Functions ####
 Functions! Syntactically, a function is very simple:
 

@@ -78,6 +78,7 @@ void builtin::make_base_env(vm::call_frame& base)
     { {"ArrayIterator"},  &builtin::type::array_iterator },
     { {"Bool"},           &builtin::type::boolean },
     { {"Dictionary"},     &builtin::type::dictionary },
+    { {"File"},           &builtin::type::file },
     { {"Float"},          &builtin::type::floating_point },
     { {"Integer"},        &builtin::type::integer },
     { {"Nil"},            &builtin::type::nil },

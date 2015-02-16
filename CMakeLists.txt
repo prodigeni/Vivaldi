@@ -24,6 +24,7 @@ add_executable(vivaldi
   src/builtins/array.cpp
   src/builtins/bool.cpp
   src/builtins/dictionary.cpp
+  src/builtins/file.cpp
   src/builtins/floating_point.cpp
   src/builtins/integer.cpp
   src/builtins/nil.cpp
@@ -67,6 +68,7 @@ add_executable(vivaldi
   src/value/boolean.cpp
   src/value/builtin_function.cpp
   src/value/dictionary.cpp
+  src/value/file.cpp
   src/value/floating_point.cpp
   src/value/function.cpp
   src/value/integer.cpp
