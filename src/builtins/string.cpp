@@ -67,15 +67,6 @@ value::base* fn_string_unequal(vm::machine& vm)
       to_string(&*vm.frame->self) != to_string(arg) );
 }
 
-value::base* fn_string_append(vm::machine& vm)
-{
-  if (get_arg(vm, 0)->type != &type::string)
-    return throw_exception("Only strings can be appended to other strings", vm);
-
-  static_cast<value::string&>(*vm.frame->self).val += to_string(get_arg(vm, 0));
-  return &*vm.frame->self;
-}
-
 value::base* fn_string_add(vm::machine& vm)
 {
   if (get_arg(vm, 0)->type != &type::string)
@@ -130,6 +121,33 @@ value::base* fn_string_end(vm::machine& vm)
   auto end = gc::alloc<value::string_iterator>(self);
   static_cast<value::string_iterator*>(end)->idx = self.val.size();
   return end;
+}
+
+value::base* fn_string_to_upper(vm::machine& vm)
+{
+  auto str = static_cast<value::string&>(*vm.frame->self).val;
+  transform(begin(str), end(str), begin(str), toupper);
+  return gc::alloc<value::string>( str );
+}
+
+value::base* fn_string_to_lower(vm::machine& vm)
+{
+  auto str = static_cast<value::string&>(*vm.frame->self).val;
+  transform(begin(str), end(str), begin(str), tolower);
+  return gc::alloc<value::string>( str );
+}
+
+value::base* fn_string_starts_with(vm::machine& vm)
+{
+  if (get_arg(vm, 0)->type != &type::string)
+    return throw_exception("Strings can only start with other Strings", vm);
+
+  const auto& str = static_cast<value::string&>(*vm.frame->self).val;
+  const auto& other = to_string(get_arg(vm, 0));
+
+  if (other.size() > str.size() || !equal(begin(other), end(other), begin(str)))
+    return gc::alloc<value::boolean>( false );
+  return gc::alloc<value::boolean>( true );
 }
 
 // }}}
@@ -225,17 +243,19 @@ value::base* fn_string_iterator_unequal(vm::machine& vm)
 
 // }}}
 
-value::builtin_function string_init    {fn_string_init,    1};
-value::builtin_function string_size    {fn_string_size,    0};
-value::builtin_function string_append  {fn_string_append,  1};
-value::builtin_function string_equals  {fn_string_equals,  1};
-value::builtin_function string_unequal {fn_string_unequal, 1};
-value::builtin_function string_add     {fn_string_add,     1};
-value::builtin_function string_times   {fn_string_times,   1};
-value::builtin_function string_to_int  {fn_string_to_int,  0};
-value::builtin_function string_at      {fn_string_at,      1};
-value::builtin_function string_start   {fn_string_start,   0};
-value::builtin_function string_end     {fn_string_end,     0};
+value::builtin_function string_init        {fn_string_init,        1};
+value::builtin_function string_size        {fn_string_size,        0};
+value::builtin_function string_equals      {fn_string_equals,      1};
+value::builtin_function string_unequal     {fn_string_unequal,     1};
+value::builtin_function string_add         {fn_string_add,         1};
+value::builtin_function string_times       {fn_string_times,       1};
+value::builtin_function string_to_int      {fn_string_to_int,      0};
+value::builtin_function string_at          {fn_string_at,          1};
+value::builtin_function string_start       {fn_string_start,       0};
+value::builtin_function string_end         {fn_string_end,         0};
+value::builtin_function string_to_upper    {fn_string_to_upper,    0};
+value::builtin_function string_to_lower    {fn_string_to_lower,    0};
+value::builtin_function string_starts_with {fn_string_starts_with, 1};
 
 value::builtin_function string_iterator_at_start  {fn_string_iterator_at_start,  0};
 value::builtin_function string_iterator_at_end    {fn_string_iterator_at_end,    0};
@@ -250,17 +270,19 @@ value::builtin_function string_iterator_subtract  {fn_string_iterator_subtract, 
 }
 
 value::type type::string {gc::alloc<value::string>, {
-  { {"init"},    &string_init    },
-  { {"size"},    &string_size    },
-  { {"append"},  &string_append  },
-  { {"equals"},  &string_equals  },
-  { {"unequal"}, &string_unequal },
-  { {"add"},     &string_add     },
-  { {"times"},   &string_times   },
-  { {"to_int"},  &string_to_int  },
-  { {"at"},      &string_at      },
-  { {"start"},   &string_start   },
-  { {"end"},     &string_end     },
+  { {"init"},        &string_init        },
+  { {"size"},        &string_size        },
+  { {"equals"},      &string_equals      },
+  { {"unequal"},     &string_unequal     },
+  { {"add"},         &string_add         },
+  { {"times"},       &string_times       },
+  { {"to_int"},      &string_to_int      },
+  { {"at"},          &string_at          },
+  { {"start"},       &string_start       },
+  { {"end"},         &string_end         },
+  { {"to_upper"},    &string_to_upper    },
+  { {"to_lower"},    &string_to_lower    },
+  { {"starts_with"}, &string_starts_with }
 }, builtin::type::object, {"String"}};
 
 value::type type::string_iterator {[]{ return nullptr; }, {

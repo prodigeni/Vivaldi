@@ -86,19 +86,24 @@ octal, or binary:
     eighteen == 0b10010
 
 #### Strings ####
-Simple, mutable string class. Currently supports:
+Simple, immutable string class. Currently supports:
 
 * `init(x)`&mdash; if `x` is a String or a Symbol, copies its string value;
   otherwise, creates a String with `x`'s display value. For instance, `new
   String(12)` will return `"12"`.
 * `size()`&mdash; returns the size of the string.
-* `append(x)`&mdash; Appends the String `x` to `self`.
 * `add(x)`&mdash; Returns a string formed form concatenating `self` and the String
   `x`, leaving `self` unchanged.
 * `times(x)`&mdash; Returns a string formed by concatenating `x` copies of `self`,
   leaving `self` unchanged.
 * `start()`&mdash; Returns an iterator pointing to the beginning of `self`.
 * `end()`&mdash; Returns an iterator pointing to the end of `self`.
+* `to_upper()`&mdash; Returns a copy of `self` with all lowercase letters
+  switched with their uppercase equivalents.
+* `to_lower()`&mdash; Returns a copy of `self` with all uppercase letters
+  switched with their lowercase equivalents.
+* `starts_with(x)`&mdash; Returns `true` if `self` begins with the string `x`,
+  and `false` otherwise.
 * `equals(x)`, `unequal(x)`&mdash; Returns `true` if `x` is a String equal in value
   to `self`, and `false` otherwise (vice versa for `unequal`).
 
@@ -303,9 +308,9 @@ Vivaldi expressions comprise:
 
 All variables must be declared before use:
 
-    i = 5     // wrong &mdash; i hasn't been declared yet
+    i = 5     // wrong: i hasn't been declared yet
     let i = 5 // right
-    i = 3     // right &mdash; i has been declared, so assigning to it is OK
+    i = 3     // right: i has been declared, so assigning to it is OK
 
 #### Control Flow ####
 
@@ -369,7 +374,7 @@ Using this, it's possible to build actually useful constructs:
 Blocks have nested scope:
 
     do let j = 5 end
-    puts(j) // wrong &mdash; j is out of scope
+    puts(j) // wrong: j is out of scope
 
     let j = 5
     do puts(j) end // fine

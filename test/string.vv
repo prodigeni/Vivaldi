@@ -18,3 +18,11 @@ let other = str + "bar"
 
 assert(str == "foo", "assignment mutated original")
 assert(other == "foobar", "assignment didn't concatenate")
+
+assert(other.starts_with(str), "'foobar'.starts_with('foo')")
+assert(!str.starts_with(other), "!'foo'.starts_with('foobar')")
+assert(!other.starts_with("wat"), "!'foobar'.starts_with('wat')")
+
+let upper = "FOO"
+assert(str.to_upper() == upper, "'foo'.to_upper() == 'FOO'")
+assert(upper.to_lower() == str, "'FOO'.to_lower() == 'foo'")
