@@ -61,7 +61,7 @@ value::base* fn_floating_point_divides(vm::machine& vm)
 {
   if (!is_float(get_arg(vm, 0)))
     return throw_exception("Right-hand argument is not a Float", vm);
-  if (to_float(get_arg(vm, 0)))
+  if (to_float(get_arg(vm, 0)) == 0)
     return throw_exception("Cannot divide by zero", vm);
   return gc::alloc<value::floating_point>( to_float(&*vm.frame->self) /
                                            to_float(get_arg(vm, 0)) );
